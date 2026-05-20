@@ -1,4 +1,9 @@
 package br.com.statezone.repository;
 
-public interface EventoPartidaRepository {
+import br.com.statezone.model.EventoPartida;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface EventoPartidaRepository extends JpaRepository<EventoPartida,Long> {
 }
