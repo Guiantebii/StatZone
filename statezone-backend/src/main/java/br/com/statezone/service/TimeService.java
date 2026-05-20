@@ -1,0 +1,71 @@
+package br.com.statezone.service;
+
+import br.com.statezone.dto.TimeRequestDto;
+import br.com.statezone.dto.TimeResponseDto;
+import br.com.statezone.exception.ResourceNotFoundException;
+import br.com.statezone.mapper.TimeMapper;
+import br.com.statezone.model.Time;
+import br.com.statezone.repository.TimeRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class TimeService {
+    private final TimeRepository timeRepository;
+    private final TimeMapper timeMapper;
+
+    public TimeResponseDto criar(TimeRequestDto dto){
+        Time entity = timeMapper.toEntity(dto);
+
+        Time salvo = timeRepository.save(entity);
+        return timeMapper.toDto(salvo);
+    }
+
+    public List<TimeResponseDto> listarTodosTimes(){
+        return timeRepository.findAll()
+                .stream()
+                .map(timeMapper::toDto)
+                .toList();
+    }
+
+    public TimeResponseDto obterTimePorId(Long id) {
+
+        Time time = timeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Time com id " + id + " não encontrado"
+                        )
+                );
+
+        return timeMapper.toDto(time);
+    }
+
+    public TimeResponseDto atualizarTime(TimeRequestDto dto, Long id){
+        Time time = timeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Time com id " + id + " não encontrado"
+                        )
+                );
+        timeMapper.updateTimeFromDto(dto, time);
+
+        Time timeAtualizado = timeRepository.save(time);
+
+        return timeMapper.toDto(timeAtualizado);
+    }
+
+    public void deletarTime(Long id) {
+
+        Time time = timeRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Time com id " + id + " não encontrado"
+                        )
+                );
+
+        timeRepository.delete(time);
+    }
+}
