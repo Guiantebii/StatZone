@@ -6,6 +6,7 @@ import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.TimeMapper;
 import br.com.statezone.model.Time;
 import br.com.statezone.repository.TimeRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TimeService {
     private final TimeRepository timeRepository;
     private final TimeMapper timeMapper;
