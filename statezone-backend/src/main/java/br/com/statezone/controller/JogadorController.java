@@ -36,17 +36,17 @@ public class JogadorController {
         return ResponseEntity.ok(jogadorService.listarTodosJogadores());
     }
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<JogadorResponseDto> obterJogadorPorId(@PathVariable Long id){
         return ResponseEntity.ok(jogadorService.obterJogadorPorId(id));
     }
 
-    @PutMapping("{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<JogadorResponseDto> atualizarJogador(@RequestBody @Valid JogadorRequestDto dto, @PathVariable Long id){
        return ResponseEntity.ok(jogadorService.atualizarJogador(dto,id));
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarJogador(@PathVariable Long id){
         jogadorService.deletarJogador(id);
         return ResponseEntity.noContent().build();
