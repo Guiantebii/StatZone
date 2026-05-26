@@ -32,8 +32,6 @@ public class Campeonato {
     @OneToMany(mappedBy = "campeonato", fetch = FetchType.LAZY)
     private List<Partida> partidas;
 
-    @OneToMany(mappedBy = "campeonato", fetch = FetchType.LAZY)
-    private List<Classificacao> classificacoes;
 
     @CreationTimestamp
     @Column(name = "criado_em")

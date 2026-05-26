@@ -52,9 +52,6 @@ public class Time {
     @OneToMany(mappedBy = "timeVisitante", fetch = FetchType.LAZY)
     private List<Partida> partidasVisitante;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "time", fetch = FetchType.LAZY)
-    private List<Classificacao> classificacoes;
 
     @CreationTimestamp
     @Column(name = "criado_em")
