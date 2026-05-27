@@ -3,8 +3,10 @@ package br.com.statezone.controller;
 import br.com.statezone.dto.CampeonatoRequestDto;
 import br.com.statezone.dto.CampeonatoResponseDto;
 import br.com.statezone.dto.ClassificacaoResponseDto;
+import br.com.statezone.dto.PartidaResponseDto;
 import br.com.statezone.service.CampeonatoService;
 import br.com.statezone.service.ClassificacaoService;
+import br.com.statezone.service.FixtureGeneratorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import java.util.List;
 public class CampeonatoController {
     private final CampeonatoService campeonatoService;
     private final ClassificacaoService classificacaoService;
+    private final FixtureGeneratorService fixtureGeneratorService;
 
         @PostMapping
         public ResponseEntity<CampeonatoResponseDto> criarCampeonato(@RequestBody @Valid CampeonatoRequestDto dto){
@@ -48,6 +51,16 @@ public class CampeonatoController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{campeonatoId}/times/{timeId}")
+    public ResponseEntity<Void> adicionarTime(
+            @PathVariable Long campeonatoId,
+            @PathVariable Long timeId
+    ) {
+        campeonatoService.adicionarTime(campeonatoId, timeId);
+
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{campeonatoId}/classificacao")
     public ResponseEntity<List<ClassificacaoResponseDto>>
     gerarClassificacao(
@@ -62,4 +75,21 @@ public class CampeonatoController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/{id}/fixtures")
+    public ResponseEntity<List<PartidaResponseDto>> gerarFixtures(@PathVariable Long id) {
+
+        List<PartidaResponseDto> response =
+                fixtureGeneratorService.gerarPartida(id);
+
+        URI uri = URI.create("/campeonatos/" + id + "/partidas");
+
+        return ResponseEntity
+                .created(uri)
+                .body(response);
+    }
+
+    @GetMapping("/{id}/partidas")
+    public ResponseEntity<List<PartidaResponseDto>> listarPartidas(@PathVariable Long id) {
+        return ResponseEntity.ok(campeonatoService.listarPartidas(id));
+    }
 }

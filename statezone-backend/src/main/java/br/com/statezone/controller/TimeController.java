@@ -1,5 +1,6 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.dto.JogadorResponseDto;
 import br.com.statezone.dto.TimeRequestDto;
 import br.com.statezone.dto.TimeResponseDto;
 import br.com.statezone.service.TimeService;
@@ -57,5 +58,9 @@ public class TimeController {
         timeService.deletarTime(id);
 
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/{id}/jogadores")
+    public ResponseEntity<List<JogadorResponseDto>> listarJogadores(@PathVariable Long id) {
+        return ResponseEntity.ok(timeService.listarJogadoresPorTime(id));
     }
 }
