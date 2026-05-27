@@ -44,5 +44,14 @@ public class PartidaController {
         partidaService.deletar(id);
         return ResponseEntity.noContent().build();
     }
+    @PostMapping("/{id}/iniciar")
+    public ResponseEntity<PartidaResponseDto> iniciar(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.iniciar(id));
+    }
+    @PostMapping("/{id}/encerrar")
+    public ResponseEntity<PartidaResponseDto> encerrar(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.encerrar(id));
+    }
+
 
 }

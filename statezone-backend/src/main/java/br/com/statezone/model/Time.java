@@ -40,15 +40,12 @@ public class Time {
     @Column(name = "fundado_em")
     private LocalDate fundadoEm;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "time", fetch = FetchType.LAZY)
     private List<Jogador> jogadores;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "timeMandante", fetch = FetchType.LAZY)
     private List<Partida> partidasMandante;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "timeVisitante", fetch = FetchType.LAZY)
     private List<Partida> partidasVisitante;
 
