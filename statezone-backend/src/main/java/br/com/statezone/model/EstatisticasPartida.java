@@ -2,9 +2,6 @@ package br.com.statezone.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -19,40 +16,48 @@ public class EstatisticasPartida {
     private Long id;
 
     @Column(name = "posse_bola_mandante")
-    private Integer posseBolaMandante;
+    private Integer posseBolaMandante = 0;
 
     @Column(name = "posse_bola_visitante")
-    private Integer posseBolaVisitante;
+    private Integer posseBolaVisitante = 0;
 
     @Column(name = "finalizacoes_mandante")
-    private Integer finalizacoesMandante;
+    private Integer finalizacoesMandante = 0;
 
     @Column(name = "finalizacoes_visitante")
-    private Integer finalizacoesVisitante;
+    private Integer finalizacoesVisitante = 0;
 
     @Column(name = "finalizacoes_gol_mandante")
-    private Integer finalizacoesGolMandante;
+    private Integer finalizacoesGolMandante = 0;
 
     @Column(name = "finalizacoes_gol_visitante")
-    private Integer finalizacoesGolVisitante;
+    private Integer finalizacoesGolVisitante = 0;
 
     @Column(name = "faltas_mandante")
-    private Integer faltasMandante;
+    private Integer faltasMandante = 0;
 
     @Column(name = "faltas_visitante")
-    private Integer faltasVisitante;
+    private Integer faltasVisitante = 0;
 
     @Column(name = "escanteios_mandante")
-    private Integer escanteiosMandante;
+    private Integer escanteiosMandante = 0;
 
     @Column(name = "escanteios_visitante")
-    private Integer escanteiosVisitante;
+    private Integer escanteiosVisitante = 0;
+
+    @Column(name = "cartoes_amarelos_mandante")
+    private Integer cartoesAmarelosMandante = 0;
+
+    @Column(name = "cartoes_amarelos_visitante")
+    private Integer cartoesAmarelosVisitante = 0;
+
+    @Column(name = "cartoes_vermelhos_mandante")
+    private Integer cartoesVermelhosMandante = 0;
+
+    @Column(name = "cartoes_vermelhos_visitante")
+    private Integer cartoesVermelhosVisitante = 0;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partida_id")
     private Partida partida;
-
-    @CreationTimestamp
-    @Column(name = "criado_em")
-    private LocalDateTime criadoEm;
 }
