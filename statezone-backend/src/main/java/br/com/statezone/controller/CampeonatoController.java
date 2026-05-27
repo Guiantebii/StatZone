@@ -2,7 +2,9 @@ package br.com.statezone.controller;
 
 import br.com.statezone.dto.CampeonatoRequestDto;
 import br.com.statezone.dto.CampeonatoResponseDto;
+import br.com.statezone.dto.ClassificacaoResponseDto;
 import br.com.statezone.service.CampeonatoService;
+import br.com.statezone.service.ClassificacaoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CampeonatoController {
     private final CampeonatoService campeonatoService;
+    private final ClassificacaoService classificacaoService;
 
         @PostMapping
         public ResponseEntity<CampeonatoResponseDto> criarCampeonato(@RequestBody @Valid CampeonatoRequestDto dto){
@@ -45,6 +48,18 @@ public class CampeonatoController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{campeonatoId}/classificacao")
+    public ResponseEntity<List<ClassificacaoResponseDto>>
+    gerarClassificacao(
+            @PathVariable Long campeonatoId
+    ) {
 
+        List<ClassificacaoResponseDto> response =
+                classificacaoService.gerarClassificacao(
+                        campeonatoId
+                );
+
+        return ResponseEntity.ok(response);
+    }
 
 }
