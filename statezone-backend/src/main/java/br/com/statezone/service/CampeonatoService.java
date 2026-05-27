@@ -2,10 +2,16 @@ package br.com.statezone.service;
 
 import br.com.statezone.dto.CampeonatoRequestDto;
 import br.com.statezone.dto.CampeonatoResponseDto;
+import br.com.statezone.dto.PartidaResponseDto;
+import br.com.statezone.exception.ConflictException;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.CampeonatoMapper;
+import br.com.statezone.mapper.PartidaMapper;
 import br.com.statezone.model.Campeonato;
+import br.com.statezone.model.Time;
 import br.com.statezone.repository.CampeonatoRepository;
+import br.com.statezone.repository.PartidaRepository;
+import br.com.statezone.repository.TimeRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +25,9 @@ public class CampeonatoService {
 
     private final CampeonatoRepository campeonatoRepository;
     private final CampeonatoMapper campeonatoMapper;
+    private final TimeRepository timeRepository;
+    private final PartidaRepository partidaRepository;
+    private final PartidaMapper partidaMapper;
 
     public CampeonatoResponseDto criarCampeonato(CampeonatoRequestDto dto){
         Campeonato entity = campeonatoMapper.toEntity(dto);
@@ -47,6 +56,38 @@ public class CampeonatoService {
     public void deletarCampeonato(Long id){
         Campeonato campeonato = campeonatoRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
         campeonatoRepository.delete(campeonato);
+    }
+
+    public void adicionarTime(Long campeonatoId, Long timeId){
+
+        Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Campeonato não encontrado")
+                );
+
+        Time time = timeRepository.findById(timeId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Time não encontrado")
+                );
+
+        if (campeonato.getTimes().contains(time)) {
+            throw new ConflictException("Time já está no campeonato");
+        }
+
+        campeonato.getTimes().add(time);
+
+        campeonatoRepository.save(campeonato);
+    }
+
+    public List<PartidaResponseDto> listarPartidas(Long campeonatoId) {
+
+        campeonatoRepository.findById(campeonatoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
+
+        return partidaRepository.findByCampeonatoId(campeonatoId)
+                .stream()
+                .map(partidaMapper::toDto)
+                .toList();
     }
 
 

@@ -17,7 +17,8 @@ public record CampeonatoResponseDto(
 
         LocalDateTime criadoEm,
 
-        LocalDateTime atualizadoEm
+        LocalDateTime atualizadoEm,
 
+        List<Long> timesIds
 ) {
 }

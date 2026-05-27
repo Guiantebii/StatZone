@@ -38,6 +38,10 @@ public class EventoPartida {
     @JoinColumn(name = "jogador_id")
     private Jogador jogador;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "time_id")
+    private Time time;
+
     @CreationTimestamp
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;

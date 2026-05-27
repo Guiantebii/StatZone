@@ -23,7 +23,7 @@ public class RankingEngine {
     public List<ClassificacaoStats> gerar(Long campeonatoId) {
 
         List<Partida> partidas =
-                partidaRepository.findByCampeonatoIdAndStatus(
+                partidaRepository.findByCampeonatoIdAndStatusWithTimes(
                         campeonatoId,
                         StatusPartida.ENCERRADA
                 );

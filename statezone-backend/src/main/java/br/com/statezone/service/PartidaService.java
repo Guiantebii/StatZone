@@ -2,6 +2,8 @@ package br.com.statezone.service;
 
 import br.com.statezone.dto.PartidaRequestDto;
 import br.com.statezone.dto.PartidaResponseDto;
+import br.com.statezone.enums.StatusPartida;
+import br.com.statezone.exception.ConflictException;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.PartidaMapper;
 import br.com.statezone.model.Campeonato;
@@ -89,6 +91,42 @@ public class PartidaService {
 
         return partidaMapper.toDto(atualizado);
     }
+
+    public PartidaResponseDto iniciar(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() == StatusPartida.AO_VIVO) {
+            throw new ConflictException("Partida já está em andamento");
+        }
+
+        if (partida.getStatus() == StatusPartida.ENCERRADA) {
+            throw new IllegalArgumentException("Partida já foi encerrada");
+        }
+
+        partida.setStatus(StatusPartida.AO_VIVO);
+
+        Partida salva = partidaRepository.save(partida);
+
+        return partidaMapper.toDto(salva);
+    }
+
+    public PartidaResponseDto encerrar(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() != StatusPartida.AO_VIVO) {
+            throw new IllegalArgumentException("Só partidas ao vivo podem ser encerradas");
+        }
+
+        partida.setStatus(StatusPartida.ENCERRADA);
+
+        Partida salva = partidaRepository.save(partida);
+
+        return partidaMapper.toDto(salva);
+    }
+
+
 
     public void deletar(Long id) {
 

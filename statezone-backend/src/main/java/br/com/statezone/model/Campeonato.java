@@ -33,6 +33,14 @@ public class Campeonato {
     private List<Partida> partidas;
 
 
+    @ManyToMany
+    @JoinTable(
+            name = "campeonato_times",
+            joinColumns = @JoinColumn(name = "campeonato_id"),
+            inverseJoinColumns = @JoinColumn(name = "time_id")
+    )
+    private List<Time> times;
+
     @CreationTimestamp
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;
