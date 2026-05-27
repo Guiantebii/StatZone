@@ -2,6 +2,7 @@ package br.com.statezone.service;
 
 import br.com.statezone.dto.ClassificacaoResponseDto;
 import br.com.statezone.mapper.ClassificacaoMapper;
+import br.com.statezone.service.ranking.RankingCacheService;
 import br.com.statezone.service.ranking.RankingEngine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -13,14 +14,14 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional
 public class ClassificacaoService {
-    private final RankingEngine rankingEngine;
-    private final ClassificacaoMapper classificacaoMapper;
+        private final RankingCacheService rankingCacheService;
+        private final ClassificacaoMapper classificacaoMapper;
 
-    public List<ClassificacaoResponseDto> gerarClassificacao(Long campeonatoId) {
-
-        return rankingEngine.gerar(campeonatoId)
-                .stream()
-                .map(classificacaoMapper::toDto)
-                .toList();
-    }
+        public List<ClassificacaoResponseDto> gerarClassificacao(Long campeonatoId) {
+            return rankingCacheService.getRanking(campeonatoId)
+                    .stream()
+                    .map(classificacaoMapper::toDto)
+                    .toList();
+        }
 }
+
