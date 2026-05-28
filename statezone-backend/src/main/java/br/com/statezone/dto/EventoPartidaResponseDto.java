@@ -19,6 +19,10 @@ public record EventoPartidaResponseDto(
 
         String nomeJogador,
 
-        String nomeTime
+        String nomeTime,
+
+        Long assistenteId,
+
+        String nomeAssistente
 ) {
 }

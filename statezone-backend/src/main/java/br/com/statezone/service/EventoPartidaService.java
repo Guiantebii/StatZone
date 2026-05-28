@@ -5,7 +5,6 @@ import br.com.statezone.dto.EventoPartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.enums.TipoEvento;
 import br.com.statezone.events.EventoPartidaCriadaEvent;
-import br.com.statezone.events.RankingAtualizadoEvent;
 import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.EventoPartidaMapper;
@@ -34,22 +33,51 @@ public class EventoPartidaService {
         private final EventoPartidaMapper eventoPartidaMapper;
         private final ApplicationEventPublisher publisher;
 
-        public EventoPartidaResponseDto registrarEvento(EventoPartidaRequestDto dto, Long partidaId) {
+        public EventoPartidaResponseDto registrarEvento(
+                EventoPartidaRequestDto dto,
+                Long partidaId
+        ) {
 
                 Partida partida = partidaRepository.findById(partidaId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Partida não encontrada"));
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Partida não encontrada"));
 
                 Jogador jogador = jogadorRepository.findById(dto.jogadorId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Jogador não encontrado"));
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Jogador não encontrado"));
 
                 validarJogadorNaPartida(partida, jogador);
                 validarStatusPartida(partida);
+
+                Jogador assistente = null;
+
+                if (dto.assistenteId() != null) {
+
+                        if (dto.tipoEvento() != TipoEvento.GOL &&
+                                dto.tipoEvento() != TipoEvento.PENALTI_GOL) {
+
+                                throw new BusinessException(
+                                        "Assistência só pode ser informada em gols");
+                        }
+
+                        assistente = jogadorRepository.findById(dto.assistenteId())
+                                .orElseThrow(() ->
+                                        new ResourceNotFoundException("Assistente não encontrado"));
+
+                        validarJogadorNaPartida(partida, assistente);
+
+                        if (assistente.getId().equals(jogador.getId())) {
+                                throw new BusinessException(
+                                        "O autor do gol não pode ser o assistente");
+                        }
+                }
 
                 EventoPartida evento = eventoPartidaMapper.toEntity(dto);
 
                 evento.setPartida(partida);
                 evento.setJogador(jogador);
                 evento.setTime(jogador.getTime());
+                evento.setAssistente(assistente);
 
                 EventoPartida salvo = eventoPartidaRepository.save(evento);
 
@@ -57,12 +85,9 @@ public class EventoPartidaService {
 
                 partidaRepository.save(partida);
 
-                publisher.publishEvent(new EventoPartidaCriadaEvent(salvo, partida));
                 publisher.publishEvent(
-                        new RankingAtualizadoEvent(partida)
+                        new EventoPartidaCriadaEvent(salvo, partida)
                 );
-
-
 
                 return eventoPartidaMapper.toDto(salvo);
         }
@@ -125,4 +150,6 @@ public class EventoPartidaService {
                         throw new BusinessException("Só é possível registrar eventos em partidas ao vivo");
                 }
         }
+
+
 }

@@ -42,6 +42,10 @@ public class EventoPartida {
     @JoinColumn(name = "time_id")
     private Time time;
 
+    @ManyToOne
+    @JoinColumn(name = "assistente_id")
+    private Jogador assistente;
+
     @CreationTimestamp
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;

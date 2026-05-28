@@ -3,6 +3,7 @@ package br.com.statezone.service;
 import br.com.statezone.dto.PartidaRequestDto;
 import br.com.statezone.dto.PartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
+import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.PartidaMapper;
@@ -12,6 +13,7 @@ import br.com.statezone.model.Time;
 import br.com.statezone.repository.CampeonatoRepository;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.TimeRepository;
+import br.com.statezone.service.ranking.RankingCacheService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class PartidaService {
     private final CampeonatoRepository campeonatoRepository;
     private final TimeRepository timeRepository;
     private final PartidaMapper partidaMapper;
+    private final RankingCacheService rankingCacheService;
 
     public PartidaResponseDto criar(PartidaRequestDto dto) {
 
@@ -101,7 +104,7 @@ public class PartidaService {
         }
 
         if (partida.getStatus() == StatusPartida.ENCERRADA) {
-            throw new IllegalArgumentException("Partida já foi encerrada");
+            throw new BusinessException("Partida já foi encerrada");
         }
 
         partida.setStatus(StatusPartida.AO_VIVO);
@@ -116,12 +119,17 @@ public class PartidaService {
         Partida partida = buscarPartida(id);
 
         if (partida.getStatus() != StatusPartida.AO_VIVO) {
-            throw new IllegalArgumentException("Só partidas ao vivo podem ser encerradas");
+            throw new BusinessException("Só partidas ao vivo podem ser encerradas");
         }
 
         partida.setStatus(StatusPartida.ENCERRADA);
 
         Partida salva = partidaRepository.save(partida);
+
+        rankingCacheService.recalcular(
+                salva.getCampeonato().getId()
+        );
+
 
         return partidaMapper.toDto(salva);
     }
@@ -166,7 +174,7 @@ public class PartidaService {
 
         if (mandante.getId().equals(visitante.getId())) {
 
-            throw new IllegalArgumentException(
+            throw new BusinessException(
                     "Os times da partida não podem ser iguais");
         }
     }

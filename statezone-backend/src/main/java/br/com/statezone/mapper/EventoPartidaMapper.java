@@ -22,6 +22,11 @@ public interface EventoPartidaMapper {
 
     @Mapping(target = "nomeTime",
             source = "jogador.time.nome")
-    EventoPartidaResponseDto toDto(EventoPartida entity);
 
+    @Mapping(target = "assistenteId",
+            source = "assistente.id")
+
+    @Mapping(target = "nomeAssistente",
+            source = "assistente.nome")
+    EventoPartidaResponseDto toDto(EventoPartida entity);
 }

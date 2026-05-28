@@ -21,6 +21,10 @@ public record EventoPartidaRequestDto(
         String descricao,
 
         @NotNull(message = "Jogador é obrigatório")
-        Long jogadorId
+        Long jogadorId,
+
+        Long assistenteId
+
+
 ) {
 }
