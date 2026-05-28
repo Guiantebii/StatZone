@@ -1,7 +1,10 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.dto.ArtilhariaResponseDto;
+import br.com.statezone.dto.EstatisticasJogadorResponseDto;
 import br.com.statezone.dto.JogadorRequestDto;
 import br.com.statezone.dto.JogadorResponseDto;
+import br.com.statezone.service.EstatisticasJogadorService;
 import br.com.statezone.service.JogadorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JogadorController {
     private final JogadorService jogadorService;
+    private final EstatisticasJogadorService estatisticasJogadorService;
 
     @PostMapping
     public ResponseEntity<JogadorResponseDto> criarJogador(
@@ -51,4 +55,11 @@ public class JogadorController {
         jogadorService.deletarJogador(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/estatisticas")
+    public ResponseEntity<EstatisticasJogadorResponseDto> estatisticas (@PathVariable Long id){
+        return ResponseEntity.ok(estatisticasJogadorService.buscarPorJogador(id));
+    }
+
+
 }

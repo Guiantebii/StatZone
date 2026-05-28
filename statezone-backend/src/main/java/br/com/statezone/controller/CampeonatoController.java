@@ -1,11 +1,9 @@
 package br.com.statezone.controller;
 
-import br.com.statezone.dto.CampeonatoRequestDto;
-import br.com.statezone.dto.CampeonatoResponseDto;
-import br.com.statezone.dto.ClassificacaoResponseDto;
-import br.com.statezone.dto.PartidaResponseDto;
+import br.com.statezone.dto.*;
 import br.com.statezone.service.CampeonatoService;
 import br.com.statezone.service.ClassificacaoService;
+import br.com.statezone.service.EstatisticasJogadorService;
 import br.com.statezone.service.FixtureGeneratorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +20,7 @@ public class CampeonatoController {
     private final CampeonatoService campeonatoService;
     private final ClassificacaoService classificacaoService;
     private final FixtureGeneratorService fixtureGeneratorService;
+    private final EstatisticasJogadorService estatisticasJogadorService;
 
         @PostMapping
         public ResponseEntity<CampeonatoResponseDto> criarCampeonato(@RequestBody @Valid CampeonatoRequestDto dto){
@@ -91,5 +90,9 @@ public class CampeonatoController {
     @GetMapping("/{id}/partidas")
     public ResponseEntity<List<PartidaResponseDto>> listarPartidas(@PathVariable Long id) {
         return ResponseEntity.ok(campeonatoService.listarPartidas(id));
+    }
+    @GetMapping("/{id}/artilharia")
+    public ResponseEntity<List<ArtilhariaResponseDto>> artilharia(@PathVariable Long id) {
+        return ResponseEntity.ok(estatisticasJogadorService.artilharia(id));
     }
 }
