@@ -26,4 +26,6 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
             @Param("status") StatusPartida status
     );
     List<Partida> findByCampeonatoId(Long campeonatoId);
+
+    long countByCampeonatoIdAndStatus(Long campeonatoId, StatusPartida status);
 }

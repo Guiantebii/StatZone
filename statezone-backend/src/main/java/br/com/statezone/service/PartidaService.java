@@ -7,12 +7,8 @@ import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.PartidaMapper;
-import br.com.statezone.model.Campeonato;
-import br.com.statezone.model.Partida;
-import br.com.statezone.model.Time;
-import br.com.statezone.repository.CampeonatoRepository;
-import br.com.statezone.repository.PartidaRepository;
-import br.com.statezone.repository.TimeRepository;
+import br.com.statezone.model.*;
+import br.com.statezone.repository.*;
 import br.com.statezone.service.ranking.RankingCacheService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +26,8 @@ public class PartidaService {
     private final TimeRepository timeRepository;
     private final PartidaMapper partidaMapper;
     private final RankingCacheService rankingCacheService;
+    private final JogadorRepository jogadorRepository;
+    private final EstatisticasJogadorRepository estatisticasJogadorRepository;
 
     public PartidaResponseDto criar(PartidaRequestDto dto) {
 
@@ -123,17 +121,16 @@ public class PartidaService {
         }
 
         partida.setStatus(StatusPartida.ENCERRADA);
-
         Partida salva = partidaRepository.save(partida);
+
+        atualizarPartidasJogadasDosAtletas(salva);
 
         rankingCacheService.recalcular(
                 salva.getCampeonato().getId()
         );
 
-
         return partidaMapper.toDto(salva);
     }
-
 
 
     public void deletar(Long id) {
@@ -187,6 +184,23 @@ public class PartidaService {
 
         if (partida.getGolsVisitante() == null) {
             partida.setGolsVisitante(0);
+        }
+    }
+
+    private void atualizarPartidasJogadasDosAtletas(Partida partida) {
+        List<Jogador> jogadoresEmCampo = jogadorRepository.findByTimeIdIn(
+                List.of(partida.getTimeMandante().getId(), partida.getTimeVisitante().getId())
+        );
+
+        for (Jogador jogador : jogadoresEmCampo) {
+            EstatisticasJogador stats = estatisticasJogadorRepository.findByJogadorId(jogador.getId())
+                    .orElseGet(() -> {
+                        EstatisticasJogador novaFicha = new EstatisticasJogador();
+                        novaFicha.setJogador(jogador);
+                        return novaFicha;
+                    });
+            stats.setPartidasJogadas(stats.getPartidasJogadas() + 1);
+            estatisticasJogadorRepository.save(stats);
         }
     }
 }

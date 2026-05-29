@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface JogadorRepository extends JpaRepository<Jogador,Long> {
     List<Jogador> findByTimeId(Long timeId);
+    List<Jogador> findByTimeIdIn(List<Long> timeIds);
 }

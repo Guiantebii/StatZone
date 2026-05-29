@@ -1,18 +1,21 @@
 package br.com.statezone.service;
 
-import br.com.statezone.dto.rankings.ArtilhariaResponseDto;
-import br.com.statezone.dto.rankings.AssistenciaRankingResponseDto;
+import br.com.statezone.dto.rankings.*;
 import br.com.statezone.dto.estatisticasJogador.EstatisticasJogadorResponseDto;
-import br.com.statezone.dto.rankings.RankingCartaoAmareloResponseDto;
-import br.com.statezone.dto.rankings.RankingCartaoVermelhoResponseDto;
+import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.EstatisticasJogadorMapper;
+import br.com.statezone.model.EstatisticasJogador;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
+import br.com.statezone.repository.PartidaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +23,7 @@ public class EstatisticasJogadorService {
 
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
     private final EstatisticasJogadorMapper estatisticasJogadorMapper;
+    private final PartidaRepository partidaRepository;
 
     public EstatisticasJogadorResponseDto buscarPorJogador(Long jogadorId){
         return estatisticasJogadorRepository.findByJogadorId(jogadorId)
@@ -105,6 +109,36 @@ public class EstatisticasJogadorService {
                 .toList();
     }
 
+    public List<SelecaoCampeonatoResponseDto> gerarSelecaoDoCampeonato(Long campeonatoId) {
+        // Busca total de partidas encerradas para definir o threshold de 50%
+        long totalPartidasEncerradas = partidaRepository.countByCampeonatoIdAndStatus(campeonatoId, StatusPartida.ENCERRADA);
+        int minPartidas = (totalPartidasEncerradas > 0) ? (int)(totalPartidasEncerradas / 2) : 1;
 
+        List<EstatisticasJogador> estatisticas = estatisticasJogadorRepository.findParaDestaques(campeonatoId, minPartidas);
+
+        return estatisticas.stream()
+                .collect(Collectors.groupingBy(
+                        e -> e.getJogador().getPosicao(),
+                        Collectors.collectingAndThen(
+                                Collectors.maxBy(Comparator.comparingDouble(this::calcularScore)),
+                                opt -> opt.map(e -> new SelecaoCampeonatoResponseDto(
+                                        e.getJogador().getPosicao().name(),
+                                        e.getJogador().getNome(),
+                                        e.getJogador().getTime().getNome(),
+                                        calcularScore(e)
+                                )).orElse(null)
+                        )
+                ))
+                .values().stream()
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private double calcularScore(EstatisticasJogador e) {
+        return (e.getGols() * 5.0) +
+                (e.getAssistencias() * 3.0) -
+                (e.getCartoesAmarelos() * 0.5) -
+                (e.getCartoesVermelhos() * 2.0);
+    }
 
 }
