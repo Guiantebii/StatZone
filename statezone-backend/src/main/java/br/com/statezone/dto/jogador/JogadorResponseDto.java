@@ -1,4 +1,4 @@
-package br.com.statezone.dto;
+package br.com.statezone.dto.jogador;
 
 import br.com.statezone.enums.PeForte;
 import br.com.statezone.enums.Posicao;

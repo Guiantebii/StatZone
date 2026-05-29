@@ -1,7 +1,7 @@
 package br.com.statezone.mapper;
 
-import br.com.statezone.dto.EventoPartidaRequestDto;
-import br.com.statezone.dto.EventoPartidaResponseDto;
+import br.com.statezone.dto.eventoPartida.EventoPartidaRequestDto;
+import br.com.statezone.dto.eventoPartida.EventoPartidaResponseDto;
 import br.com.statezone.model.EventoPartida;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

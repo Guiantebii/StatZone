@@ -1,7 +1,7 @@
 package br.com.statezone.controller;
 
-import br.com.statezone.dto.EventoPartidaRequestDto;
-import br.com.statezone.dto.EventoPartidaResponseDto;
+import br.com.statezone.dto.eventoPartida.EventoPartidaRequestDto;
+import br.com.statezone.dto.eventoPartida.EventoPartidaResponseDto;
 import br.com.statezone.service.EventoPartidaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

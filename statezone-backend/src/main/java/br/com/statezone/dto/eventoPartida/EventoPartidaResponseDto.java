@@ -1,4 +1,4 @@
-package br.com.statezone.dto;
+package br.com.statezone.dto.eventoPartida;
 
 import br.com.statezone.enums.TipoEvento;
 

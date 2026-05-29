@@ -1,9 +1,8 @@
 package br.com.statezone.controller;
 
-import br.com.statezone.dto.ArtilhariaResponseDto;
-import br.com.statezone.dto.EstatisticasJogadorResponseDto;
-import br.com.statezone.dto.JogadorRequestDto;
-import br.com.statezone.dto.JogadorResponseDto;
+import br.com.statezone.dto.estatisticasJogador.EstatisticasJogadorResponseDto;
+import br.com.statezone.dto.jogador.JogadorRequestDto;
+import br.com.statezone.dto.jogador.JogadorResponseDto;
 import br.com.statezone.service.EstatisticasJogadorService;
 import br.com.statezone.service.JogadorService;
 import jakarta.validation.Valid;

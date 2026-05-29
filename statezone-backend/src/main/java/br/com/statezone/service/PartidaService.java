@@ -1,7 +1,7 @@
 package br.com.statezone.service;
 
-import br.com.statezone.dto.PartidaRequestDto;
-import br.com.statezone.dto.PartidaResponseDto;
+import br.com.statezone.dto.partida.PartidaRequestDto;
+import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;

@@ -1,4 +1,4 @@
-package br.com.statezone.dto;
+package br.com.statezone.dto.time;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;

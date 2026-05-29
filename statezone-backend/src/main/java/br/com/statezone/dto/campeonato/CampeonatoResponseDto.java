@@ -1,4 +1,4 @@
-package br.com.statezone.dto;
+package br.com.statezone.dto.campeonato;
 
 
 import java.time.LocalDateTime;

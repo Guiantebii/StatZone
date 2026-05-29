@@ -1,6 +1,6 @@
 package br.com.statezone.service;
 
-import br.com.statezone.dto.EstatisticasPartidaResponseDto;
+import br.com.statezone.dto.estatisticasJogador.EstatisticasPartidaResponseDto;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.EstatisticasPartidaMapper;
 import br.com.statezone.model.EstatisticasPartida;

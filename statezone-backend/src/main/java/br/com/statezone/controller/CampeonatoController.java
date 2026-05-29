@@ -1,6 +1,13 @@
 package br.com.statezone.controller;
 
-import br.com.statezone.dto.*;
+import br.com.statezone.dto.campeonato.CampeonatoRequestDto;
+import br.com.statezone.dto.campeonato.CampeonatoResponseDto;
+import br.com.statezone.dto.classificacao.ClassificacaoResponseDto;
+import br.com.statezone.dto.partida.PartidaResponseDto;
+import br.com.statezone.dto.rankings.ArtilhariaResponseDto;
+import br.com.statezone.dto.rankings.AssistenciaRankingResponseDto;
+import br.com.statezone.dto.rankings.RankingCartaoAmareloResponseDto;
+import br.com.statezone.dto.rankings.RankingCartaoVermelhoResponseDto;
 import br.com.statezone.service.CampeonatoService;
 import br.com.statezone.service.ClassificacaoService;
 import br.com.statezone.service.EstatisticasJogadorService;
@@ -95,4 +102,22 @@ public class CampeonatoController {
     public ResponseEntity<List<ArtilhariaResponseDto>> artilharia(@PathVariable Long id) {
         return ResponseEntity.ok(estatisticasJogadorService.artilharia(id));
     }
+
+    @GetMapping("/{campeonatoId}/assistencias")
+    public ResponseEntity<List<AssistenciaRankingResponseDto>> buscarRankingAssistencias(@PathVariable Long campeonatoId) {
+        List<AssistenciaRankingResponseDto> ranking = estatisticasJogadorService.rankingAssistencias(campeonatoId);
+        return ResponseEntity.ok(ranking);
+    }
+
+    @GetMapping("/{campeonatoId}/cartoes-amarelos")
+    public ResponseEntity<List<RankingCartaoAmareloResponseDto>> buscarRankingCartaoAmarelo(@PathVariable Long campeonatoId) {
+        List<RankingCartaoAmareloResponseDto> ranking = estatisticasJogadorService.rankingCartaoAmarelo(campeonatoId);
+        return ResponseEntity.ok(ranking);
+    }
+    @GetMapping("/{campeonatoId}/cartoes-vermelhos")
+    public ResponseEntity<List<RankingCartaoVermelhoResponseDto>> buscarRankingCartaoVermelho(@PathVariable Long campeonatoId) {
+        List<RankingCartaoVermelhoResponseDto> ranking = estatisticasJogadorService.rankingCartaoVermelho(campeonatoId);
+        return ResponseEntity.ok(ranking);
+    }
+
 }

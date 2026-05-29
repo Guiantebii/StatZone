@@ -1,7 +1,7 @@
 package br.com.statezone.service;
 
-import br.com.statezone.dto.EventoPartidaRequestDto;
-import br.com.statezone.dto.EventoPartidaResponseDto;
+import br.com.statezone.dto.eventoPartida.EventoPartidaRequestDto;
+import br.com.statezone.dto.eventoPartida.EventoPartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.enums.TipoEvento;
 import br.com.statezone.events.EventoPartidaCriadaEvent;

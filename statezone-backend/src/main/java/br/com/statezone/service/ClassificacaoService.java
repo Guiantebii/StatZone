@@ -1,9 +1,8 @@
 package br.com.statezone.service;
 
-import br.com.statezone.dto.ClassificacaoResponseDto;
+import br.com.statezone.dto.classificacao.ClassificacaoResponseDto;
 import br.com.statezone.mapper.ClassificacaoMapper;
 import br.com.statezone.service.ranking.RankingCacheService;
-import br.com.statezone.service.ranking.RankingEngine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

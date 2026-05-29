@@ -1,8 +1,8 @@
 package br.com.statezone.service;
 
-import br.com.statezone.dto.CampeonatoRequestDto;
-import br.com.statezone.dto.CampeonatoResponseDto;
-import br.com.statezone.dto.PartidaResponseDto;
+import br.com.statezone.dto.campeonato.CampeonatoRequestDto;
+import br.com.statezone.dto.campeonato.CampeonatoResponseDto;
+import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.exception.ConflictException;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.CampeonatoMapper;

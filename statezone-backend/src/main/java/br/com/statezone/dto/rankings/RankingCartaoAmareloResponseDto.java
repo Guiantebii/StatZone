@@ -1,11 +1,11 @@
-package br.com.statezone.dto;
+package br.com.statezone.dto.rankings;
 
-public record ArtilhariaResponseDto(
+public record RankingCartaoAmareloResponseDto(
         Integer posicao,
         Long jogadorId,
         String nomeJogador,
         String nomeTime,
         String escudoTime,
-        Integer gols
+        Integer cartoesAmarelos
 ) {
 }

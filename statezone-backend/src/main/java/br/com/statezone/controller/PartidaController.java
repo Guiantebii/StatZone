@@ -1,7 +1,7 @@
 package br.com.statezone.controller;
 
-import br.com.statezone.dto.PartidaRequestDto;
-import br.com.statezone.dto.PartidaResponseDto;
+import br.com.statezone.dto.partida.PartidaRequestDto;
+import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.service.PartidaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

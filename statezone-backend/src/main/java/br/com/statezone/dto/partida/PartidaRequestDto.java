@@ -1,4 +1,4 @@
-package br.com.statezone.dto;
+package br.com.statezone.dto.partida;
 
 import br.com.statezone.enums.StatusPartida;
 import jakarta.validation.constraints.Future;

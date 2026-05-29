@@ -1,7 +1,7 @@
 package br.com.statezone.mapper;
 
-import br.com.statezone.dto.PartidaRequestDto;
-import br.com.statezone.dto.PartidaResponseDto;
+import br.com.statezone.dto.partida.PartidaRequestDto;
+import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.model.Partida;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
