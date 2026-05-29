@@ -4,10 +4,7 @@ import br.com.statezone.dto.campeonato.CampeonatoRequestDto;
 import br.com.statezone.dto.campeonato.CampeonatoResponseDto;
 import br.com.statezone.dto.classificacao.ClassificacaoResponseDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
-import br.com.statezone.dto.rankings.ArtilhariaResponseDto;
-import br.com.statezone.dto.rankings.AssistenciaRankingResponseDto;
-import br.com.statezone.dto.rankings.RankingCartaoAmareloResponseDto;
-import br.com.statezone.dto.rankings.RankingCartaoVermelhoResponseDto;
+import br.com.statezone.dto.rankings.*;
 import br.com.statezone.service.CampeonatoService;
 import br.com.statezone.service.ClassificacaoService;
 import br.com.statezone.service.EstatisticasJogadorService;
@@ -119,5 +116,11 @@ public class CampeonatoController {
         List<RankingCartaoVermelhoResponseDto> ranking = estatisticasJogadorService.rankingCartaoVermelho(campeonatoId);
         return ResponseEntity.ok(ranking);
     }
+
+    @GetMapping("/{campeonatoId}/selecao-do-campeonato")
+    public ResponseEntity<List<SelecaoCampeonatoResponseDto>> getSelecao(@PathVariable Long campeonatoId) {
+        return ResponseEntity.ok(estatisticasJogadorService.gerarSelecaoDoCampeonato(campeonatoId));
+    }
+
 
 }

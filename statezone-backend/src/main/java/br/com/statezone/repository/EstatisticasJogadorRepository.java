@@ -60,4 +60,17 @@ public interface EstatisticasJogadorRepository extends JpaRepository<Estatistica
         ORDER BY e.cartoesVermelhos DESC
         """)
     List<EstatisticasJogador> findCartoesVermelhosByCampeonatoId(@Param("campeonatoId") Long campeonatoId);
+
+    @Query("""
+    SELECT e FROM EstatisticasJogador e 
+    JOIN FETCH e.jogador j 
+    JOIN FETCH j.time t
+    JOIN EventoPartida ep ON ep.jogador.id = j.id
+    JOIN ep.partida p
+    WHERE p.campeonato.id = :campeonatoId 
+    AND p.status = br.com.statezone.enums.StatusPartida.ENCERRADA
+    GROUP BY e.id, j.id, t.id
+    HAVING e.partidasJogadas >= :minPartidas
+""")
+    List<EstatisticasJogador> findParaDestaques(@Param("campeonatoId") Long campeonatoId, @Param("minPartidas") int minPartidas);
 }
