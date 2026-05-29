@@ -1,7 +1,10 @@
 package br.com.statezone.service;
 
-import br.com.statezone.dto.ArtilhariaResponseDto;
-import br.com.statezone.dto.EstatisticasJogadorResponseDto;
+import br.com.statezone.dto.rankings.ArtilhariaResponseDto;
+import br.com.statezone.dto.rankings.AssistenciaRankingResponseDto;
+import br.com.statezone.dto.estatisticasJogador.EstatisticasJogadorResponseDto;
+import br.com.statezone.dto.rankings.RankingCartaoAmareloResponseDto;
+import br.com.statezone.dto.rankings.RankingCartaoVermelhoResponseDto;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.EstatisticasJogadorMapper;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
@@ -25,7 +28,7 @@ public class EstatisticasJogadorService {
     }
 
     public List<ArtilhariaResponseDto> artilharia(Long campeonatoId){
-        var lista = estatisticasJogadorRepository.findArtilhariasByCampeonatoId(campeonatoId);
+        var lista = estatisticasJogadorRepository.findArtilheirosByCampeonatoId(campeonatoId);
 
         AtomicInteger posicao = new AtomicInteger(1);
 
@@ -43,4 +46,65 @@ public class EstatisticasJogadorService {
                 })
                 .toList();
     }
+
+    public List<AssistenciaRankingResponseDto> rankingAssistencias(Long campeonatoId){
+        var lista = estatisticasJogadorRepository.findAssistentesByCampeonatoId(campeonatoId);
+
+        AtomicInteger posicao = new AtomicInteger(1);
+
+        return lista.stream()
+                .map(e -> {
+                    AssistenciaRankingResponseDto dto = estatisticasJogadorMapper.toAssistenciaDto(e);
+                    return new AssistenciaRankingResponseDto(
+                            posicao.getAndIncrement(),
+                            dto.jogadorId(),
+                            dto.nomeJogador(),
+                            dto.nomeTime(),
+                            dto.escudoTime(),
+                            dto.assistencias()
+                    );
+                })
+                .toList();
+    }
+    public List<RankingCartaoAmareloResponseDto> rankingCartaoAmarelo(Long campeonatoId){
+        var lista = estatisticasJogadorRepository.findCartoesAmarelosByCampeonatoId(campeonatoId);
+
+        AtomicInteger posicao = new AtomicInteger(1);
+
+        return lista.stream()
+                .map(e -> {
+                    RankingCartaoAmareloResponseDto dto = estatisticasJogadorMapper.toCartaoAmareloDto(e);
+                    return new RankingCartaoAmareloResponseDto(
+                            posicao.getAndIncrement(),
+                            dto.jogadorId(),
+                            dto.nomeJogador(),
+                            dto.nomeTime(),
+                            dto.escudoTime(),
+                            dto.cartoesAmarelos()
+                    );
+                })
+                .toList();
+    }
+    public List<RankingCartaoVermelhoResponseDto> rankingCartaoVermelho(Long campeonatoId){
+        var lista = estatisticasJogadorRepository.findCartoesVermelhosByCampeonatoId(campeonatoId);
+
+        AtomicInteger posicao = new AtomicInteger(1);
+
+        return lista.stream()
+                .map(e -> {
+                    RankingCartaoVermelhoResponseDto dto = estatisticasJogadorMapper.toCartaoVermelhoDto(e);
+                    return new RankingCartaoVermelhoResponseDto(
+                            posicao.getAndIncrement(),
+                            dto.jogadorId(),
+                            dto.nomeJogador(),
+                            dto.nomeTime(),
+                            dto.escudoTime(),
+                            dto.cartoesVermelhos()
+                    );
+                })
+                .toList();
+    }
+
+
+
 }

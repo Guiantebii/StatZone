@@ -1,8 +1,8 @@
 package br.com.statezone.service;
 
-import br.com.statezone.dto.JogadorResponseDto;
-import br.com.statezone.dto.TimeRequestDto;
-import br.com.statezone.dto.TimeResponseDto;
+import br.com.statezone.dto.jogador.JogadorResponseDto;
+import br.com.statezone.dto.time.TimeRequestDto;
+import br.com.statezone.dto.time.TimeResponseDto;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.JogadorMapper;
 import br.com.statezone.mapper.TimeMapper;

@@ -1,7 +1,7 @@
 package br.com.statezone.mapper;
 
-import br.com.statezone.dto.JogadorRequestDto;
-import br.com.statezone.dto.JogadorResponseDto;
+import br.com.statezone.dto.jogador.JogadorRequestDto;
+import br.com.statezone.dto.jogador.JogadorResponseDto;
 import br.com.statezone.model.Jogador;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

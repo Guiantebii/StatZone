@@ -1,7 +1,7 @@
 package br.com.statezone.mapper;
 
-import br.com.statezone.dto.TimeRequestDto;
-import br.com.statezone.dto.TimeResponseDto;
+import br.com.statezone.dto.time.TimeRequestDto;
+import br.com.statezone.dto.time.TimeResponseDto;
 import br.com.statezone.model.Time;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

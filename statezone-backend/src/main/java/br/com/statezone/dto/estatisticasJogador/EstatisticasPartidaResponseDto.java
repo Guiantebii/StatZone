@@ -1,4 +1,4 @@
-package br.com.statezone.dto;
+package br.com.statezone.dto.estatisticasJogador;
 
 public record EstatisticasPartidaResponseDto(
         Long partidaId,

@@ -1,6 +1,6 @@
 package br.com.statezone.service;
 
-import br.com.statezone.dto.PartidaResponseDto;
+import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;
@@ -53,6 +53,9 @@ public class FixtureGeneratorService {
 
         List<Partida> partidasCriadas = new ArrayList<>();
 
+        // ==========================================
+        // GERAÇÃO DO 1º TURNO (JOGOS DE IDA)
+        // ==========================================
         for (int rodada = 1; rodada <= totalRodadas; rodada++) {
             for (int j = 0; j < jogosPorRodada; j++) {
 
@@ -73,10 +76,34 @@ public class FixtureGeneratorService {
                 partidasCriadas.add(partidaRepository.save(partida));
             }
 
-
             Time ultimo = times.remove(n - 1);
             times.add(1, ultimo);
         }
+
+        // ==========================================
+        // GERAÇÃO DO 2º TURNO (JOGOS DE VOLTA)
+        // ==========================================
+        List<Partida> partidasReturno = new ArrayList<>();
+
+        for (Partida partidaIda : partidasCriadas) {
+            Partida partidaVolta = new Partida();
+            partidaVolta.setCampeonato(campeonato);
+
+            partidaVolta.setTimeMandante(partidaIda.getTimeVisitante());
+            partidaVolta.setTimeVisitante(partidaIda.getTimeMandante());
+
+            partidaVolta.setRodada(partidaIda.getRodada() + totalRodadas);
+
+            partidaVolta.setGolsMandante(0);
+            partidaVolta.setGolsVisitante(0);
+            partidaVolta.setStatus(StatusPartida.AGENDADA);
+
+            partidasReturno.add(partidaRepository.save(partidaVolta));
+        }
+
+        partidasCriadas.addAll(partidasReturno);
+
+        // ==========================================
 
         return partidasCriadas.stream()
                 .map(partidaMapper::toDto)

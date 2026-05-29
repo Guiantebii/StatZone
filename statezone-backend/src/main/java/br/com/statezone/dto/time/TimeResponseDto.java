@@ -1,4 +1,4 @@
-package br.com.statezone.dto;
+package br.com.statezone.dto.time;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

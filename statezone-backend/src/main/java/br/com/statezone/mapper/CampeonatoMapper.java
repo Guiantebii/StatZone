@@ -1,7 +1,7 @@
 package br.com.statezone.mapper;
 
-import br.com.statezone.dto.CampeonatoRequestDto;
-import br.com.statezone.dto.CampeonatoResponseDto;
+import br.com.statezone.dto.campeonato.CampeonatoRequestDto;
+import br.com.statezone.dto.campeonato.CampeonatoResponseDto;
 import br.com.statezone.model.Campeonato;
 import br.com.statezone.model.Time;
 import org.mapstruct.Mapper;

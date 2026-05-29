@@ -14,15 +14,50 @@ public interface EstatisticasJogadorRepository extends JpaRepository<Estatistica
     Optional<EstatisticasJogador> findByJogadorId(Long JogadorId);
 
     @Query("""
-        SELECT e FROM EstatisticasJogador e
+        SELECT DISTINCT e FROM EstatisticasJogador e
         JOIN FETCH e.jogador j
         JOIN FETCH j.time t
         JOIN EventoPartida ep ON ep.jogador.id = j.id
         JOIN ep.partida p
         WHERE p.campeonato.id = :campeonatoId
-        AND ep.tipoEvento IN ('GOL', 'PENALTI_GOL')
-        GROUP BY e.id, j.id, t.id
+          AND e.gols > 0
         ORDER BY e.gols DESC
         """)
-    List<EstatisticasJogador> findArtilhariasByCampeonatoId(@Param("campeonatoId") Long campeonatoId);
+    List<EstatisticasJogador> findArtilheirosByCampeonatoId(@Param("campeonatoId") Long campeonatoId);
+
+    @Query("""
+        SELECT DISTINCT e FROM EstatisticasJogador e
+        JOIN FETCH e.jogador j
+        JOIN FETCH j.time t
+        JOIN EventoPartida ep ON ep.jogador.id = j.id
+        JOIN ep.partida p
+        WHERE p.campeonato.id = :campeonatoId
+          AND e.assistencias > 0
+        ORDER BY e.assistencias DESC
+        """)
+    List<EstatisticasJogador> findAssistentesByCampeonatoId(@Param("campeonatoId") Long campeonatoId);
+
+    @Query("""
+        SELECT DISTINCT e FROM EstatisticasJogador e
+        JOIN FETCH e.jogador j
+        JOIN FETCH j.time t
+        JOIN EventoPartida ep ON ep.jogador.id = j.id
+        JOIN ep.partida p
+        WHERE p.campeonato.id = :campeonatoId
+          AND e.cartoesAmarelos > 0
+        ORDER BY e.cartoesAmarelos DESC
+        """)
+    List<EstatisticasJogador> findCartoesAmarelosByCampeonatoId(@Param("campeonatoId") Long campeonatoId);
+
+    @Query("""
+        SELECT DISTINCT e FROM EstatisticasJogador e
+        JOIN FETCH e.jogador j
+        JOIN FETCH j.time t
+        JOIN EventoPartida ep ON ep.jogador.id = j.id
+        JOIN ep.partida p
+        WHERE p.campeonato.id = :campeonatoId
+          AND e.cartoesVermelhos > 0
+        ORDER BY e.cartoesVermelhos DESC
+        """)
+    List<EstatisticasJogador> findCartoesVermelhosByCampeonatoId(@Param("campeonatoId") Long campeonatoId);
 }
