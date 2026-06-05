@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import br.com.statezone.repository.CampeonatoRepository;
 import br.com.statezone.repository.PartidaRepository;
-import br.com.statezone.repository.TimeRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +22,6 @@ import java.util.List;
 public class FixtureGeneratorService {
 
     private final CampeonatoRepository campeonatoRepository;
-    private final TimeRepository timeRepository;
     private final PartidaRepository partidaRepository;
     private final PartidaMapper partidaMapper;
 
@@ -102,8 +100,6 @@ public class FixtureGeneratorService {
         }
 
         partidasCriadas.addAll(partidasReturno);
-
-        // ==========================================
 
         return partidasCriadas.stream()
                 .map(partidaMapper::toDto)

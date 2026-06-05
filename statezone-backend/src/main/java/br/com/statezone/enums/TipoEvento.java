@@ -8,21 +8,29 @@ public enum TipoEvento {
     PENALTI_GOL(true, true, false, true),
     PENALTI_PERDIDO(false, false, false, true),
 
-    // FINALIZAÇÃO
+    // CRIAÇÃO DE JOGADAS
+    ASSISTENCIA(false, true, false, true),
+
+    // FINALIZAÇÕES
     FINALIZACAO(false, true, false, true),
+    FINALIZACAO_NO_GOL(false, true, false, true),
+
+    // GOLEIRO
+    DEFESA(false, false, false, false),
+    PENALTI_DEFENDIDO(false, false, false, false),
 
     // DISCIPLINA
     FALTA(false, false, true, false),
     CARTAO_AMARELO(false, false, true, false),
     CARTAO_VERMELHO(false, false, true, false),
+
+    // OFENSIVOS
     IMPEDIMENTO(false, false, false, true),
-
-    // TÁTICO
     ESCANTEIO(false, false, false, true),
-    SUBSTITUICAO(false, false, false, false),
 
-    // SUPORTE
-    ASSISTENCIA(false, true, false, true);
+    // TÁTICOS
+    SUBSTITUICAO_ENTRADA(false, false, false, false),
+    SUBSTITUICAO_SAIDA(false, false, false, false);
 
     private final boolean geraGol;
     private final boolean contaFinalizacao;

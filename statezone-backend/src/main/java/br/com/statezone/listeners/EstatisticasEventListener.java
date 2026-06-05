@@ -46,7 +46,7 @@ public class EstatisticasEventListener {
 
         switch (e.getTipoEvento()) {
 
-            case FINALIZACAO -> {
+            case FINALIZACAO, FINALIZACAO_NO_GOL -> {
                 if (mandante) stats.setFinalizacoesMandante(stats.getFinalizacoesMandante() + 1);
                 else stats.setFinalizacoesVisitante(stats.getFinalizacoesVisitante() + 1);
                 statsJogador.setFinalizacoes(statsJogador.getFinalizacoes() + 1);
@@ -113,6 +113,24 @@ public class EstatisticasEventListener {
                 if (mandante) stats.setEscanteiosMandante(stats.getEscanteiosMandante() + 1);
                 else stats.setEscanteiosVisitante(stats.getEscanteiosVisitante() + 1);
             }
+
+
+            case DEFESA -> {
+                if (mandante) stats.setDefesasMandante(stats.getDefesasMandante() + 1);
+                else stats.setDefesasVisitante(stats.getDefesasVisitante() + 1);
+                statsJogador.setDefesas(statsJogador.getDefesas() + 1);
+            }
+
+            case PENALTI_DEFENDIDO -> {
+                if (mandante) stats.setPenaltisDefendidosMandante(stats.getPenaltisDefendidosMandante() + 1);
+                else stats.setPenaltisDefendidosVisitante(stats.getPenaltisDefendidosVisitante() + 1);
+                statsJogador.setPenaltisDefendidos(statsJogador.getPenaltisDefendidos() + 1);
+            }
+
+            case PENALTI_PERDIDO -> {
+                statsJogador.setPenaltisPerdidos(statsJogador.getPenaltisPerdidos() + 1);
+            }
+
         }
 
         repository.save(stats);

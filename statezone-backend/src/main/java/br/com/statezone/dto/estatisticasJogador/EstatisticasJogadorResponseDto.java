@@ -10,6 +10,9 @@ public record EstatisticasJogadorResponseDto(
         Integer cartoesAmarelos,
         Integer cartoesVermelhos,
         Integer faltasCometidas,
-        Integer partidasJogadas
+        Integer partidasJogadas,
+        Integer defesas,
+        Integer penaltisDefendidos,
+        Integer penaltisPerdidos
 ) {
 }
