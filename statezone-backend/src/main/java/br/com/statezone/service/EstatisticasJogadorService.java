@@ -110,7 +110,6 @@ public class EstatisticasJogadorService {
     }
 
     public List<SelecaoCampeonatoResponseDto> gerarSelecaoDoCampeonato(Long campeonatoId) {
-        // Busca total de partidas encerradas para definir o threshold de 50%
         long totalPartidasEncerradas = partidaRepository.countByCampeonatoIdAndStatus(campeonatoId, StatusPartida.ENCERRADA);
         int minPartidas = (totalPartidasEncerradas > 0) ? (int)(totalPartidasEncerradas / 2) : 1;
 
@@ -134,11 +133,37 @@ public class EstatisticasJogadorService {
                 .toList();
     }
 
+    public CraqueCampeonatoResponseDto mvpCampeonato(Long campeonatoId){
+        long totalPartidasEncerradas = partidaRepository
+                .countByCampeonatoIdAndStatus(campeonatoId, StatusPartida.ENCERRADA);
+
+        int minPartidas = (totalPartidasEncerradas > 0)
+                ? (int) (totalPartidasEncerradas /2)
+                :1;
+        List<EstatisticasJogador> estatisticas =
+                estatisticasJogadorRepository.findParaDestaques(campeonatoId,minPartidas);
+
+        EstatisticasJogador mvp = estatisticas.stream()
+                .max(Comparator.comparingDouble(this::calcularScore))
+                .orElseThrow(() -> new ResourceNotFoundException("Nenhum jogador encontrado"));
+
+        double score = calcularScore(mvp);
+
+        return estatisticasJogadorMapper.toCraqueCampeonatoDto(
+                mvp,
+                score
+        );
+    }
+
+
     private double calcularScore(EstatisticasJogador e) {
-        return (e.getGols() * 5.0) +
-                (e.getAssistencias() * 3.0) -
-                (e.getCartoesAmarelos() * 0.5) -
-                (e.getCartoesVermelhos() * 2.0);
+        return (e.getGols() * 5.0)
+                + (e.getAssistencias() * 3.0)
+                + (e.getDefesas() * 1.5)
+                + (e.getPenaltisDefendidos() * 4.0)
+                - (e.getPenaltisPerdidos() * 1.0)
+                - (e.getCartoesAmarelos() * 0.5)
+                - (e.getCartoesVermelhos() * 2.0);
     }
 
 }

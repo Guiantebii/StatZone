@@ -123,4 +123,8 @@ public class CampeonatoController {
     }
 
 
+    @GetMapping("/{campeonatoId}/mvp")
+    public ResponseEntity<CraqueCampeonatoResponseDto> mvpCampeonato(@PathVariable Long campeonatoId) {
+        return ResponseEntity.ok(estatisticasJogadorService.mvpCampeonato(campeonatoId));
+    }
 }

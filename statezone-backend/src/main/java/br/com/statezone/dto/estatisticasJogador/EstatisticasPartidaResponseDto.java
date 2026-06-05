@@ -16,6 +16,18 @@ public record EstatisticasPartidaResponseDto(
         Integer faltasVisitante,
 
         Integer escanteiosMandante,
-        Integer escanteiosVisitante
+        Integer escanteiosVisitante,
+
+        Integer cartoesAmarelosMandante,
+        Integer cartoesAmarelosVisitante,
+
+        Integer cartoesVermelhosMandante,
+        Integer cartoesVermelhosVisitante,
+
+        Integer defesasMandante,
+        Integer defesasVisitante,
+
+        Integer penaltisDefendidosMandante,
+        Integer penaltisDefendidosVisitante
 ) {
 }

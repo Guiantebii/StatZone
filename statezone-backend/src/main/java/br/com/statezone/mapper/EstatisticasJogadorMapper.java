@@ -1,10 +1,7 @@
 package br.com.statezone.mapper;
 
-import br.com.statezone.dto.rankings.ArtilhariaResponseDto;
-import br.com.statezone.dto.rankings.AssistenciaRankingResponseDto;
+import br.com.statezone.dto.rankings.*;
 import br.com.statezone.dto.estatisticasJogador.EstatisticasJogadorResponseDto;
-import br.com.statezone.dto.rankings.RankingCartaoAmareloResponseDto;
-import br.com.statezone.dto.rankings.RankingCartaoVermelhoResponseDto;
 import br.com.statezone.model.EstatisticasJogador;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -45,4 +42,21 @@ public interface EstatisticasJogadorMapper {
     @Mapping(source = "jogador.time.escudoUrl", target = "escudoTime")
     @Mapping(target = "posicao", ignore = true)
     RankingCartaoVermelhoResponseDto toCartaoVermelhoDto(EstatisticasJogador entity);
+
+    @Mapping(source = "entity.jogador.id", target = "jogadorId")
+    @Mapping(source = "entity.jogador.nome", target = "nomeJogador")
+    @Mapping(source = "entity.jogador.time.nome", target = "nomeTime")
+    @Mapping(source = "entity.jogador.time.escudoUrl", target = "escudoTime")
+    @Mapping(source = "entity.gols", target = "gols")
+    @Mapping(source = "entity.assistencias", target = "assistencias")
+    @Mapping(source = "entity.defesas", target = "defesas")
+    @Mapping(source = "entity.penaltisDefendidos", target = "penaltisDefendidos")
+    @Mapping(source = "entity.penaltisPerdidos", target = "penaltisPerdidos")
+    @Mapping(source = "entity.cartoesAmarelos", target = "cartoesAmarelos")
+    @Mapping(source = "entity.cartoesVermelhos", target = "cartoesVermelhos")
+    @Mapping(source = "score", target = "score")
+    CraqueCampeonatoResponseDto toCraqueCampeonatoDto(
+            EstatisticasJogador entity,
+            Double score
+    );
 }
