@@ -3,14 +3,18 @@ package br.com.statezone.service;
 import br.com.statezone.dto.jogador.JogadorResponseDto;
 import br.com.statezone.dto.time.TimeRequestDto;
 import br.com.statezone.dto.time.TimeResponseDto;
+import br.com.statezone.dto.time.UltimasPartidasTimeResponseDto;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.JogadorMapper;
 import br.com.statezone.mapper.TimeMapper;
+import br.com.statezone.model.Partida;
 import br.com.statezone.model.Time;
 import br.com.statezone.repository.JogadorRepository;
+import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.TimeRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +27,7 @@ public class TimeService {
     private final TimeMapper timeMapper;
     private final JogadorRepository jogadorRepository;
     private final JogadorMapper jogadorMapper;
+    private final PartidaRepository partidaRepository;
 
     public TimeResponseDto criar(TimeRequestDto dto){
         Time entity = timeMapper.toEntity(dto);
@@ -86,4 +91,27 @@ public class TimeService {
                 .toList();
     }
 
+
+    public UltimasPartidasTimeResponseDto ultimas5Partidas (Long timeId){
+        timeRepository.findById(timeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Time não encontrado"));
+
+        List<String> forma = partidaRepository
+                .findUltimasPartidas(timeId, PageRequest.of(0, 5))
+                .stream()
+                .map(partida -> calcularResultado(partida, timeId))
+                .toList();
+    return new UltimasPartidasTimeResponseDto(timeId,forma);
+    }
+
+    private String calcularResultado(Partida partida, Long timeId) {
+        boolean mandante = partida.getTimeMandante().getId().equals(timeId);
+
+        int golsTime = mandante ? partida.getGolsMandante() : partida.getGolsVisitante();
+        int golsAdversario = mandante ? partida.getGolsVisitante() : partida.getGolsMandante();
+
+        if (golsTime > golsAdversario) return "V";
+        if (golsTime < golsAdversario) return "D";
+        return "E";
+    }
 }
