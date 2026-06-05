@@ -3,6 +3,7 @@ package br.com.statezone.controller;
 import br.com.statezone.dto.jogador.JogadorResponseDto;
 import br.com.statezone.dto.time.TimeRequestDto;
 import br.com.statezone.dto.time.TimeResponseDto;
+import br.com.statezone.dto.time.UltimasPartidasTimeResponseDto;
 import br.com.statezone.service.TimeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -62,5 +63,10 @@ public class TimeController {
     @GetMapping("/{id}/jogadores")
     public ResponseEntity<List<JogadorResponseDto>> listarJogadores(@PathVariable Long id) {
         return ResponseEntity.ok(timeService.listarJogadoresPorTime(id));
+    }
+
+    @GetMapping("/{id}/forma")
+    public ResponseEntity<UltimasPartidasTimeResponseDto> ultimas5Partidas(@PathVariable Long id){
+        return ResponseEntity.ok(timeService.ultimas5Partidas(id));
     }
 }
