@@ -42,9 +42,9 @@ public class EventoPartida {
     @JoinColumn(name = "time_id")
     private Time time;
 
-    @ManyToOne
-    @JoinColumn(name = "assistente_id")
-    private Jogador assistente;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "jogador_secundario_id")
+    private Jogador jogadorSecundario;
 
     @CreationTimestamp
     @Column(name = "criado_em")

@@ -1,7 +1,9 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.dto.eventoPartida.EventoTimelineResponseDto;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
+import br.com.statezone.service.EventoPartidaService;
 import br.com.statezone.service.PartidaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PartidaController {
     private final PartidaService partidaService;
+    private final EventoPartidaService eventoPartidaService;
 
     @PostMapping
     public ResponseEntity<PartidaResponseDto> criarPartida(@RequestBody @Valid PartidaRequestDto dto){

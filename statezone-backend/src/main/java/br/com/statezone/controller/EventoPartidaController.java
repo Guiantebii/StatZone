@@ -2,6 +2,7 @@ package br.com.statezone.controller;
 
 import br.com.statezone.dto.eventoPartida.EventoPartidaRequestDto;
 import br.com.statezone.dto.eventoPartida.EventoPartidaResponseDto;
+import br.com.statezone.dto.eventoPartida.EventoTimelineResponseDto;
 import br.com.statezone.service.EventoPartidaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,15 @@ public class EventoPartidaController {
                 eventoPartidaService.listarEventosPorPartida(partidaId);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{partidaId}/timeline")
+    public ResponseEntity<List<EventoTimelineResponseDto>> timeline(
+            @PathVariable Long partidaId
+    ) {
+        return ResponseEntity.ok(
+                eventoPartidaService.buscarTimeline(partidaId)
+        );
     }
 
 }
