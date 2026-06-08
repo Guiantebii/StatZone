@@ -3,9 +3,11 @@ package br.com.statezone.service;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
+import br.com.statezone.enums.TipoEvento;
 import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;
 import br.com.statezone.exception.ResourceNotFoundException;
+import br.com.statezone.mapper.EventoPartidaMapper;
 import br.com.statezone.mapper.PartidaMapper;
 import br.com.statezone.model.*;
 import br.com.statezone.repository.*;
@@ -28,6 +30,8 @@ public class PartidaService {
     private final RankingCacheService rankingCacheService;
     private final JogadorRepository jogadorRepository;
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
+    private final EventoPartidaRepository eventoPartidaRepository;
+    private final EventoPartidaMapper eventoPartidaMapper;
 
     public PartidaResponseDto criar(PartidaRequestDto dto) {
 
@@ -109,6 +113,12 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
 
+        criarEventoSistema(
+                salva,
+                TipoEvento.INICIO_PRIMEIRO_TEMPO,
+                1
+        );
+
         return partidaMapper.toDto(salva);
     }
 
@@ -117,11 +127,20 @@ public class PartidaService {
         Partida partida = buscarPartida(id);
 
         if (partida.getStatus() != StatusPartida.AO_VIVO) {
-            throw new BusinessException("Só partidas ao vivo podem ser encerradas");
+            throw new BusinessException(
+                    "Só partidas ao vivo podem ser encerradas"
+            );
         }
 
         partida.setStatus(StatusPartida.ENCERRADA);
+
         Partida salva = partidaRepository.save(partida);
+
+        criarEventoSistema(
+                salva,
+                TipoEvento.FIM_PARTIDA,
+                90
+        );
 
         atualizarPartidasJogadasDosAtletas(salva);
 
@@ -131,7 +150,6 @@ public class PartidaService {
 
         return partidaMapper.toDto(salva);
     }
-
 
     public void deletar(Long id) {
 
@@ -202,5 +220,19 @@ public class PartidaService {
             stats.setPartidasJogadas(stats.getPartidasJogadas() + 1);
             estatisticasJogadorRepository.save(stats);
         }
+    }
+    private void criarEventoSistema(
+            Partida partida,
+            TipoEvento tipoEvento,
+            Integer minuto
+    ) {
+
+        EventoPartida evento = new EventoPartida();
+
+        evento.setPartida(partida);
+        evento.setTipoEvento(tipoEvento);
+        evento.setMinuto(minuto);
+
+        eventoPartidaRepository.save(evento);
     }
 }

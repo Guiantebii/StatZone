@@ -2,6 +2,7 @@ package br.com.statezone.service;
 
 import br.com.statezone.dto.eventoPartida.EventoPartidaRequestDto;
 import br.com.statezone.dto.eventoPartida.EventoPartidaResponseDto;
+import br.com.statezone.dto.eventoPartida.EventoTimelineResponseDto;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.enums.TipoEvento;
 import br.com.statezone.events.EventoPartidaCriadaEvent;
@@ -20,7 +21,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
 
 @Service
 @RequiredArgsConstructor
@@ -42,33 +42,47 @@ public class EventoPartidaService {
                         .orElseThrow(() ->
                                 new ResourceNotFoundException("Partida não encontrada"));
 
-                Jogador jogador = jogadorRepository.findById(dto.jogadorId())
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException("Jogador não encontrado"));
-
-                validarJogadorNaPartida(partida, jogador);
                 validarStatusPartida(partida);
 
-                Jogador assistente = null;
+                if (exigeJogador(dto.tipoEvento()) && dto.jogadorId() == null) {
+                        throw new BusinessException(
+                                "Este tipo de evento exige um jogador");
+                }
 
-                if (dto.assistenteId() != null) {
+                Jogador jogador = null;
+
+                if (dto.jogadorId() != null) {
+
+                        jogador = jogadorRepository.findById(dto.jogadorId())
+                                .orElseThrow(() ->
+                                        new ResourceNotFoundException("Jogador não encontrado"));
+
+                        validarJogadorNaPartida(partida, jogador);
+                }
+
+                Jogador jogadorSecundario = null;
+
+                if (dto.jogadorSecundarioId() != null) {
 
                         if (dto.tipoEvento() != TipoEvento.GOL &&
                                 dto.tipoEvento() != TipoEvento.PENALTI_GOL) {
 
                                 throw new BusinessException(
-                                        "Assistência só pode ser informada em gols");
+                                        "Este tipo de evento não aceita jogador secundário");
                         }
 
-                        assistente = jogadorRepository.findById(dto.assistenteId())
+                        jogadorSecundario = jogadorRepository.findById(dto.jogadorSecundarioId())
                                 .orElseThrow(() ->
-                                        new ResourceNotFoundException("Assistente não encontrado"));
+                                        new ResourceNotFoundException(
+                                                "Jogador secundário não encontrado"));
 
-                        validarJogadorNaPartida(partida, assistente);
+                        validarJogadorNaPartida(partida, jogadorSecundario);
 
-                        if (assistente.getId().equals(jogador.getId())) {
+                        if (jogador != null &&
+                                jogadorSecundario.getId().equals(jogador.getId())) {
+
                                 throw new BusinessException(
-                                        "O autor do gol não pode ser o assistente");
+                                        "O jogador principal não pode ser o jogador secundário");
                         }
                 }
 
@@ -76,8 +90,11 @@ public class EventoPartidaService {
 
                 evento.setPartida(partida);
                 evento.setJogador(jogador);
-                evento.setTime(jogador.getTime());
-                evento.setAssistente(assistente);
+                evento.setJogadorSecundario(jogadorSecundario);
+
+                if (jogador != null) {
+                        evento.setTime(jogador.getTime());
+                }
 
                 EventoPartida salvo = eventoPartidaRepository.save(evento);
 
@@ -99,13 +116,30 @@ public class EventoPartidaService {
                                 new ResourceNotFoundException("Partida não encontrada"));
 
                 return eventoPartidaRepository
-                        .findByPartidaIdOrderByMinutoAscMinutoExtraAsc(partidaId)
+                        .findByPartidaIdOrderByMinutoAscMinutoExtraAscCriadoEmAsc(partidaId)
                         .stream()
                         .map(eventoPartidaMapper::toDto)
                         .toList();
         }
 
+        public List<EventoTimelineResponseDto> buscarTimeline(Long partidaId) {
+
+                partidaRepository.findById(partidaId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("Partida não encontrada"));
+
+                return eventoPartidaRepository
+                        .findByPartidaIdOrderByMinutoAscMinutoExtraAscCriadoEmAsc(partidaId)
+                        .stream()
+                        .map(eventoPartidaMapper::toTimelineDto)
+                        .toList();
+        }
+
         private void aplicarGolSeNecessario(Partida partida, EventoPartida evento) {
+
+                if (evento.getTime() == null) {
+                        return;
+                }
 
                 TipoEvento tipo = evento.getTipoEvento();
 
@@ -130,7 +164,8 @@ public class EventoPartidaService {
                                 }
                         }
 
-                        default -> {}
+                        default -> {
+                        }
                 }
         }
 
@@ -141,15 +176,49 @@ public class EventoPartidaService {
                                 jogador.getTime().getId().equals(partida.getTimeVisitante().getId());
 
                 if (!ok) {
-                        throw new BusinessException("Jogador não pertence aos times da partida");
+                        throw new BusinessException(
+                                "Jogador não pertence aos times da partida");
                 }
         }
 
         private void validarStatusPartida(Partida partida) {
+
                 if (partida.getStatus() != StatusPartida.AO_VIVO) {
-                        throw new BusinessException("Só é possível registrar eventos em partidas ao vivo");
+                        throw new BusinessException(
+                                "Só é possível registrar eventos em partidas ao vivo");
                 }
         }
 
+        private boolean exigeJogador(TipoEvento tipo) {
 
+                return switch (tipo) {
+
+                        case GOL,
+                             GOL_CONTRA,
+                             PENALTI_GOL,
+                             PENALTI_PERDIDO,
+
+                             FINALIZACAO,
+                             FINALIZACAO_NO_GOL,
+
+                             DEFESA,
+                             PENALTI_DEFENDIDO,
+
+                             FALTA,
+                             CARTAO_AMARELO,
+                             CARTAO_VERMELHO,
+
+                             IMPEDIMENTO,
+                             ESCANTEIO,
+
+                             SUBSTITUICAO -> true;
+
+                        case VAR_GOL_CONFIRMADO,
+                             VAR_GOL_ANULADO,
+                             INICIO_PRIMEIRO_TEMPO,
+                             FIM_PRIMEIRO_TEMPO,
+                             INICIO_SEGUNDO_TEMPO,
+                             FIM_PARTIDA -> false;
+                };
+        }
 }

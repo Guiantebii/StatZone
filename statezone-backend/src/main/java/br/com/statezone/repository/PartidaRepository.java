@@ -1,6 +1,7 @@
 package br.com.statezone.repository;
 
 import br.com.statezone.enums.StatusPartida;
+import br.com.statezone.model.EventoPartida;
 import br.com.statezone.model.Partida;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +41,6 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
             @Param("timeId") Long timeId,
             Pageable pageable
     );
+
+
 }
