@@ -42,5 +42,13 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
             Pageable pageable
     );
 
-
+    @Query("SELECT p FROM Partida p " +
+            "JOIN FETCH p.timeMandante " +
+            "JOIN FETCH p.timeVisitante " +
+            "WHERE p.campeonato.id = :campeonatoId " +
+            "AND p.status IN :statuses")
+    List<Partida> findByCampeonatoIdAndStatusInWithTimes(
+            @Param("campeonatoId") Long campeonatoId,
+            @Param("statuses") List<StatusPartida> statuses
+    );
 }

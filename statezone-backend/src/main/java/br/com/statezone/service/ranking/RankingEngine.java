@@ -20,14 +20,20 @@ public class RankingEngine {
 
     private final PartidaRepository partidaRepository;
 
+    private static final List<StatusPartida> STATUSES_QUE_CONTAM =
+            List.of(
+                    StatusPartida.ENCERRADA,
+                    StatusPartida.WO_MANDANTE,
+                    StatusPartida.WO_VISITANTE
+            );
+
     public List<ClassificacaoStats> gerar(Long campeonatoId) {
 
         List<Partida> partidas =
-                partidaRepository.findByCampeonatoIdAndStatusWithTimes(
+                partidaRepository.findByCampeonatoIdAndStatusInWithTimes(
                         campeonatoId,
-                        StatusPartida.ENCERRADA
+                        STATUSES_QUE_CONTAM
                 );
-
         Map<Long, ClassificacaoStats> tabela = new HashMap<>();
 
         for (Partida partida : partidas) {

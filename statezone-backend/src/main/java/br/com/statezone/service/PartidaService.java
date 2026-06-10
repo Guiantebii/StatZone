@@ -299,4 +299,94 @@ public class PartidaService {
 
         return partidaMapper.toDto(salva);
     }
+
+    public PartidaResponseDto adiar(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() == StatusPartida.ENCERRADA) {
+            throw new BusinessException("Partida já foi encerrada");
+        }
+
+        if (partida.getStatus() == StatusPartida.ADIADA) {
+            throw new ConflictException("Partida já está adiada");
+        }
+
+        partida.setStatus(StatusPartida.ADIADA);
+
+        Partida salva = partidaRepository.save(partida);
+
+        rankingCacheService.recalcular(salva.getCampeonato().getId());
+
+        return partidaMapper.toDto(salva);
+    }
+
+    public PartidaResponseDto cancelar(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() == StatusPartida.ENCERRADA) {
+            throw new BusinessException("Partida já foi encerrada");
+        }
+
+        if (partida.getStatus() == StatusPartida.CANCELADA) {
+            throw new ConflictException("Partida já está cancelada");
+        }
+
+        partida.setStatus(StatusPartida.CANCELADA);
+
+        Partida salva = partidaRepository.save(partida);
+
+        rankingCacheService.recalcular(salva.getCampeonato().getId());
+
+        return partidaMapper.toDto(salva);
+    }
+
+    public PartidaResponseDto woMandante(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() == StatusPartida.ENCERRADA) {
+            throw new BusinessException("Partida já foi encerrada");
+        }
+
+        if (partida.getStatus() == StatusPartida.WO_MANDANTE ||
+                partida.getStatus() == StatusPartida.WO_VISITANTE) {
+            throw new ConflictException("Partida já tem WO registrado");
+        }
+
+        partida.setStatus(StatusPartida.WO_MANDANTE);
+        partida.setGolsMandante(0);
+        partida.setGolsVisitante(3);
+
+        Partida salva = partidaRepository.save(partida);
+
+        rankingCacheService.recalcular(salva.getCampeonato().getId());
+
+        return partidaMapper.toDto(salva);
+    }
+
+    public PartidaResponseDto woVisitante(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() == StatusPartida.ENCERRADA) {
+            throw new BusinessException("Partida já foi encerrada");
+        }
+
+        if (partida.getStatus() == StatusPartida.WO_MANDANTE ||
+                partida.getStatus() == StatusPartida.WO_VISITANTE) {
+            throw new ConflictException("Partida já tem WO registrado");
+        }
+
+        partida.setStatus(StatusPartida.WO_VISITANTE);
+        partida.setGolsMandante(3);
+        partida.setGolsVisitante(0);
+
+        Partida salva = partidaRepository.save(partida);
+
+        rankingCacheService.recalcular(salva.getCampeonato().getId());
+
+        return partidaMapper.toDto(salva);
+    }
 }

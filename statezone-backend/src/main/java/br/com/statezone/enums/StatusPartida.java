@@ -6,5 +6,7 @@ public enum StatusPartida {
     ENCERRADA,
     ADIADA,
     CANCELADA,
-    INTERVALO
+    INTERVALO,
+    WO_MANDANTE,
+    WO_VISITANTE
 }
