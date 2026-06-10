@@ -32,6 +32,7 @@ public class PartidaService {
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
     private final EventoPartidaRepository eventoPartidaRepository;
     private final EventoPartidaMapper eventoPartidaMapper;
+    private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
 
     public PartidaResponseDto criar(PartidaRequestDto dto) {
 
@@ -206,19 +207,38 @@ public class PartidaService {
     }
 
     private void atualizarPartidasJogadasDosAtletas(Partida partida) {
-        List<Jogador> jogadoresEmCampo = jogadorRepository.findByTimeIdIn(
-                List.of(partida.getTimeMandante().getId(), partida.getTimeVisitante().getId())
+        List<Jogador> jogadores = jogadorRepository.findByTimeIdIn(
+                List.of(partida.getTimeMandante().getId(),
+                        partida.getTimeVisitante().getId())
         );
 
-        for (Jogador jogador : jogadoresEmCampo) {
-            EstatisticasJogador stats = estatisticasJogadorRepository.findByJogadorId(jogador.getId())
+        for (Jogador jogador : jogadores) {
+
+            // carreira
+            EstatisticasJogador carreira = estatisticasJogadorRepository
+                    .findByJogadorId(jogador.getId())
                     .orElseGet(() -> {
-                        EstatisticasJogador novaFicha = new EstatisticasJogador();
-                        novaFicha.setJogador(jogador);
-                        return novaFicha;
+                        EstatisticasJogador s = new EstatisticasJogador();
+                        s.setJogador(jogador);
+                        return s;
                     });
-            stats.setPartidasJogadas(stats.getPartidasJogadas() + 1);
-            estatisticasJogadorRepository.save(stats);
+            carreira.setPartidasJogadas(carreira.getPartidasJogadas() + 1);
+            estatisticasJogadorRepository.save(carreira);
+
+            // campeonato
+            EstatisticasJogadorCampeonato campeonato = estatisticasJogadorCampeonatoRepository
+                    .findByJogadorIdAndCampeonatoId(
+                            jogador.getId(),
+                            partida.getCampeonato().getId()
+                    )
+                    .orElseGet(() -> {
+                        EstatisticasJogadorCampeonato s = new EstatisticasJogadorCampeonato();
+                        s.setJogador(jogador);
+                        s.setCampeonato(partida.getCampeonato());
+                        return s;
+                    });
+            campeonato.setPartidasJogadas(campeonato.getPartidasJogadas() + 1);
+            estatisticasJogadorCampeonatoRepository.save(campeonato);
         }
     }
     private void criarEventoSistema(
