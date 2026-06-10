@@ -2,7 +2,9 @@ package br.com.statezone.listeners;
 
 import br.com.statezone.events.EventoPartidaCriadaEvent;
 import br.com.statezone.model.EstatisticasJogador;
+import br.com.statezone.model.EstatisticasJogadorCampeonato;
 import br.com.statezone.model.EstatisticasPartida;
+import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.EstatisticasPartidaRepository;
 import jakarta.transaction.Transactional;
@@ -16,6 +18,7 @@ public class EstatisticasEventListener {
 
     private final EstatisticasPartidaRepository repository;
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
+    private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
 
     @EventListener
     @Transactional
@@ -23,6 +26,8 @@ public class EstatisticasEventListener {
 
         var e = event.evento();
         var partida = event.partida();
+
+        if (e.getTime() == null) return;
 
         boolean mandante =
                 e.getTime().getId().equals(partida.getTimeMandante().getId());
@@ -34,21 +39,31 @@ public class EstatisticasEventListener {
                     return repository.saveAndFlush(s);
                 });
 
-        EstatisticasJogador statsJogador = null;
+        EstatisticasJogador statsJogadorCarreira = null;
+        EstatisticasJogadorCampeonato statsJogadorCampeonato = null;
 
         if (e.getJogador() != null) {
 
-            statsJogador = estatisticasJogadorRepository
+            // carreira
+            statsJogadorCarreira = estatisticasJogadorRepository
                     .findByJogadorId(e.getJogador().getId())
                     .orElseGet(() -> {
-
-                        EstatisticasJogador s =
-                                new EstatisticasJogador();
-
+                        EstatisticasJogador s = new EstatisticasJogador();
                         s.setJogador(e.getJogador());
+                        return estatisticasJogadorRepository.saveAndFlush(s);
+                    });
 
-                        return estatisticasJogadorRepository
-                                .saveAndFlush(s);
+            // campeonato
+            statsJogadorCampeonato = estatisticasJogadorCampeonatoRepository
+                    .findByJogadorIdAndCampeonatoId(
+                            e.getJogador().getId(),
+                            partida.getCampeonato().getId()
+                    )
+                    .orElseGet(() -> {
+                        EstatisticasJogadorCampeonato s = new EstatisticasJogadorCampeonato();
+                        s.setJogador(e.getJogador());
+                        s.setCampeonato(partida.getCampeonato());
+                        return estatisticasJogadorCampeonatoRepository.saveAndFlush(s);
                     });
         }
 
@@ -56,216 +71,145 @@ public class EstatisticasEventListener {
 
             case FINALIZACAO, FINALIZACAO_NO_GOL -> {
                 if (mandante) {
-                    stats.setFinalizacoesMandante(
-                            stats.getFinalizacoesMandante() + 1
-                    );
+                    stats.setFinalizacoesMandante(stats.getFinalizacoesMandante() + 1);
                 } else {
-                    stats.setFinalizacoesVisitante(
-                            stats.getFinalizacoesVisitante() + 1
-                    );
+                    stats.setFinalizacoesVisitante(stats.getFinalizacoesVisitante() + 1);
                 }
-
-                statsJogador.setFinalizacoes(
-                        statsJogador.getFinalizacoes() + 1
-                );
+                statsJogadorCarreira.setFinalizacoes(statsJogadorCarreira.getFinalizacoes() + 1);
+                statsJogadorCampeonato.setFinalizacoes(statsJogadorCampeonato.getFinalizacoes() + 1);
             }
 
             case GOL, PENALTI_GOL -> {
-
                 if (mandante) {
-                    stats.setFinalizacoesMandante(
-                            stats.getFinalizacoesMandante() + 1
-                    );
-
-                    stats.setFinalizacoesGolMandante(
-                            stats.getFinalizacoesGolMandante() + 1
-                    );
-
+                    stats.setFinalizacoesMandante(stats.getFinalizacoesMandante() + 1);
+                    stats.setFinalizacoesGolMandante(stats.getFinalizacoesGolMandante() + 1);
                 } else {
-
-                    stats.setFinalizacoesVisitante(
-                            stats.getFinalizacoesVisitante() + 1
-                    );
-
-                    stats.setFinalizacoesGolVisitante(
-                            stats.getFinalizacoesGolVisitante() + 1
-                    );
+                    stats.setFinalizacoesVisitante(stats.getFinalizacoesVisitante() + 1);
+                    stats.setFinalizacoesGolVisitante(stats.getFinalizacoesGolVisitante() + 1);
                 }
 
-                statsJogador.setFinalizacoes(
-                        statsJogador.getFinalizacoes() + 1
-                );
+                statsJogadorCarreira.setFinalizacoes(statsJogadorCarreira.getFinalizacoes() + 1);
+                statsJogadorCarreira.setGols(statsJogadorCarreira.getGols() + 1);
 
-                statsJogador.setGols(
-                        statsJogador.getGols() + 1
-                );
+                statsJogadorCampeonato.setFinalizacoes(statsJogadorCampeonato.getFinalizacoes() + 1);
+                statsJogadorCampeonato.setGols(statsJogadorCampeonato.getGols() + 1);
 
+                // assistência
                 if (e.getJogadorSecundario() != null) {
 
-                    EstatisticasJogador assistStats =
-                            estatisticasJogadorRepository
-                                    .findByJogadorId(
-                                            e.getJogadorSecundario().getId()
-                                    )
-                                    .orElseGet(() -> {
+                    EstatisticasJogador assistCarreira = estatisticasJogadorRepository
+                            .findByJogadorId(e.getJogadorSecundario().getId())
+                            .orElseGet(() -> {
+                                EstatisticasJogador s = new EstatisticasJogador();
+                                s.setJogador(e.getJogadorSecundario());
+                                return estatisticasJogadorRepository.saveAndFlush(s);
+                            });
 
-                                        EstatisticasJogador s =
-                                                new EstatisticasJogador();
+                    EstatisticasJogadorCampeonato assistCampeonato = estatisticasJogadorCampeonatoRepository
+                            .findByJogadorIdAndCampeonatoId(
+                                    e.getJogadorSecundario().getId(),
+                                    partida.getCampeonato().getId()
+                            )
+                            .orElseGet(() -> {
+                                EstatisticasJogadorCampeonato s = new EstatisticasJogadorCampeonato();
+                                s.setJogador(e.getJogadorSecundario());
+                                s.setCampeonato(partida.getCampeonato());
+                                return estatisticasJogadorCampeonatoRepository.saveAndFlush(s);
+                            });
 
-                                        s.setJogador(
-                                                e.getJogadorSecundario()
-                                        );
+                    assistCarreira.setAssistencias(assistCarreira.getAssistencias() + 1);
+                    assistCampeonato.setAssistencias(assistCampeonato.getAssistencias() + 1);
 
-                                        return estatisticasJogadorRepository
-                                                .saveAndFlush(s);
-                                    });
-
-                    assistStats.setAssistencias(
-                            assistStats.getAssistencias() + 1
-                    );
-
-                    estatisticasJogadorRepository.save(assistStats);
+                    estatisticasJogadorRepository.save(assistCarreira);
+                    estatisticasJogadorCampeonatoRepository.save(assistCampeonato);
                 }
             }
 
             case GOL_CONTRA -> {
-
                 if (mandante) {
-                    stats.setFinalizacoesGolVisitante(
-                            stats.getFinalizacoesGolVisitante() + 1
-                    );
+                    stats.setFinalizacoesGolVisitante(stats.getFinalizacoesGolVisitante() + 1);
                 } else {
-                    stats.setFinalizacoesGolMandante(
-                            stats.getFinalizacoesGolMandante() + 1
-                    );
+                    stats.setFinalizacoesGolMandante(stats.getFinalizacoesGolMandante() + 1);
                 }
             }
 
             case FALTA -> {
-
                 if (mandante) {
-                    stats.setFaltasMandante(
-                            stats.getFaltasMandante() + 1
-                    );
+                    stats.setFaltasMandante(stats.getFaltasMandante() + 1);
                 } else {
-                    stats.setFaltasVisitante(
-                            stats.getFaltasVisitante() + 1
-                    );
+                    stats.setFaltasVisitante(stats.getFaltasVisitante() + 1);
                 }
-
-                statsJogador.setFaltasCometidas(
-                        statsJogador.getFaltasCometidas() + 1
-                );
+                statsJogadorCarreira.setFaltasCometidas(statsJogadorCarreira.getFaltasCometidas() + 1);
+                statsJogadorCampeonato.setFaltasCometidas(statsJogadorCampeonato.getFaltasCometidas() + 1);
             }
 
             case CARTAO_AMARELO -> {
-
                 if (mandante) {
-                    stats.setCartoesAmarelosMandante(
-                            stats.getCartoesAmarelosMandante() + 1
-                    );
+                    stats.setCartoesAmarelosMandante(stats.getCartoesAmarelosMandante() + 1);
                 } else {
-                    stats.setCartoesAmarelosVisitante(
-                            stats.getCartoesAmarelosVisitante() + 1
-                    );
+                    stats.setCartoesAmarelosVisitante(stats.getCartoesAmarelosVisitante() + 1);
                 }
-
-                statsJogador.setCartoesAmarelos(
-                        statsJogador.getCartoesAmarelos() + 1
-                );
+                statsJogadorCarreira.setCartoesAmarelos(statsJogadorCarreira.getCartoesAmarelos() + 1);
+                statsJogadorCampeonato.setCartoesAmarelos(statsJogadorCampeonato.getCartoesAmarelos() + 1);
             }
 
             case CARTAO_VERMELHO -> {
-
                 if (mandante) {
-                    stats.setCartoesVermelhosMandante(
-                            stats.getCartoesVermelhosMandante() + 1
-                    );
+                    stats.setCartoesVermelhosMandante(stats.getCartoesVermelhosMandante() + 1);
                 } else {
-                    stats.setCartoesVermelhosVisitante(
-                            stats.getCartoesVermelhosVisitante() + 1
-                    );
+                    stats.setCartoesVermelhosVisitante(stats.getCartoesVermelhosVisitante() + 1);
                 }
-
-                statsJogador.setCartoesVermelhos(
-                        statsJogador.getCartoesVermelhos() + 1
-                );
+                statsJogadorCarreira.setCartoesVermelhos(statsJogadorCarreira.getCartoesVermelhos() + 1);
+                statsJogadorCampeonato.setCartoesVermelhos(statsJogadorCampeonato.getCartoesVermelhos() + 1);
             }
 
             case ESCANTEIO -> {
-
                 if (mandante) {
-                    stats.setEscanteiosMandante(
-                            stats.getEscanteiosMandante() + 1
-                    );
+                    stats.setEscanteiosMandante(stats.getEscanteiosMandante() + 1);
                 } else {
-                    stats.setEscanteiosVisitante(
-                            stats.getEscanteiosVisitante() + 1
-                    );
+                    stats.setEscanteiosVisitante(stats.getEscanteiosVisitante() + 1);
                 }
             }
 
             case DEFESA -> {
-
                 if (mandante) {
-                    stats.setDefesasMandante(
-                            stats.getDefesasMandante() + 1
-                    );
+                    stats.setDefesasMandante(stats.getDefesasMandante() + 1);
                 } else {
-                    stats.setDefesasVisitante(
-                            stats.getDefesasVisitante() + 1
-                    );
+                    stats.setDefesasVisitante(stats.getDefesasVisitante() + 1);
                 }
-
-                statsJogador.setDefesas(
-                        statsJogador.getDefesas() + 1
-                );
+                statsJogadorCarreira.setDefesas(statsJogadorCarreira.getDefesas() + 1);
+                statsJogadorCampeonato.setDefesas(statsJogadorCampeonato.getDefesas() + 1);
             }
 
             case PENALTI_DEFENDIDO -> {
-
                 if (mandante) {
-                    stats.setPenaltisDefendidosMandante(
-                            stats.getPenaltisDefendidosMandante() + 1
-                    );
+                    stats.setPenaltisDefendidosMandante(stats.getPenaltisDefendidosMandante() + 1);
                 } else {
-                    stats.setPenaltisDefendidosVisitante(
-                            stats.getPenaltisDefendidosVisitante() + 1
-                    );
+                    stats.setPenaltisDefendidosVisitante(stats.getPenaltisDefendidosVisitante() + 1);
                 }
-
-                statsJogador.setPenaltisDefendidos(
-                        statsJogador.getPenaltisDefendidos() + 1
-                );
+                statsJogadorCarreira.setPenaltisDefendidos(statsJogadorCarreira.getPenaltisDefendidos() + 1);
+                statsJogadorCampeonato.setPenaltisDefendidos(statsJogadorCampeonato.getPenaltisDefendidos() + 1);
             }
 
             case PENALTI_PERDIDO -> {
-                statsJogador.setPenaltisPerdidos(
-                        statsJogador.getPenaltisPerdidos() + 1
-                );
+                statsJogadorCarreira.setPenaltisPerdidos(statsJogadorCarreira.getPenaltisPerdidos() + 1);
+                statsJogadorCampeonato.setPenaltisPerdidos(statsJogadorCampeonato.getPenaltisPerdidos() + 1);
             }
 
-            case IMPEDIMENTO -> {
-                // implementar depois
-            }
-
-            case SUBSTITUICAO -> {
-                // implementar depois
-            }
-            case VAR_GOL_CONFIRMADO,
-                 VAR_GOL_ANULADO,
-                 INICIO_PRIMEIRO_TEMPO,
-                 FIM_PRIMEIRO_TEMPO,
-                 INICIO_SEGUNDO_TEMPO,
-                 FIM_PARTIDA -> {
-                // não alteram estatísticas
+            case IMPEDIMENTO, SUBSTITUICAO,
+                 VAR_GOL_CONFIRMADO, VAR_GOL_ANULADO,
+                 INICIO_PRIMEIRO_TEMPO, FIM_PRIMEIRO_TEMPO,
+                 INICIO_SEGUNDO_TEMPO, FIM_PARTIDA -> {
             }
         }
 
         repository.save(stats);
 
-        if (statsJogador != null) {
-            estatisticasJogadorRepository.save(statsJogador);
+        if (statsJogadorCarreira != null) {
+            estatisticasJogadorRepository.save(statsJogadorCarreira);
+        }
+        if (statsJogadorCampeonato != null) {
+            estatisticasJogadorCampeonatoRepository.save(statsJogadorCampeonato);
         }
     }
 }

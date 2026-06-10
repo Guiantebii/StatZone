@@ -3,46 +3,20 @@ package br.com.statezone.mapper;
 import br.com.statezone.dto.rankings.*;
 import br.com.statezone.dto.estatisticasJogador.EstatisticasJogadorResponseDto;
 import br.com.statezone.model.EstatisticasJogador;
+import br.com.statezone.model.EstatisticasJogadorCampeonato;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface EstatisticasJogadorMapper {
+
+    // ─── Carreira ───────────────────────────────────────────────
     @Mapping(source = "jogador.id", target = "jogadorId")
     @Mapping(source = "jogador.nome", target = "nomeJogador")
     @Mapping(source = "jogador.time.nome", target = "nomeTime")
     EstatisticasJogadorResponseDto toDto(EstatisticasJogador entity);
 
-
-
-    @Mapping(source = "jogador.id", target = "jogadorId")
-    @Mapping(source = "jogador.nome", target = "nomeJogador")
-    @Mapping(source = "jogador.time.nome", target = "nomeTime")
-    @Mapping(source = "jogador.time.escudoUrl", target = "escudoTime")
-    @Mapping(target = "posicao", ignore = true)
-    ArtilhariaResponseDto toArtilhariaDto(EstatisticasJogador entity);
-
-    @Mapping(source = "jogador.id", target = "jogadorId")
-    @Mapping(source = "jogador.nome", target = "nomeJogador")
-    @Mapping(source = "jogador.time.nome", target = "nomeTime")
-    @Mapping(source = "jogador.time.escudoUrl", target = "escudoTime")
-    @Mapping(target = "posicao", ignore = true)
-    AssistenciaRankingResponseDto toAssistenciaDto(EstatisticasJogador entity);
-
-    @Mapping(source = "jogador.id", target = "jogadorId")
-    @Mapping(source = "jogador.nome", target = "nomeJogador")
-    @Mapping(source = "jogador.time.nome", target = "nomeTime")
-    @Mapping(source = "jogador.time.escudoUrl", target = "escudoTime")
-    @Mapping(target = "posicao", ignore = true)
-    RankingCartaoAmareloResponseDto toCartaoAmareloDto(EstatisticasJogador entity);
-
-    @Mapping(source = "jogador.id", target = "jogadorId")
-    @Mapping(source = "jogador.nome", target = "nomeJogador")
-    @Mapping(source = "jogador.time.nome", target = "nomeTime")
-    @Mapping(source = "jogador.time.escudoUrl", target = "escudoTime")
-    @Mapping(target = "posicao", ignore = true)
-    RankingCartaoVermelhoResponseDto toCartaoVermelhoDto(EstatisticasJogador entity);
-
+    // ─── Campeonato ──────────────────────────────────────────────
     @Mapping(source = "entity.jogador.id", target = "jogadorId")
     @Mapping(source = "entity.jogador.nome", target = "nomeJogador")
     @Mapping(source = "entity.jogador.time.nome", target = "nomeTime")
@@ -56,7 +30,7 @@ public interface EstatisticasJogadorMapper {
     @Mapping(source = "entity.cartoesVermelhos", target = "cartoesVermelhos")
     @Mapping(source = "score", target = "score")
     CraqueCampeonatoResponseDto toCraqueCampeonatoDto(
-            EstatisticasJogador entity,
+            EstatisticasJogadorCampeonato entity,
             Double score
     );
 }
