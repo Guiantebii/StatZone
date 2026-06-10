@@ -182,10 +182,10 @@ public class EventoPartidaService {
         }
 
         private void validarStatusPartida(Partida partida) {
-
                 if (partida.getStatus() != StatusPartida.AO_VIVO) {
                         throw new BusinessException(
-                                "Só é possível registrar eventos em partidas ao vivo");
+                                "Só é possível registrar eventos em partidas ao vivo. " +
+                                        "Status atual: " + partida.getStatus());
                 }
         }
 
