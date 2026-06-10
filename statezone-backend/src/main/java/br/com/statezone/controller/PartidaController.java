@@ -66,5 +66,24 @@ public class PartidaController {
         return ResponseEntity.ok(partidaService.iniciarSegundoTempo(id));
     }
 
+    @PatchMapping("/{id}/adiar")
+    public ResponseEntity<PartidaResponseDto> adiar(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.adiar(id));
+    }
+
+    @PatchMapping("/{id}/cancelar")
+    public ResponseEntity<PartidaResponseDto> cancelar(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.cancelar(id));
+    }
+
+    @PatchMapping("/{id}/wo-mandante")
+    public ResponseEntity<PartidaResponseDto> woMandante(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.woMandante(id));
+    }
+
+    @PatchMapping("/{id}/wo-visitante")
+    public ResponseEntity<PartidaResponseDto> woVisitante(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.woVisitante(id));
+    }
 
 }
