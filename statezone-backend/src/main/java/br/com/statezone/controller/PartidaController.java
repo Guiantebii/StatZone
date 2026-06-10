@@ -56,5 +56,15 @@ public class PartidaController {
         return ResponseEntity.ok(partidaService.encerrar(id));
     }
 
+    @PatchMapping("/{id}/intervalo")
+    public ResponseEntity<PartidaResponseDto> intervalo(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.intervalo(id));
+    }
+
+    @PatchMapping("/{id}/segundo-tempo")
+    public ResponseEntity<PartidaResponseDto> iniciarSegundoTempo(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.iniciarSegundoTempo(id));
+    }
+
 
 }

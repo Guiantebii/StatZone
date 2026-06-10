@@ -255,4 +255,48 @@ public class PartidaService {
 
         eventoPartidaRepository.save(evento);
     }
+
+    public PartidaResponseDto intervalo(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() != StatusPartida.AO_VIVO) {
+            throw new BusinessException(
+                    "Só é possível pausar para intervalo partidas ao vivo");
+        }
+
+        partida.setStatus(StatusPartida.INTERVALO);
+
+        Partida salva = partidaRepository.save(partida);
+
+        criarEventoSistema(
+                salva,
+                TipoEvento.FIM_PRIMEIRO_TEMPO,
+                45
+        );
+
+        return partidaMapper.toDto(salva);
+    }
+
+    public PartidaResponseDto iniciarSegundoTempo(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() != StatusPartida.INTERVALO) {
+            throw new BusinessException(
+                    "Só é possível iniciar o segundo tempo após o intervalo");
+        }
+
+        partida.setStatus(StatusPartida.AO_VIVO);
+
+        Partida salva = partidaRepository.save(partida);
+
+        criarEventoSistema(
+                salva,
+                TipoEvento.INICIO_SEGUNDO_TEMPO,
+                46
+        );
+
+        return partidaMapper.toDto(salva);
+    }
 }
