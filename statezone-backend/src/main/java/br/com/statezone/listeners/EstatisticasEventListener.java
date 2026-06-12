@@ -4,6 +4,7 @@ import br.com.statezone.events.EventoPartidaCriadaEvent;
 import br.com.statezone.model.EstatisticasJogador;
 import br.com.statezone.model.EstatisticasJogadorCampeonato;
 import br.com.statezone.model.EstatisticasPartida;
+import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.EstatisticasPartidaRepository;
@@ -19,6 +20,7 @@ public class EstatisticasEventListener {
     private final EstatisticasPartidaRepository repository;
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
+    private final EscalacaoPartidaRepository escalacaoPartidaRepository;
 
     @EventListener
     @Transactional
@@ -196,20 +198,57 @@ public class EstatisticasEventListener {
                 statsJogadorCampeonato.setPenaltisPerdidos(statsJogadorCampeonato.getPenaltisPerdidos() + 1);
             }
 
-            case IMPEDIMENTO, SUBSTITUICAO,
+            case IMPEDIMENTO,
                  VAR_GOL_CONFIRMADO, VAR_GOL_ANULADO,
                  INICIO_PRIMEIRO_TEMPO, FIM_PRIMEIRO_TEMPO,
                  INICIO_SEGUNDO_TEMPO, FIM_PARTIDA -> {
             }
-        }
+            case SUBSTITUICAO -> {
 
-        repository.save(stats);
+                if (e.getJogador() == null || e.getJogadorSecundario() == null) {
+                    break;
+                }
 
-        if (statsJogadorCarreira != null) {
-            estatisticasJogadorRepository.save(statsJogadorCarreira);
+                // jogador que sai
+                escalacaoPartidaRepository
+                        .findByPartidaIdAndJogadorId(
+                                partida.getId(),
+                                e.getJogador().getId()
+                        )
+                        .ifPresent(esc -> {
+                            esc.setAtivo(false);
+                            escalacaoPartidaRepository.save(esc);
+                        });
+
+                // jogador que entra
+                escalacaoPartidaRepository
+                        .findByPartidaIdAndJogadorId(
+                                partida.getId(),
+                                e.getJogadorSecundario().getId()
+                        )
+                        .ifPresent(esc -> {
+                            esc.setAtivo(true);
+                            escalacaoPartidaRepository.save(esc);
+                        });
+                // stats da partida
+                if (mandante) {
+                    stats.setSubstituicoesMandante(
+                            stats.getSubstituicoesMandante() + 1
+                    );
+                } else {
+                    stats.setSubstituicoesVisitante(
+                            stats.getSubstituicoesVisitante() + 1
+                    );
+                }
+            }
         }
-        if (statsJogadorCampeonato != null) {
-            estatisticasJogadorCampeonatoRepository.save(statsJogadorCampeonato);
+            repository.save(stats);
+
+            if (statsJogadorCarreira != null) {
+                estatisticasJogadorRepository.save(statsJogadorCarreira);
+            }
+            if (statsJogadorCampeonato != null) {
+                estatisticasJogadorCampeonatoRepository.save(statsJogadorCampeonato);
+            }
         }
     }
-}

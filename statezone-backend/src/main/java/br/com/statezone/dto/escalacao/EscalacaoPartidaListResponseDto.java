@@ -1,4 +1,9 @@
 package br.com.statezone.dto.escalacao;
 
-public record EscalacaoPartidaListResponseDto() {
-}
+import java.util.List;
+
+public record EscalacaoPartidaListResponseDto(
+        Long partidaId,
+        List<EscalacaoPartidaResponseDto> titulares,
+        List<EscalacaoPartidaResponseDto> reservas
+) {}
