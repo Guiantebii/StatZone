@@ -69,6 +69,12 @@ public class EstatisticasPartida {
     @Column(name = "penaltis_defendidos_visitante")
     private Integer penaltisDefendidosVisitante = 0;
 
+    @Column(name = "substituicoes_mandante")
+    private Integer substituicoesMandante = 0;
+
+    @Column(name = "substituicoes_visitante")
+    private Integer substituicoesVisitante = 0;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partida_id")
     private Partida partida;

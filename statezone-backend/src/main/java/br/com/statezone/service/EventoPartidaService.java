@@ -65,7 +65,8 @@ public class EventoPartidaService {
                 if (dto.jogadorSecundarioId() != null) {
 
                         if (dto.tipoEvento() != TipoEvento.GOL &&
-                                dto.tipoEvento() != TipoEvento.PENALTI_GOL) {
+                                dto.tipoEvento() != TipoEvento.PENALTI_GOL &&
+                                dto.tipoEvento() != TipoEvento.SUBSTITUICAO) {
 
                                 throw new BusinessException(
                                         "Este tipo de evento não aceita jogador secundário");
