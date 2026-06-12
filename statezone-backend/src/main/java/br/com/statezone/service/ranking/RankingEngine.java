@@ -34,6 +34,7 @@ public class RankingEngine {
                         campeonatoId,
                         STATUSES_QUE_CONTAM
                 );
+
         Map<Long, ClassificacaoStats> tabela = new HashMap<>();
 
         for (Partida partida : partidas) {
@@ -80,27 +81,24 @@ public class RankingEngine {
 
                 statsMandante.setVitorias(statsMandante.getVitorias() + 1);
                 statsMandante.setPontos(statsMandante.getPontos() + 3);
-
                 statsVisitante.setDerrotas(statsVisitante.getDerrotas() + 1);
 
             } else if (golsVisitante > golsMandante) {
 
                 statsVisitante.setVitorias(statsVisitante.getVitorias() + 1);
                 statsVisitante.setPontos(statsVisitante.getPontos() + 3);
-
                 statsMandante.setDerrotas(statsMandante.getDerrotas() + 1);
 
             } else {
 
                 statsMandante.setEmpates(statsMandante.getEmpates() + 1);
                 statsVisitante.setEmpates(statsVisitante.getEmpates() + 1);
-
                 statsMandante.setPontos(statsMandante.getPontos() + 1);
                 statsVisitante.setPontos(statsVisitante.getPontos() + 1);
             }
         }
-
-        // ordenação da tabela
+        
+        // ordenação
         List<ClassificacaoStats> ranking =
                 tabela.values()
                         .stream()
@@ -112,7 +110,6 @@ public class RankingEngine {
                         )
                         .collect(Collectors.toList());
 
-        // posição
         for (int i = 0; i < ranking.size(); i++) {
             ranking.get(i).setPosicao(i + 1);
         }

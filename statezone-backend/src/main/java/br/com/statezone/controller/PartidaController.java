@@ -3,6 +3,7 @@ package br.com.statezone.controller;
 import br.com.statezone.dto.eventoPartida.EventoTimelineResponseDto;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
+import br.com.statezone.dto.partida.PenaltisRequestDto;
 import br.com.statezone.service.EventoPartidaService;
 import br.com.statezone.service.PartidaService;
 import jakarta.validation.Valid;
@@ -84,6 +85,23 @@ public class PartidaController {
     @PatchMapping("/{id}/wo-visitante")
     public ResponseEntity<PartidaResponseDto> woVisitante(@PathVariable Long id) {
         return ResponseEntity.ok(partidaService.woVisitante(id));
+    }
+
+    @PatchMapping("/{id}/penaltis")
+    public ResponseEntity<PartidaResponseDto> iniciarPenaltis(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.iniciarPenaltis(id));
+    }
+
+    @PatchMapping("/{id}/encerrar-penaltis")
+    public ResponseEntity<PartidaResponseDto> encerrarComPenaltis(
+            @PathVariable Long id,
+            @RequestBody @Valid PenaltisRequestDto dto
+    ) {
+        return ResponseEntity.ok(partidaService.encerrarComPenaltis(
+                id,
+                dto.golsPenaltisMandante(),
+                dto.golsPenaltisVisitante()
+        ));
     }
 
 }

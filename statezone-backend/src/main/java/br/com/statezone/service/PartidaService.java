@@ -389,4 +389,54 @@ public class PartidaService {
 
         return partidaMapper.toDto(salva);
     }
+
+    public PartidaResponseDto iniciarPenaltis(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() != StatusPartida.AO_VIVO) {
+            throw new BusinessException(
+                    "Só é possível iniciar pênaltis em partidas ao vivo");
+        }
+
+        if (!partida.getGolsMandante().equals(partida.getGolsVisitante())) {
+            throw new BusinessException(
+                    "Só é possível iniciar pênaltis em partidas empatadas");
+        }
+
+        partida.setStatus(StatusPartida.PENALTIS);
+        partida.setGolsPenaltisMandante(0);
+        partida.setGolsPenaltisVisitante(0);
+
+        return partidaMapper.toDto(partidaRepository.save(partida));
+    }
+
+    public PartidaResponseDto encerrarComPenaltis(Long id, Integer golsPenaltisMandante, Integer golsPenaltisVisitante) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() != StatusPartida.PENALTIS) {
+            throw new BusinessException(
+                    "Partida não está em disputa de pênaltis");
+        }
+
+        if (golsPenaltisMandante.equals(golsPenaltisVisitante)) {
+            throw new BusinessException(
+                    "O resultado dos pênaltis não pode ser empate");
+        }
+
+        partida.setGolsPenaltisMandante(golsPenaltisMandante);
+        partida.setGolsPenaltisVisitante(golsPenaltisVisitante);
+        partida.setStatus(StatusPartida.ENCERRADA);
+
+        Partida salva = partidaRepository.save(partida);
+
+        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 120);
+
+        atualizarPartidasJogadasDosAtletas(salva);
+
+        rankingCacheService.recalcular(salva.getCampeonato().getId());
+
+        return partidaMapper.toDto(salva);
+    }
 }

@@ -51,6 +51,12 @@ public class Partida {
     @JoinColumn(name = "campeonato_id")
     private Campeonato campeonato;
 
+    @Column(name = "gols_penaltis_mandante")
+    private Integer golsPenaltisMandante;
+
+    @Column(name = "gols_penaltis_visitante")
+    private Integer golsPenaltisVisitante;
+
     @OneToMany(mappedBy = "partida", fetch = FetchType.LAZY)
     private List<EventoPartida> eventos;
 
