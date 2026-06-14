@@ -28,6 +28,9 @@ public class Campeonato {
 
     @Column(name = "logo_url")
     private String logoUrl;
+    
+    @Column(name = "amarelos_para_suspensao")
+    private Integer amarelosParaSuspensao = 3;
 
     @OneToMany(mappedBy = "campeonato", fetch = FetchType.LAZY)
     private List<Partida> partidas;
