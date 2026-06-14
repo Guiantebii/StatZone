@@ -13,22 +13,21 @@ public class RankingCacheService {
 
     private final RankingEngine rankingEngine;
 
-    private final ConcurrentHashMap<Long, List<ClassificacaoStats>> cache =
+    private final ConcurrentHashMap<String, List<ClassificacaoStats>> cache =
             new ConcurrentHashMap<>();
 
     public List<ClassificacaoStats> getRanking(Long campeonatoId) {
+        String key = campeonatoId + "_geral";
+        return cache.computeIfAbsent(key, k -> rankingEngine.gerar(campeonatoId));
+    }
 
-        return cache.computeIfAbsent(
-                campeonatoId,
-                rankingEngine::gerar
-        );
+    public List<ClassificacaoStats> getRankingPorTurno(Long campeonatoId, Integer turno) {
+        String key = campeonatoId + "_turno_" + turno;
+        return cache.computeIfAbsent(key, k -> rankingEngine.gerarPorTurno(campeonatoId, turno));
     }
 
     public void recalcular(Long campeonatoId) {
-
-        List<ClassificacaoStats> novoRanking =
-                rankingEngine.gerar(campeonatoId);
-
-        cache.put(campeonatoId, novoRanking);
+        cache.entrySet().removeIf(entry -> entry.getKey().startsWith(campeonatoId + "_"));
+        cache.put(campeonatoId + "_geral", rankingEngine.gerar(campeonatoId));
     }
 }

@@ -63,19 +63,17 @@ public class CampeonatoController {
 
         return ResponseEntity.ok().build();
     }
-
     @GetMapping("/{campeonatoId}/classificacao")
-    public ResponseEntity<List<ClassificacaoResponseDto>>
-    gerarClassificacao(
-            @PathVariable Long campeonatoId
+    public ResponseEntity<List<ClassificacaoResponseDto>> gerarClassificacao(
+            @PathVariable Long campeonatoId,
+            @RequestParam(required = false) Integer turno
     ) {
-
-        List<ClassificacaoResponseDto> response =
-                classificacaoService.gerarClassificacao(
-                        campeonatoId
-                );
-
-        return ResponseEntity.ok(response);
+        if (turno != null) {
+            return ResponseEntity.ok(
+                    classificacaoService.gerarClassificacaoPorTurno(campeonatoId, turno)
+            );
+        }
+        return ResponseEntity.ok(classificacaoService.gerarClassificacao(campeonatoId));
     }
 
     @PostMapping("/{id}/fixtures")
@@ -96,25 +94,39 @@ public class CampeonatoController {
         return ResponseEntity.ok(campeonatoService.listarPartidas(id));
     }
     @GetMapping("/{id}/artilharia")
-    public ResponseEntity<List<ArtilhariaResponseDto>> artilharia(@PathVariable Long id) {
-        return ResponseEntity.ok(estatisticasJogadorService.artilharia(id));
+    public ResponseEntity<List<ArtilhariaResponseDto>> artilharia(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "10") int tamanho
+    ) {
+        return ResponseEntity.ok(estatisticasJogadorService.artilharia(id, pagina, tamanho));
     }
 
-    @GetMapping("/{campeonatoId}/assistencias")
-    public ResponseEntity<List<AssistenciaRankingResponseDto>> buscarRankingAssistencias(@PathVariable Long campeonatoId) {
-        List<AssistenciaRankingResponseDto> ranking = estatisticasJogadorService.rankingAssistencias(campeonatoId);
-        return ResponseEntity.ok(ranking);
+    @GetMapping("/{id}/assistencias")
+    public ResponseEntity<List<AssistenciaRankingResponseDto>> rankingAssistencias(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "10") int tamanho
+    ) {
+        return ResponseEntity.ok(estatisticasJogadorService.rankingAssistencias(id, pagina, tamanho));
     }
 
-    @GetMapping("/{campeonatoId}/cartoes-amarelos")
-    public ResponseEntity<List<RankingCartaoAmareloResponseDto>> buscarRankingCartaoAmarelo(@PathVariable Long campeonatoId) {
-        List<RankingCartaoAmareloResponseDto> ranking = estatisticasJogadorService.rankingCartaoAmarelo(campeonatoId);
-        return ResponseEntity.ok(ranking);
+    @GetMapping("/{id}/ranking/cartoes-amarelos")
+    public ResponseEntity<List<RankingCartaoAmareloResponseDto>> rankingCartaoAmarelo(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "10") int tamanho
+    ) {
+        return ResponseEntity.ok(estatisticasJogadorService.rankingCartaoAmarelo(id, pagina, tamanho));
     }
-    @GetMapping("/{campeonatoId}/cartoes-vermelhos")
-    public ResponseEntity<List<RankingCartaoVermelhoResponseDto>> buscarRankingCartaoVermelho(@PathVariable Long campeonatoId) {
-        List<RankingCartaoVermelhoResponseDto> ranking = estatisticasJogadorService.rankingCartaoVermelho(campeonatoId);
-        return ResponseEntity.ok(ranking);
+
+    @GetMapping("/{id}/ranking/cartoes-vermelhos")
+    public ResponseEntity<List<RankingCartaoVermelhoResponseDto>> rankingCartaoVermelho(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "10") int tamanho
+    ) {
+        return ResponseEntity.ok(estatisticasJogadorService.rankingCartaoVermelho(id, pagina, tamanho));
     }
 
     @GetMapping("/{campeonatoId}/selecao-do-campeonato")
@@ -128,10 +140,12 @@ public class CampeonatoController {
         return ResponseEntity.ok(estatisticasJogadorService.mvpCampeonato(campeonatoId));
     }
 
-    @GetMapping("/{campeonatoId}/ranking/goleiros")
+    @GetMapping("/{id}/ranking/goleiros")
     public ResponseEntity<List<RankingGoleiroResponseDto>> rankingGoleiros(
-            @PathVariable Long campeonatoId
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "10") int tamanho
     ) {
-        return ResponseEntity.ok(estatisticasJogadorService.rankingGoleiros(campeonatoId));
+        return ResponseEntity.ok(estatisticasJogadorService.rankingGoleiros(id, pagina, tamanho));
     }
 }

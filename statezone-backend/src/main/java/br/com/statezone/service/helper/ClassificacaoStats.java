@@ -22,6 +22,7 @@ public class ClassificacaoStats {
     private Integer golsSofridos;
     private Integer saldoGols;
     private Integer posicao;
+    private Double aproveitamento;
 
     public ClassificacaoStats(Time time) {
 
@@ -39,5 +40,6 @@ public class ClassificacaoStats {
         this.golsSofridos = 0;
         this.saldoGols = 0;
         this.posicao = 0;
+        this.aproveitamento = 0.0;
     }
 }

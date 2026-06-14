@@ -11,6 +11,7 @@ public record ClassificacaoResponseDto(
         Integer golsFeitos,
         Integer golsSofridos,
         Integer saldoGols,
-        Integer posicao
+        Integer posicao,
+        Double aproveitamento
 ) {
 }
