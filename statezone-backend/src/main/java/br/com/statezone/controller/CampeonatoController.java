@@ -127,4 +127,11 @@ public class CampeonatoController {
     public ResponseEntity<CraqueCampeonatoResponseDto> mvpCampeonato(@PathVariable Long campeonatoId) {
         return ResponseEntity.ok(estatisticasJogadorService.mvpCampeonato(campeonatoId));
     }
+
+    @GetMapping("/{campeonatoId}/ranking/goleiros")
+    public ResponseEntity<List<RankingGoleiroResponseDto>> rankingGoleiros(
+            @PathVariable Long campeonatoId
+    ) {
+        return ResponseEntity.ok(estatisticasJogadorService.rankingGoleiros(campeonatoId));
+    }
 }

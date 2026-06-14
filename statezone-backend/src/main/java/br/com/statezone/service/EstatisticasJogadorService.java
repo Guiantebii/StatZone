@@ -157,6 +157,28 @@ public class EstatisticasJogadorService {
         return estatisticasJogadorMapper.toCraqueCampeonatoDto(mvp, calcularScore(mvp));
     }
 
+    public List<RankingGoleiroResponseDto> rankingGoleiros(Long campeonatoId) {
+        var lista = estatisticasJogadorCampeonatoRepository
+                .findRankingGoleirosByCampeonatoId(campeonatoId);
+
+        AtomicInteger posicao = new AtomicInteger(1);
+
+        return lista.stream()
+                .map(e -> new RankingGoleiroResponseDto(
+                        posicao.getAndIncrement(),
+                        e.getJogador().getId(),
+                        e.getJogador().getNome(),
+                        e.getJogador().getFotoUrl(),
+                        e.getJogador().getTime().getNome(),
+                        e.getJogador().getTime().getEscudoUrl(),
+                        e.getCleanSheets(),
+                        e.getDefesas(),
+                        e.getPenaltisDefendidos(),
+                        e.getPartidasJogadas()
+                ))
+                .toList();
+    }
+
     private double calcularScore(EstatisticasJogadorCampeonato e) {
         return (e.getGols() * 5.0)
                 + (e.getAssistencias() * 3.0)
