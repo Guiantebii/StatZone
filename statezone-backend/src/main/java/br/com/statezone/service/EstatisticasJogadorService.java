@@ -11,6 +11,7 @@ import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -35,11 +36,11 @@ public class EstatisticasJogadorService {
                         "Estatisticas não encontradas para esse jogador"));
     }
 
-    public List<ArtilhariaResponseDto> artilharia(Long campeonatoId) {
+    public List<ArtilhariaResponseDto> artilharia(Long campeonatoId, int pagina, int tamanho) {
         var lista = estatisticasJogadorCampeonatoRepository
-                .findArtilheirosByCampeonatoId(campeonatoId);
+                .findArtilheirosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
-        AtomicInteger posicao = new AtomicInteger(1);
+        AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
         return lista.stream()
                 .map(e -> new ArtilhariaResponseDto(
@@ -53,11 +54,11 @@ public class EstatisticasJogadorService {
                 .toList();
     }
 
-    public List<AssistenciaRankingResponseDto> rankingAssistencias(Long campeonatoId) {
+    public List<AssistenciaRankingResponseDto> rankingAssistencias(Long campeonatoId, int pagina, int tamanho) {
         var lista = estatisticasJogadorCampeonatoRepository
-                .findAssistentesByCampeonatoId(campeonatoId);
+                .findAssistentesByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
-        AtomicInteger posicao = new AtomicInteger(1);
+        AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
         return lista.stream()
                 .map(e -> new AssistenciaRankingResponseDto(
@@ -70,12 +71,11 @@ public class EstatisticasJogadorService {
                 ))
                 .toList();
     }
-
-    public List<RankingCartaoAmareloResponseDto> rankingCartaoAmarelo(Long campeonatoId) {
+    public List<RankingCartaoAmareloResponseDto> rankingCartaoAmarelo(Long campeonatoId, int pagina, int tamanho) {
         var lista = estatisticasJogadorCampeonatoRepository
-                .findCartoesAmarelosByCampeonatoId(campeonatoId);
+                .findCartoesAmarelosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
-        AtomicInteger posicao = new AtomicInteger(1);
+        AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
         return lista.stream()
                 .map(e -> new RankingCartaoAmareloResponseDto(
@@ -88,12 +88,11 @@ public class EstatisticasJogadorService {
                 ))
                 .toList();
     }
-
-    public List<RankingCartaoVermelhoResponseDto> rankingCartaoVermelho(Long campeonatoId) {
+    public List<RankingCartaoVermelhoResponseDto> rankingCartaoVermelho(Long campeonatoId, int pagina, int tamanho) {
         var lista = estatisticasJogadorCampeonatoRepository
-                .findCartoesVermelhosByCampeonatoId(campeonatoId);
+                .findCartoesVermelhosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
-        AtomicInteger posicao = new AtomicInteger(1);
+        AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
         return lista.stream()
                 .map(e -> new RankingCartaoVermelhoResponseDto(
@@ -157,11 +156,11 @@ public class EstatisticasJogadorService {
         return estatisticasJogadorMapper.toCraqueCampeonatoDto(mvp, calcularScore(mvp));
     }
 
-    public List<RankingGoleiroResponseDto> rankingGoleiros(Long campeonatoId) {
+    public List<RankingGoleiroResponseDto> rankingGoleiros(Long campeonatoId, int pagina, int tamanho) {
         var lista = estatisticasJogadorCampeonatoRepository
-                .findRankingGoleirosByCampeonatoId(campeonatoId);
+                .findRankingGoleirosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
-        AtomicInteger posicao = new AtomicInteger(1);
+        AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
         return lista.stream()
                 .map(e -> new RankingGoleiroResponseDto(
