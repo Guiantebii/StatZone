@@ -28,12 +28,36 @@ public class RankingEngine {
             );
 
     public List<ClassificacaoStats> gerar(Long campeonatoId) {
+        return gerarComFiltro(campeonatoId, null);
+    }
+
+    public List<ClassificacaoStats> gerarPorTurno(Long campeonatoId, Integer turno) {
+        return gerarComFiltro(campeonatoId, turno);
+    }
+
+    private List<ClassificacaoStats> gerarComFiltro(Long campeonatoId, Integer turno) {
 
         List<Partida> partidas =
                 partidaRepository.findByCampeonatoIdAndStatusInWithTimes(
                         campeonatoId,
                         STATUSES_QUE_CONTAM
                 );
+
+        if (turno != null) {
+            Integer maxRodada = partidaRepository.findMaxRodada(campeonatoId);
+
+            if (maxRodada != null) {
+                int rodadasPorTurno = maxRodada / 2;
+
+                partidas = partidas.stream()
+                        .filter(p -> {
+                            if (turno == 1) return p.getRodada() <= rodadasPorTurno;
+                            if (turno == 2) return p.getRodada() > rodadasPorTurno;
+                            return true;
+                        })
+                        .toList();
+            }
+        }
 
         Map<Long, ClassificacaoStats> tabela = new HashMap<>();
 
@@ -97,6 +121,7 @@ public class RankingEngine {
                 statsVisitante.setPontos(statsVisitante.getPontos() + 1);
             }
         }
+
         
         // ordenação
         List<ClassificacaoStats> ranking =
@@ -111,9 +136,14 @@ public class RankingEngine {
                         .collect(Collectors.toList());
 
         for (int i = 0; i < ranking.size(); i++) {
-            ranking.get(i).setPosicao(i + 1);
-        }
+            ClassificacaoStats stats = ranking.get(i);
+            stats.setPosicao(i + 1);
 
+            double aproveitamento = stats.getJogos() > 0
+                    ? Math.round((stats.getPontos() / (double)(stats.getJogos() * 3)) * 1000.0) / 10.0
+                    : 0.0;
+            stats.setAproveitamento(aproveitamento);
+        }
         return ranking;
     }
 }

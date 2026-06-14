@@ -61,4 +61,10 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
       )
     """)
     Integer findProximaRodada(@Param("campeonatoId") Long campeonatoId);
+
+    @Query("""
+    SELECT MAX(p.rodada) FROM Partida p
+    WHERE p.campeonato.id = :campeonatoId
+    """)
+    Integer findMaxRodada(@Param("campeonatoId") Long campeonatoId);
 }

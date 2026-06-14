@@ -63,19 +63,17 @@ public class CampeonatoController {
 
         return ResponseEntity.ok().build();
     }
-
     @GetMapping("/{campeonatoId}/classificacao")
-    public ResponseEntity<List<ClassificacaoResponseDto>>
-    gerarClassificacao(
-            @PathVariable Long campeonatoId
+    public ResponseEntity<List<ClassificacaoResponseDto>> gerarClassificacao(
+            @PathVariable Long campeonatoId,
+            @RequestParam(required = false) Integer turno
     ) {
-
-        List<ClassificacaoResponseDto> response =
-                classificacaoService.gerarClassificacao(
-                        campeonatoId
-                );
-
-        return ResponseEntity.ok(response);
+        if (turno != null) {
+            return ResponseEntity.ok(
+                    classificacaoService.gerarClassificacaoPorTurno(campeonatoId, turno)
+            );
+        }
+        return ResponseEntity.ok(classificacaoService.gerarClassificacao(campeonatoId));
     }
 
     @PostMapping("/{id}/fixtures")
