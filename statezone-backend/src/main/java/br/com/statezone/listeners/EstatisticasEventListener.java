@@ -1,13 +1,12 @@
 package br.com.statezone.listeners;
 
+import br.com.statezone.enums.MotivoSuspensao;
 import br.com.statezone.events.EventoPartidaCriadaEvent;
 import br.com.statezone.model.EstatisticasJogador;
 import br.com.statezone.model.EstatisticasJogadorCampeonato;
 import br.com.statezone.model.EstatisticasPartida;
-import br.com.statezone.repository.EscalacaoPartidaRepository;
-import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
-import br.com.statezone.repository.EstatisticasJogadorRepository;
-import br.com.statezone.repository.EstatisticasPartidaRepository;
+import br.com.statezone.model.Suspensao;
+import br.com.statezone.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -21,6 +20,7 @@ public class EstatisticasEventListener {
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
     private final EscalacaoPartidaRepository escalacaoPartidaRepository;
+    private final SuspensaoRepository suspensaoRepository;
 
     @EventListener
     @Transactional
@@ -153,8 +153,33 @@ public class EstatisticasEventListener {
                 }
                 statsJogadorCarreira.setCartoesAmarelos(statsJogadorCarreira.getCartoesAmarelos() + 1);
                 statsJogadorCampeonato.setCartoesAmarelos(statsJogadorCampeonato.getCartoesAmarelos() + 1);
-            }
 
+                int amarelosParaSuspensao = partida.getCampeonato().getAmarelosParaSuspensao() != null
+                        ? partida.getCampeonato().getAmarelosParaSuspensao()
+                        : 3;
+
+                if (statsJogadorCampeonato.getCartoesAmarelos() >= amarelosParaSuspensao) {
+                    int proximaRodada = partida.getRodada() + 1;
+
+                    boolean jaTemSuspensao = suspensaoRepository
+                            .existsByJogadorIdAndCampeonatoIdAndRodadaSuspensao(
+                                    e.getJogador().getId(),
+                                    partida.getCampeonato().getId(),
+                                    proximaRodada
+                            );
+
+                    if (!jaTemSuspensao) {
+                        Suspensao suspensao = new Suspensao();
+                        suspensao.setJogador(e.getJogador());
+                        suspensao.setCampeonato(partida.getCampeonato());
+                        suspensao.setRodadaSuspensao(proximaRodada);
+                        suspensao.setMotivo(MotivoSuspensao.ACUMULO_AMARELOS);
+                        suspensaoRepository.save(suspensao);
+
+                        statsJogadorCampeonato.setCartoesAmarelos(0);
+                    }
+                }
+            }
             case CARTAO_VERMELHO -> {
                 if (mandante) {
                     stats.setCartoesVermelhosMandante(stats.getCartoesVermelhosMandante() + 1);
@@ -163,6 +188,24 @@ public class EstatisticasEventListener {
                 }
                 statsJogadorCarreira.setCartoesVermelhos(statsJogadorCarreira.getCartoesVermelhos() + 1);
                 statsJogadorCampeonato.setCartoesVermelhos(statsJogadorCampeonato.getCartoesVermelhos() + 1);
+
+                int proximaRodada = partida.getRodada() + 1;
+
+                boolean jaTemSuspensao = suspensaoRepository
+                        .existsByJogadorIdAndCampeonatoIdAndRodadaSuspensao(
+                                e.getJogador().getId(),
+                                partida.getCampeonato().getId(),
+                                proximaRodada
+                        );
+
+                if (!jaTemSuspensao) {
+                    Suspensao suspensao = new Suspensao();
+                    suspensao.setJogador(e.getJogador());
+                    suspensao.setCampeonato(partida.getCampeonato());
+                    suspensao.setRodadaSuspensao(proximaRodada);
+                    suspensao.setMotivo(MotivoSuspensao.CARTAO_VERMELHO);
+                    suspensaoRepository.save(suspensao);
+                }
             }
 
             case ESCANTEIO -> {

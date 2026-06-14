@@ -18,6 +18,8 @@ public record CampeonatoRequestDto(
         String temporada,
 
         @NotBlank(message = "A logo URL é obrigatória")
-        String logoUrl
+        String logoUrl,
+
+          Integer amarelosParaSuspensao
 ) {
 }

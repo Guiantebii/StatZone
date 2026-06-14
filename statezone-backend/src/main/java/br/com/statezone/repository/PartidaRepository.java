@@ -51,4 +51,14 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
             @Param("campeonatoId") Long campeonatoId,
             @Param("statuses") List<StatusPartida> statuses
     );
+
+    @Query("""
+    SELECT MIN(p.rodada) FROM Partida p
+    WHERE p.campeonato.id = :campeonatoId
+      AND p.status IN (
+          br.com.statezone.enums.StatusPartida.AGENDADA,
+          br.com.statezone.enums.StatusPartida.AO_VIVO
+      )
+    """)
+    Integer findProximaRodada(@Param("campeonatoId") Long campeonatoId);
 }
