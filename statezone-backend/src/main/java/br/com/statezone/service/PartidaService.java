@@ -2,6 +2,7 @@ package br.com.statezone.service;
 
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
+import br.com.statezone.enums.Posicao;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.enums.TipoEvento;
 import br.com.statezone.exception.BusinessException;
@@ -144,6 +145,8 @@ public class PartidaService {
         );
 
         atualizarPartidasJogadasDosAtletas(salva);
+
+        atualizarCleanSheets(salva);
 
         rankingCacheService.recalcular(
                 salva.getCampeonato().getId()
@@ -438,5 +441,58 @@ public class PartidaService {
         rankingCacheService.recalcular(salva.getCampeonato().getId());
 
         return partidaMapper.toDto(salva);
+    }
+
+    private void atualizarCleanSheets(Partida partida) {
+
+        boolean mandanteSofreu = partida.getGolsVisitante() > 0;
+        boolean visitanteSofreu = partida.getGolsMandante() > 0;
+
+
+        if (!mandanteSofreu) {
+            atribuirCleanSheetParaGoleiros(
+                    partida.getTimeMandante().getId(),
+                    partida
+            );
+        }
+
+        if (!visitanteSofreu) {
+            atribuirCleanSheetParaGoleiros(
+                    partida.getTimeVisitante().getId(),
+                    partida
+            );
+        }
+    }
+
+    private void atribuirCleanSheetParaGoleiros(Long timeId, Partida partida) {
+
+        jogadorRepository.findByTimeIdAndPosicao(timeId, Posicao.GOLEIRO)
+                .forEach(goleiro -> {
+
+
+                    EstatisticasJogador carreira = estatisticasJogadorRepository
+                            .findByJogadorId(goleiro.getId())
+                            .orElseGet(() -> {
+                                EstatisticasJogador s = new EstatisticasJogador();
+                                s.setJogador(goleiro);
+                                return s;
+                            });
+                    carreira.setCleanSheets(carreira.getCleanSheets() + 1);
+                    estatisticasJogadorRepository.save(carreira);
+
+                    EstatisticasJogadorCampeonato campeonato = estatisticasJogadorCampeonatoRepository
+                            .findByJogadorIdAndCampeonatoId(
+                                    goleiro.getId(),
+                                    partida.getCampeonato().getId()
+                            )
+                            .orElseGet(() -> {
+                                EstatisticasJogadorCampeonato s = new EstatisticasJogadorCampeonato();
+                                s.setJogador(goleiro);
+                                s.setCampeonato(partida.getCampeonato());
+                                return s;
+                            });
+                    campeonato.setCleanSheets(campeonato.getCleanSheets() + 1);
+                    estatisticasJogadorCampeonatoRepository.save(campeonato);
+                });
     }
 }

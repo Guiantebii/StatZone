@@ -48,4 +48,7 @@ public class EstatisticasJogador {
 
     @Column(name = "penaltis_perdidos")
     private Integer penaltisPerdidos = 0;
+
+    @Column(name = "clean_sheets")
+    private Integer cleanSheets = 0;
 }

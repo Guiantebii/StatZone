@@ -77,4 +77,16 @@ public interface EstatisticasJogadorCampeonatoRepository
             @Param("campeonatoId") Long campeonatoId,
             @Param("minPartidas") int minPartidas
     );
+
+    @Query("""
+    SELECT e FROM EstatisticasJogadorCampeonato e
+    JOIN FETCH e.jogador j
+    JOIN FETCH j.time t
+    WHERE e.campeonato.id = :campeonatoId
+      AND j.posicao = br.com.statezone.enums.Posicao.GOLEIRO
+    ORDER BY e.cleanSheets DESC, e.defesas DESC, e.penaltisDefendidos DESC
+    """)
+    List<EstatisticasJogadorCampeonato> findRankingGoleirosByCampeonatoId(
+            @Param("campeonatoId") Long campeonatoId
+    );
 }
