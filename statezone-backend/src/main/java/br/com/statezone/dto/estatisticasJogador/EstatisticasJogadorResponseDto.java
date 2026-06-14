@@ -13,6 +13,9 @@ public record EstatisticasJogadorResponseDto(
         Integer partidasJogadas,
         Integer defesas,
         Integer penaltisDefendidos,
-        Integer penaltisPerdidos
-) {
-}
+        Integer penaltisPerdidos,
+        Integer cleanSheets,
+        Double mediaGolsPorPartida,
+        Double mediaAssistenciasPorPartida,
+        Double mediaDefesasPorPartida
+) {}

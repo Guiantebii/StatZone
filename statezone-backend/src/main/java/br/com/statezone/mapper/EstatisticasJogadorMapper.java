@@ -10,13 +10,21 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface EstatisticasJogadorMapper {
 
-    // ─── Carreira ───────────────────────────────────────────────
+
     @Mapping(source = "jogador.id", target = "jogadorId")
     @Mapping(source = "jogador.nome", target = "nomeJogador")
     @Mapping(source = "jogador.time.nome", target = "nomeTime")
+    @Mapping(source = "cleanSheets", target = "cleanSheets")
+    @Mapping(target = "mediaGolsPorPartida", expression = "java(calcularMedia(entity.getGols(), entity.getPartidasJogadas()))")
+    @Mapping(target = "mediaAssistenciasPorPartida", expression = "java(calcularMedia(entity.getAssistencias(), entity.getPartidasJogadas()))")
+    @Mapping(target = "mediaDefesasPorPartida", expression = "java(calcularMedia(entity.getDefesas(), entity.getPartidasJogadas()))")
     EstatisticasJogadorResponseDto toDto(EstatisticasJogador entity);
 
-    // ─── Campeonato ──────────────────────────────────────────────
+    default Double calcularMedia(Integer valor, Integer partidas) {
+        if (partidas == null || partidas == 0) return 0.0;
+        return Math.round((valor / (double) partidas) * 100.0) / 100.0;
+    }
+
     @Mapping(source = "entity.jogador.id", target = "jogadorId")
     @Mapping(source = "entity.jogador.nome", target = "nomeJogador")
     @Mapping(source = "entity.jogador.time.nome", target = "nomeTime")
@@ -33,4 +41,6 @@ public interface EstatisticasJogadorMapper {
             EstatisticasJogadorCampeonato entity,
             Double score
     );
+
+
 }
