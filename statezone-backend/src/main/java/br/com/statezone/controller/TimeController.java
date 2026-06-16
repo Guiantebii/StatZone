@@ -4,6 +4,7 @@ import br.com.statezone.dto.jogador.JogadorResponseDto;
 import br.com.statezone.dto.time.TimeRequestDto;
 import br.com.statezone.dto.time.TimeResponseDto;
 import br.com.statezone.dto.time.UltimasPartidasTimeResponseDto;
+import br.com.statezone.service.ApiFootballImportService;
 import br.com.statezone.service.TimeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TimeController {
     private final TimeService timeService;
+    private final ApiFootballImportService apiFootballImportService;
 
     @PostMapping
     public ResponseEntity<TimeResponseDto> criarTime(

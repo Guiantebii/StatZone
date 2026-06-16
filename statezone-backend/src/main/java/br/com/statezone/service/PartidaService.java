@@ -35,6 +35,7 @@ public class PartidaService {
     private final EventoPartidaRepository eventoPartidaRepository;
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
     private final ApplicationEventPublisher publisher;
+    private final PartidaWebSocketService partidaWebSocketService;
 
     public PartidaResponseDto criar(PartidaRequestDto dto) {
 
@@ -122,6 +123,8 @@ public class PartidaService {
                 1
         );
 
+        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
+
         return partidaMapper.toDto(salva);
     }
 
@@ -144,6 +147,7 @@ public class PartidaService {
         rankingCacheService.recalcular(salva.getCampeonato().getId());
 
         publisher.publishEvent(new PartidaEncerradaEvent(salva));
+        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
         return partidaMapper.toDto(salva);
     }
@@ -269,6 +273,7 @@ public class PartidaService {
                 TipoEvento.FIM_PRIMEIRO_TEMPO,
                 45
         );
+        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
         return partidaMapper.toDto(salva);
     }
@@ -291,6 +296,8 @@ public class PartidaService {
                 TipoEvento.INICIO_SEGUNDO_TEMPO,
                 46
         );
+
+        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
         return partidaMapper.toDto(salva);
     }
@@ -426,6 +433,8 @@ public class PartidaService {
         atualizarPartidasJogadasDosAtletas(salva);
         rankingCacheService.recalcular(salva.getCampeonato().getId());
         publisher.publishEvent(new PartidaEncerradaEvent(salva));
+
+        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
         return partidaMapper.toDto(salva);
     }

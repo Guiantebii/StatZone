@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PartidaRepository extends JpaRepository<Partida,Long> {
@@ -69,4 +70,6 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
     Integer findMaxRodada(@Param("campeonatoId") Long campeonatoId);
 
     boolean existsByGrupoId(Long grupoId);
+
+    Optional<Partida> findByApiFootballId(Long apiFootballId);
 }
