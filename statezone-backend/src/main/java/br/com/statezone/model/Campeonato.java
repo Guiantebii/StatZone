@@ -29,7 +29,10 @@ public class Campeonato {
 
     @Column(name = "logo_url")
     private String logoUrl;
-    
+
+    @Column(name = "api_football_id", unique = true)
+    private Long apiFootballId;
+
     @Column(name = "amarelos_para_suspensao")
     private Integer amarelosParaSuspensao = 3;
 

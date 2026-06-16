@@ -50,6 +50,9 @@ public class Jogador {
     @Column(name = "foto_url")
     private String fotoUrl;
 
+    @Column(name = "api_football_id", unique = true)
+    private Long apiFootballId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "time_id")
     private Time time;

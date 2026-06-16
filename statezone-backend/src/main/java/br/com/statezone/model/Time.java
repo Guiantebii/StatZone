@@ -1,6 +1,5 @@
 package br.com.statezone.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -39,6 +38,9 @@ public class Time {
 
     @Column(name = "seed")
     private Integer seed;
+
+    @Column(name = "api_football_id", unique = true)
+    private Long apiFootballId;
 
     @Column(name = "fundado_em")
     private LocalDate fundadoEm;

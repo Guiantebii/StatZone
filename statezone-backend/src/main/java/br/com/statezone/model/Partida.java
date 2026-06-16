@@ -67,6 +67,8 @@ public class Partida {
     @JoinColumn(name = "grupo_id")
     private Grupo grupo;
 
+    @Column(name = "api_football_id", unique = true)
+    private Long apiFootballId;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fase_eliminatoria_id")
     private FaseEliminatoria faseEliminatoria;
