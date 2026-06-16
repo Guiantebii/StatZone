@@ -37,6 +37,9 @@ public class Time {
 
     private String estadio;
 
+    @Column(name = "seed")
+    private Integer seed;
+
     @Column(name = "fundado_em")
     private LocalDate fundadoEm;
 

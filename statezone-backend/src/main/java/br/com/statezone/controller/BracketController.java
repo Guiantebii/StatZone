@@ -1,0 +1,61 @@
+package br.com.statezone.controller;
+
+import br.com.statezone.dto.eliminatoria.*;
+import br.com.statezone.service.BracketService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.List;
+
+@RestController
+@RequestMapping("/campeonatos/{campeonatoId}")
+@RequiredArgsConstructor
+public class BracketController {
+
+    private final BracketService bracketService;
+
+    @PostMapping("/fases")
+    public ResponseEntity<FaseEliminatoriaResponseDto> criarFase(
+            @PathVariable Long campeonatoId,
+            @RequestBody @Valid FaseEliminatoriaRequestDto dto
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(bracketService.criarFase(campeonatoId, dto));
+    }
+
+    @GetMapping("/fases")
+    public ResponseEntity<List<FaseEliminatoriaResponseDto>> listarFases(
+            @PathVariable Long campeonatoId
+    ) {
+        return ResponseEntity.ok(bracketService.listarFases(campeonatoId));
+    }
+
+    @PostMapping("/fases/{faseId}/gerar")
+    public ResponseEntity<Void> gerarPrimeiraFase(
+            @PathVariable Long campeonatoId,
+            @PathVariable Long faseId
+    ) {
+        bracketService.gerarPrimeiraFase(campeonatoId, faseId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/confrontos")
+    public ResponseEntity<List<ConfrontoEliminatorioResponseDto>> listarConfrontos(
+            @PathVariable Long campeonatoId
+    ) {
+        return ResponseEntity.ok(bracketService.listarConfrontos(campeonatoId));
+    }
+
+    @PostMapping("/confrontos/{confrontoId}/encerrar")
+    public ResponseEntity<FaseEliminatoriaResponseDto> encerrarConfronto(
+            @PathVariable Long campeonatoId,
+            @PathVariable Long confrontoId
+    ) {
+        return ResponseEntity.ok(
+                bracketService.encerraConfronto(campeonatoId, confrontoId)
+        );
+    }
+}
