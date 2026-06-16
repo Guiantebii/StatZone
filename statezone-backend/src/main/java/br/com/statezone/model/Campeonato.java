@@ -1,5 +1,6 @@
 package br.com.statezone.model;
 
+import br.com.statezone.enums.TipoFormato;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -35,6 +36,9 @@ public class Campeonato {
     @OneToMany(mappedBy = "campeonato", fetch = FetchType.LAZY)
     private List<Partida> partidas;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_formato")
+    private TipoFormato tipoFormato = TipoFormato.PONTOS_CORRIDOS;
 
     @ManyToMany
     @JoinTable(

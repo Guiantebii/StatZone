@@ -67,4 +67,6 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
     WHERE p.campeonato.id = :campeonatoId
     """)
     Integer findMaxRodada(@Param("campeonatoId") Long campeonatoId);
+
+    boolean existsByGrupoId(Long grupoId);
 }

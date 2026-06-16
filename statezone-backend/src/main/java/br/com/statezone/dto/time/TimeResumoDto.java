@@ -1,4 +1,8 @@
 package br.com.statezone.dto.time;
 
-public class TimeResumoDto {
-}
+public record TimeResumoDto(
+        Long id,
+        String nome,
+        String sigla,
+        String escudoUrl
+) {}

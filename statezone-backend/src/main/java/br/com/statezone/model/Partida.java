@@ -33,11 +33,11 @@ public class Partida {
     @Enumerated(EnumType.STRING)
     private StatusPartida status;
 
-    @Column(name = "gols_mandante")
-    private Integer golsMandante;
+    @Column(name = "gols_mandante", nullable = false)
+    private Integer golsMandante = 0;
 
-    @Column(name = "gols_visitante")
-    private Integer golsVisitante;
+    @Column(name = "gols_visitante",nullable = false)
+    private Integer golsVisitante = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "time_mandante_id")
@@ -62,6 +62,14 @@ public class Partida {
 
     @OneToOne(mappedBy = "partida", fetch = FetchType.LAZY)
     private EstatisticasPartida estatisticas;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grupo_id")
+    private Grupo grupo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fase_eliminatoria_id")
+    private FaseEliminatoria faseEliminatoria;
 
     @CreationTimestamp
     @Column(name = "criado_em")

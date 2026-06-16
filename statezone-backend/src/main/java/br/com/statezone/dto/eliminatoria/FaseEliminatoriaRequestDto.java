@@ -1,4 +1,11 @@
 package br.com.statezone.dto.eliminatoria;
 
-public record FaseEliminatoriaRequestDto() {
-}
+import br.com.statezone.enums.FaseEnum;
+import jakarta.validation.constraints.NotNull;
+
+public record FaseEliminatoriaRequestDto(
+        @NotNull(message = "Fase é obrigatória")
+        FaseEnum fase,
+
+        Boolean jogoUnico
+) {}

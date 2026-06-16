@@ -5,16 +5,17 @@ import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.enums.Posicao;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.enums.TipoEvento;
+import br.com.statezone.events.PartidaEncerradaEvent;
 import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;
 import br.com.statezone.exception.ResourceNotFoundException;
-import br.com.statezone.mapper.EventoPartidaMapper;
 import br.com.statezone.mapper.PartidaMapper;
 import br.com.statezone.model.*;
 import br.com.statezone.repository.*;
 import br.com.statezone.service.ranking.RankingCacheService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,8 +33,8 @@ public class PartidaService {
     private final JogadorRepository jogadorRepository;
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
     private final EventoPartidaRepository eventoPartidaRepository;
-    private final EventoPartidaMapper eventoPartidaMapper;
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
+    private final ApplicationEventPublisher publisher;
 
     public PartidaResponseDto criar(PartidaRequestDto dto) {
 
@@ -125,36 +126,27 @@ public class PartidaService {
     }
 
     public PartidaResponseDto encerrar(Long id) {
-
         Partida partida = buscarPartida(id);
 
         if (partida.getStatus() != StatusPartida.AO_VIVO) {
-            throw new BusinessException(
-                    "Só partidas ao vivo podem ser encerradas"
-            );
+            throw new BusinessException("Só partidas ao vivo podem ser encerradas");
         }
 
         partida.setStatus(StatusPartida.ENCERRADA);
 
+
         Partida salva = partidaRepository.save(partida);
 
-        criarEventoSistema(
-                salva,
-                TipoEvento.FIM_PARTIDA,
-                90
-        );
 
+        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 90);
         atualizarPartidasJogadasDosAtletas(salva);
-
         atualizarCleanSheets(salva);
+        rankingCacheService.recalcular(salva.getCampeonato().getId());
 
-        rankingCacheService.recalcular(
-                salva.getCampeonato().getId()
-        );
+        publisher.publishEvent(new PartidaEncerradaEvent(salva));
 
         return partidaMapper.toDto(salva);
     }
-
     public void deletar(Long id) {
 
         Partida partida = buscarPartida(id);
@@ -415,17 +407,13 @@ public class PartidaService {
     }
 
     public PartidaResponseDto encerrarComPenaltis(Long id, Integer golsPenaltisMandante, Integer golsPenaltisVisitante) {
-
         Partida partida = buscarPartida(id);
 
         if (partida.getStatus() != StatusPartida.PENALTIS) {
-            throw new BusinessException(
-                    "Partida não está em disputa de pênaltis");
+            throw new BusinessException("Partida não está em disputa de pênaltis");
         }
-
         if (golsPenaltisMandante.equals(golsPenaltisVisitante)) {
-            throw new BusinessException(
-                    "O resultado dos pênaltis não pode ser empate");
+            throw new BusinessException("O resultado dos pênaltis não pode ser empate");
         }
 
         partida.setGolsPenaltisMandante(golsPenaltisMandante);
@@ -435,32 +423,26 @@ public class PartidaService {
         Partida salva = partidaRepository.save(partida);
 
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 120);
-
         atualizarPartidasJogadasDosAtletas(salva);
-
         rankingCacheService.recalcular(salva.getCampeonato().getId());
+        publisher.publishEvent(new PartidaEncerradaEvent(salva));
 
         return partidaMapper.toDto(salva);
     }
 
     private void atualizarCleanSheets(Partida partida) {
+        int golsMandante = (partida.getGolsMandante() != null) ? partida.getGolsMandante() : 0;
+        int golsVisitante = (partida.getGolsVisitante() != null) ? partida.getGolsVisitante() : 0;
 
-        boolean mandanteSofreu = partida.getGolsVisitante() > 0;
-        boolean visitanteSofreu = partida.getGolsMandante() > 0;
-
+        boolean mandanteSofreu = golsVisitante > 0;
+        boolean visitanteSofreu = golsMandante > 0;
 
         if (!mandanteSofreu) {
-            atribuirCleanSheetParaGoleiros(
-                    partida.getTimeMandante().getId(),
-                    partida
-            );
+            atribuirCleanSheetParaGoleiros(partida.getTimeMandante().getId(), partida);
         }
 
         if (!visitanteSofreu) {
-            atribuirCleanSheetParaGoleiros(
-                    partida.getTimeVisitante().getId(),
-                    partida
-            );
+            atribuirCleanSheetParaGoleiros(partida.getTimeVisitante().getId(), partida);
         }
     }
 

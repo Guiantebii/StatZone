@@ -1,4 +1,8 @@
 package br.com.statezone.dto.eliminatoria;
 
-public record GrupoRequestDto() {
-}
+import jakarta.validation.constraints.NotBlank;
+
+public record GrupoRequestDto(
+        @NotBlank(message = "Nome do grupo é obrigatório")
+        String nome
+) {}

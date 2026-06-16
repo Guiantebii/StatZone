@@ -137,35 +137,22 @@ public class EventoPartidaService {
         }
 
         private void aplicarGolSeNecessario(Partida partida, EventoPartida evento) {
-
-                if (evento.getTime() == null) {
-                        return;
-                }
+                if (evento.getTime() == null) return;
 
                 TipoEvento tipo = evento.getTipoEvento();
-
-                boolean mandante =
-                        evento.getTime().getId().equals(partida.getTimeMandante().getId());
+                boolean mandante = evento.getTime().getId().equals(partida.getTimeMandante().getId());
+                
+                int golsMandante = (partida.getGolsMandante() != null) ? partida.getGolsMandante() : 0;
+                int golsVisitante = (partida.getGolsVisitante() != null) ? partida.getGolsVisitante() : 0;
 
                 switch (tipo) {
-
                         case GOL, PENALTI_GOL -> {
-                                if (mandante) {
-                                        partida.setGolsMandante(partida.getGolsMandante() + 1);
-                                } else {
-                                        partida.setGolsVisitante(partida.getGolsVisitante() + 1);
-                                }
+                                if (mandante) partida.setGolsMandante(golsMandante + 1);
+                                else partida.setGolsVisitante(golsVisitante + 1);
                         }
-
                         case GOL_CONTRA -> {
-                                if (mandante) {
-                                        partida.setGolsVisitante(partida.getGolsVisitante() + 1);
-                                } else {
-                                        partida.setGolsMandante(partida.getGolsMandante() + 1);
-                                }
-                        }
-
-                        default -> {
+                                if (mandante) partida.setGolsVisitante(golsVisitante + 1);
+                                else partida.setGolsMandante(golsMandante + 1);
                         }
                 }
         }

@@ -1,4 +1,13 @@
 package br.com.statezone.dto.eliminatoria;
 
-public record GrupoResponseDto() {
-}
+import br.com.statezone.dto.time.TimeResumoDto;
+
+import java.util.List;
+
+public record GrupoResponseDto(
+        Long id,
+        String nome,
+        Long campeonatoId,
+        String campeonatoNome,
+        List<TimeResumoDto> times
+) {}
