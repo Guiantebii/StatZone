@@ -1,13 +1,12 @@
 package br.com.statezone.controller;
 
+
 import br.com.statezone.service.ApiFootballImportService;
 import br.com.statezone.service.ApiFootballJogadorImportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @RestController
 @RequestMapping("/api/importacao")
@@ -16,6 +15,7 @@ public class ImportacaoController {
 
     private final ApiFootballImportService apiFootballImportService;
     private final ApiFootballJogadorImportService jogadorImportService;
+    private final WebClient apiFootballWebClient;
 
     @PostMapping("/times")
     public String importarTimes() {
@@ -40,5 +40,21 @@ public class ImportacaoController {
         jogadorImportService.importarJogadoresTodosTimes();
 
         return ResponseEntity.ok().build();
+    }
+
+
+    @GetMapping("/teste-fixtures")
+    public Object buscarPartidasTeste() {
+        return apiFootballWebClient
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/fixtures")
+                        .queryParam("league", 71)
+                        .queryParam("season", 2024)
+                        .queryParam("round", "Regular Season - 1")
+                        .build())
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
     }
 }

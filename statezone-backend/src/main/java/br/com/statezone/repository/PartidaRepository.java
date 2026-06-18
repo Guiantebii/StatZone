@@ -72,4 +72,15 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
     boolean existsByGrupoId(Long grupoId);
 
     Optional<Partida> findByApiFootballId(Long apiFootballId);
+
+    @Query("""
+    SELECT p FROM Partida p
+    WHERE p.campeonato.id = :campeonatoId
+      AND p.status = 'AGENDADA'
+      AND (p.timeMandante.id = :timeId OR p.timeVisitante.id = :timeId)
+    ORDER BY p.rodada ASC NULLS LAST, p.id ASC
+""")
+    List<Partida> findProximasPartidasDoTime(Long campeonatoId, Long timeId, Pageable pageable);
+
+    List<Partida> findByGrupoIdAndStatusIn(Long grupoId, List<StatusPartida> status);
 }

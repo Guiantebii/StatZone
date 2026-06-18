@@ -36,9 +36,10 @@ public class BracketController {
     @PostMapping("/fases/{faseId}/gerar")
     public ResponseEntity<Void> gerarPrimeiraFase(
             @PathVariable Long campeonatoId,
-            @PathVariable Long faseId
+            @PathVariable Long faseId,
+            @RequestParam(defaultValue = "2") int vagasPorGrupo
     ) {
-        bracketService.gerarPrimeiraFase(campeonatoId, faseId);
+        bracketService.gerarPrimeiraFase(campeonatoId, faseId, vagasPorGrupo);
         return ResponseEntity.ok().build();
     }
 

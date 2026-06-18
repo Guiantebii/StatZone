@@ -48,7 +48,15 @@ public class ConfrontoEventListener {
     }
 
     private void mapearPenaltisParaConfronto(ConfrontoEliminatorio confronto, Partida partida) {
-        if (partida.getGolsPenaltisMandante() != null) {
+        if (partida.getGolsPenaltisMandante() == null) return;
+
+        boolean ehVolta = confronto.getPartidaVolta() != null
+                && confronto.getPartidaVolta().getId().equals(partida.getId());
+
+        if (ehVolta) {
+            confronto.setGolsPenaltisA(partida.getGolsPenaltisVisitante());
+            confronto.setGolsPenaltisB(partida.getGolsPenaltisMandante());
+        } else {
             confronto.setGolsPenaltisA(partida.getGolsPenaltisMandante());
             confronto.setGolsPenaltisB(partida.getGolsPenaltisVisitante());
         }

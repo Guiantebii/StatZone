@@ -30,8 +30,12 @@ public class Suspensao {
     @JoinColumn(name = "campeonato_id", nullable = false)
     private Campeonato campeonato;
 
-    @Column(name = "rodada_suspensao", nullable = false)
+    @Column(name = "rodada_suspensao")
     private Integer rodadaSuspensao;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "partida_alvo_id")
+    private Partida partidaAlvo;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "motivo", nullable = false)

@@ -35,6 +35,12 @@ public class RankingEngine {
         return gerarComFiltro(campeonatoId, turno);
     }
 
+    public List<ClassificacaoStats> gerarPorGrupo(Long grupoId) {
+        List<Partida> partidas =
+                partidaRepository.findByGrupoIdAndStatusIn(grupoId, STATUSES_QUE_CONTAM);
+        return calcularClassificacao(partidas);
+    }
+
     private List<ClassificacaoStats> gerarComFiltro(Long campeonatoId, Integer turno) {
 
         List<Partida> partidas =
@@ -58,6 +64,11 @@ public class RankingEngine {
                         .toList();
             }
         }
+
+        return calcularClassificacao(partidas);
+    }
+
+    private List<ClassificacaoStats> calcularClassificacao(List<Partida> partidas) {
 
         Map<Long, ClassificacaoStats> tabela = new HashMap<>();
 
@@ -122,7 +133,6 @@ public class RankingEngine {
             }
         }
 
-        
         // ordenação
         List<ClassificacaoStats> ranking =
                 tabela.values()
