@@ -18,6 +18,10 @@ public interface EventoPartidaMapper {
     @Mapping(target = "nomeTime", source = "time.nome")
     @Mapping(target = "assistenteId", source = "jogadorSecundario.id")
     @Mapping(target = "nomeAssistente", source = "jogadorSecundario.nome")
+
+    @Mapping(target = "eventoRelacionadoId", source = "eventoRelacionado.id")
+    @Mapping(target = "anulado", source = "anulado")
+
     EventoPartidaResponseDto toDto(EventoPartida entity);
 
     @Mapping(target = "tipo", source = "tipoEvento")

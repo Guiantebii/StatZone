@@ -61,4 +61,6 @@ public class EstatisticasJogadorCampeonato {
 
     @Column(name = "clean_sheets")
     private Integer cleanSheets = 0;
+
+    private int amarelosDesdeSuspensao;
 }

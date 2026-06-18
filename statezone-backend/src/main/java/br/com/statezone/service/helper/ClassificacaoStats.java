@@ -10,6 +10,7 @@ public class ClassificacaoStats {
 
     private Long timeId;
     private String nomeTime;
+    private Time time;
 
     private Integer pontos;
     private Integer jogos;
@@ -26,6 +27,7 @@ public class ClassificacaoStats {
 
     public ClassificacaoStats(Time time) {
 
+        this.time = time;
         this.timeId = time.getId();
         this.nomeTime = time.getNome();
 

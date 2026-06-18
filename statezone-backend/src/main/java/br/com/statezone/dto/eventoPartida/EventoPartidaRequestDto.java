@@ -1,6 +1,7 @@
 package br.com.statezone.dto.eventoPartida;
 
 import br.com.statezone.enums.TipoEvento;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -22,7 +23,9 @@ public record EventoPartidaRequestDto(
 
         Long jogadorId,
 
-        Long jogadorSecundarioId
+        Long jogadorSecundarioId,
+
+        Long eventoRelacionadoId
 
 
 ) {

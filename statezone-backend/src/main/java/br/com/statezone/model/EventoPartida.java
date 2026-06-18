@@ -31,6 +31,12 @@ public class EventoPartida {
     private String descricao;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "evento_relacionado_id")
+    private EventoPartida eventoRelacionado;
+
+    private boolean anulado;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "partida_id")
     private Partida partida;
 

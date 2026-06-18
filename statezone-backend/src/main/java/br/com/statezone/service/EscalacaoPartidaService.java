@@ -15,6 +15,7 @@ import br.com.statezone.model.Partida;
 import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
+import br.com.statezone.repository.SuspensaoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class EscalacaoPartidaService {
     private final PartidaRepository partidaRepository;
     private final JogadorRepository jogadorRepository;
     private final EscalacaoPartidaMapper escalacaoPartidaMapper;
+    private final SuspensaoRepository suspensaoRepository;
 
     public EscalacaoPartidaResponseDto adicionarJogador(
             Long partidaId,
@@ -49,6 +51,13 @@ public class EscalacaoPartidaService {
                         new ResourceNotFoundException("Jogador não encontrado"));
 
         validarJogadorNaPartida(partida, jogador);
+
+        boolean suspenso = suspensaoRepository.existsByJogadorIdAndCampeonatoIdAndPartidaAlvoId(
+                jogador.getId(), partida.getCampeonato().getId(), partida.getId());
+
+        if (suspenso) {
+            throw new BusinessException("Jogador está suspenso para esta partida");
+        }
 
         if (escalacaoPartidaRepository.existsByPartidaIdAndJogadorId(partidaId, dto.jogadorId())) {
             throw new ConflictException("Jogador já está na escalação desta partida");

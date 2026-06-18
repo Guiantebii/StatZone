@@ -86,6 +86,29 @@ public class EventoPartidaService {
                                         "O jogador principal não pode ser o jogador secundário");
                         }
                 }
+                EventoPartida eventoRelacionado = null;
+                if (dto.tipoEvento() == TipoEvento.VAR_GOL_ANULADO) {
+                        if (dto.eventoRelacionadoId() == null) {
+                                throw new BusinessException("VAR_GOL_ANULADO exige o evento de gol original (eventoRelacionadoId)");
+                        }
+                        eventoRelacionado = eventoPartidaRepository.findById(dto.eventoRelacionadoId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Evento original não encontrado"));
+
+                        boolean tipoValido = eventoRelacionado.getTipoEvento() == TipoEvento.GOL
+                                || eventoRelacionado.getTipoEvento() == TipoEvento.PENALTI_GOL
+                                || eventoRelacionado.getTipoEvento() == TipoEvento.GOL_CONTRA;
+
+                        if (!tipoValido || !eventoRelacionado.getPartida().getId().equals(partidaId)) {
+                                throw new BusinessException("Evento relacionado inválido para anulação de VAR");
+                        }
+                        if (eventoRelacionado.isAnulado()) {
+                                throw new BusinessException("Este gol já foi anulado anteriormente");
+                        }
+                        eventoRelacionado.setAnulado(true);
+                        eventoPartidaRepository.save(eventoRelacionado);
+                }
+
+
 
                 EventoPartida evento = eventoPartidaMapper.toEntity(dto);
 
@@ -95,7 +118,15 @@ public class EventoPartidaService {
 
                 if (jogador != null) {
                         evento.setTime(jogador.getTime());
+                } else if (
+                        dto.tipoEvento() == TipoEvento.VAR_GOL_ANULADO
+                                && eventoRelacionado != null
+                                && eventoRelacionado.getTime() != null) {
+
+                        evento.setTime(eventoRelacionado.getTime());
                 }
+
+                evento.setEventoRelacionado(eventoRelacionado);
 
                 EventoPartida salvo = eventoPartidaRepository.save(evento);
 
@@ -137,15 +168,29 @@ public class EventoPartidaService {
         }
 
         private void aplicarGolSeNecessario(Partida partida, EventoPartida evento) {
-                if (evento.getTime() == null) return;
-
-                TipoEvento tipo = evento.getTipoEvento();
-                boolean mandante = evento.getTime().getId().equals(partida.getTimeMandante().getId());
-                
                 int golsMandante = (partida.getGolsMandante() != null) ? partida.getGolsMandante() : 0;
                 int golsVisitante = (partida.getGolsVisitante() != null) ? partida.getGolsVisitante() : 0;
 
-                switch (tipo) {
+                if (evento.getTipoEvento() == TipoEvento.VAR_GOL_ANULADO) {
+                        EventoPartida original = evento.getEventoRelacionado();
+                        if (original == null || original.getTime() == null) return;
+
+                        boolean mandanteOriginal = original.getTime().getId().equals(partida.getTimeMandante().getId());
+
+                        if (original.getTipoEvento() == TipoEvento.GOL_CONTRA) {
+                                if (mandanteOriginal) partida.setGolsVisitante(Math.max(0, golsVisitante - 1));
+                                else partida.setGolsMandante(Math.max(0, golsMandante - 1));
+                        } else {
+                                if (mandanteOriginal) partida.setGolsMandante(Math.max(0, golsMandante - 1));
+                                else partida.setGolsVisitante(Math.max(0, golsVisitante - 1));
+                        }
+                        return;
+                }
+
+                if (evento.getTime() == null) return;
+                boolean mandante = evento.getTime().getId().equals(partida.getTimeMandante().getId());
+
+                switch (evento.getTipoEvento()) {
                         case GOL, PENALTI_GOL -> {
                                 if (mandante) partida.setGolsMandante(golsMandante + 1);
                                 else partida.setGolsVisitante(golsVisitante + 1);
@@ -154,6 +199,7 @@ public class EventoPartidaService {
                                 if (mandante) partida.setGolsVisitante(golsVisitante + 1);
                                 else partida.setGolsMandante(golsMandante + 1);
                         }
+                        default -> { }
                 }
         }
 

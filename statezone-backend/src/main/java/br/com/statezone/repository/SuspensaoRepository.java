@@ -19,4 +19,8 @@ public interface SuspensaoRepository extends JpaRepository<Suspensao, Long> {
             Long campeonatoId,
             Integer rodadaSuspensao
     );
+
+    boolean existsByJogadorIdAndCampeonatoIdAndPartidaAlvoId(Long jogadorId, Long campeonatoId, Long partidaId);
+    boolean existsByJogadorIdAndCampeonatoIdAndPartidaAlvoIsNull(Long jogadorId, Long campeonatoId);
+    List<Suspensao> findByCampeonatoIdAndJogador_Time_IdAndPartidaAlvoIsNull(Long campeonatoId, Long timeId);
 }

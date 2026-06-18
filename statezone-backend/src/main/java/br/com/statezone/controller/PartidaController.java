@@ -41,7 +41,7 @@ public class PartidaController {
     }
     @PutMapping("/{id}")
     public ResponseEntity<PartidaResponseDto> atualizarPartida(@RequestBody @Valid PartidaRequestDto dto,@PathVariable Long id){
-        return ResponseEntity.ok(partidaService.atualizar(dto,id));
+        return ResponseEntity.ok(partidaService.atualizar(id, dto));
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarPartida(@PathVariable Long id){
