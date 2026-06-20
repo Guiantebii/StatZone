@@ -1,13 +1,19 @@
 package br.com.statezone.service;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.enums.TipoEvento;
 import br.com.statezone.model.EventoPartida;
 import br.com.statezone.model.Partida;
+import br.com.statezone.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +25,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
+@Import(TestSecurityConfig.class)
 class SuspensionEngineTest {
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Mock
     private SuspensaoService suspensaoService;
@@ -28,6 +41,7 @@ class SuspensionEngineTest {
     private SuspensionEngine suspensionEngine;
 
     @Test
+    @WithMockUser
     void process_deveIgnorarEventosAnuladosENulos() {
         var campeonato = campeonato(1L, 3);
         var mandante = time(10L, "Mandante");

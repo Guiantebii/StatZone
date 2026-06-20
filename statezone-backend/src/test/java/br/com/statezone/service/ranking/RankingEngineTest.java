@@ -1,15 +1,21 @@
 package br.com.statezone.service.ranking;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.model.Partida;
 import br.com.statezone.model.Time;
 import br.com.statezone.repository.PartidaRepository;
+import br.com.statezone.security.JwtService;
 import br.com.statezone.service.helper.ClassificacaoStats;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.List;
 
@@ -23,7 +29,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Import(TestSecurityConfig.class)
 class RankingEngineTest {
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Mock
     private PartidaRepository partidaRepository;
@@ -36,6 +49,7 @@ class RankingEngineTest {
     }
 
     @Test
+    @WithMockUser
     void gerar_deveOrdenarPorPontosSaldoEGols() {
         var campeonato = campeonato(1L, 3);
         Time a = time(10L, "A");
@@ -64,6 +78,7 @@ class RankingEngineTest {
     }
 
     @Test
+    @WithMockUser
     void gerarPorTurno_deveFiltrarRodadasDoPrimeiroESegundoTurno() {
         var campeonato = campeonato(1L, 3);
         Time a = time(10L, "A");
@@ -99,6 +114,7 @@ class RankingEngineTest {
     }
 
     @Test
+    @WithMockUser
     void gerarPorGrupo_deveUsarPartidasDoGrupo() {
         var campeonato = campeonato(1L, 3);
         Time a = time(10L, "A");

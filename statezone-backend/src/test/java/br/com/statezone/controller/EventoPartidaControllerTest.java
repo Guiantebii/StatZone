@@ -1,16 +1,21 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.eventoPartida.EventoPartidaRequestDto;
 import br.com.statezone.dto.eventoPartida.EventoPartidaResponseDto;
 import br.com.statezone.dto.eventoPartida.EventoTimelineResponseDto;
 import br.com.statezone.enums.TipoEvento;
+import br.com.statezone.security.JwtService;
 import br.com.statezone.service.EventoPartidaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -26,10 +31,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(EventoPartidaController.class)
+@Import(TestSecurityConfig.class)
 class EventoPartidaControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -38,6 +50,7 @@ class EventoPartidaControllerTest {
     private EventoPartidaService eventoPartidaService;
 
     @Test
+    @WithMockUser
     void registrarEvento_deveRetornar201ComLocation() throws Exception {
         EventoPartidaRequestDto request = new EventoPartidaRequestDto(
                 TipoEvento.GOL,
@@ -79,6 +92,7 @@ class EventoPartidaControllerTest {
     }
 
     @Test
+    @WithMockUser
     void listarEventos_deveRetornarLista() throws Exception {
         EventoPartidaResponseDto response = new EventoPartidaResponseDto(
                 51L,
@@ -107,6 +121,7 @@ class EventoPartidaControllerTest {
     }
 
     @Test
+    @WithMockUser
     void timeline_deveRetornarListaDeEventos() throws Exception {
         EventoTimelineResponseDto response = new EventoTimelineResponseDto(
                 52L,

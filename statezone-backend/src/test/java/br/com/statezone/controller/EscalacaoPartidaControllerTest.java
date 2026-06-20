@@ -1,17 +1,22 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.escalacao.EscalacaoPartidaListResponseDto;
 import br.com.statezone.dto.escalacao.EscalacaoPartidaRequestDto;
 import br.com.statezone.dto.escalacao.EscalacaoPartidaResponseDto;
 import br.com.statezone.enums.FuncaoEscalacao;
 import br.com.statezone.enums.Posicao;
+import br.com.statezone.security.JwtService;
 import br.com.statezone.service.EscalacaoPartidaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -27,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(EscalacaoPartidaController.class)
+@Import(TestSecurityConfig.class)
 class EscalacaoPartidaControllerTest {
 
     @Autowired
@@ -36,9 +42,16 @@ class EscalacaoPartidaControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @MockBean
     private EscalacaoPartidaService escalacaoPartidaService;
 
     @Test
+    @WithMockUser
     void adicionarJogador_deveRetornar201() throws Exception {
         EscalacaoPartidaRequestDto request = new EscalacaoPartidaRequestDto(20L, FuncaoEscalacao.TITULAR, Posicao.CENTROAVANTE, 9);
         EscalacaoPartidaResponseDto response = new EscalacaoPartidaResponseDto(1L, 20L, "Jogador", "foto.png", "Time", "escudo.png", FuncaoEscalacao.TITULAR, Posicao.CENTROAVANTE, 9, true);
@@ -56,6 +69,7 @@ class EscalacaoPartidaControllerTest {
     }
 
     @Test
+    @WithMockUser
     void buscarEscalacao_deveRetornarTitularesEReservas() throws Exception {
         EscalacaoPartidaResponseDto titular = new EscalacaoPartidaResponseDto(1L, 20L, "Titular", "foto.png", "Time", "escudo.png", FuncaoEscalacao.TITULAR, Posicao.CENTROAVANTE, 9, true);
         EscalacaoPartidaResponseDto reserva = new EscalacaoPartidaResponseDto(2L, 21L, "Reserva", "foto2.png", "Time", "escudo.png", FuncaoEscalacao.RESERVA, Posicao.MEIO_CAMPO, 18, true);

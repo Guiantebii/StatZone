@@ -1,13 +1,18 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.estatisticasJogador.EstatisticasPartidaResponseDto;
 import br.com.statezone.mapper.EstatisticasPartidaMapper;
 import br.com.statezone.model.EstatisticasPartida;
 import br.com.statezone.repository.EstatisticasPartidaRepository;
+import br.com.statezone.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
@@ -22,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(EstatisticasPartidaController.class)
+@Import(TestSecurityConfig.class)
 class EstatisticasPartidaControllerTest {
 
     @Autowired
@@ -31,9 +37,16 @@ class EstatisticasPartidaControllerTest {
     private EstatisticasPartidaRepository repository;
 
     @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @MockBean
     private EstatisticasPartidaMapper mapper;
 
     @Test
+    @WithMockUser
     void get_deveRetornarEstatisticasDaPartida() throws Exception {
         var campeonato = campeonato(1L, 3);
         var mandante = time(10L, "Mandante");
