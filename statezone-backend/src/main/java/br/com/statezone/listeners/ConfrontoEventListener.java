@@ -1,5 +1,6 @@
 package br.com.statezone.listeners;
 
+import br.com.statezone.repository.ProcessamentoConfrontoPendenteRepository;
 import br.com.statezone.service.BracketEngine;
 import br.com.statezone.service.BracketService;
 import br.com.statezone.enums.StatusConfronto;
@@ -23,28 +24,13 @@ public class ConfrontoEventListener {
     private final BracketEngine bracketEngine;
     private final BracketService bracketService;
     private final ConfrontoEliminatorioRepository confrontoRepository;
+    private final ProcessamentoConfrontoPendenteRepository pendenteRepository;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handlePartidaEncerrada(PartidaEncerradaEvent event) {
         Partida partida = event.getPartida();
-
-        confrontoRepository.findConfrontoByPartidaId(partida.getId())
-                .ifPresent(confronto -> {
-                    if (deveEncerrarConfronto(confronto)) {
-                        mapearPenaltisParaConfronto(confronto, partida);
-
-                        Time vencedor = bracketEngine.resolverVencedor(confronto);
-                        confronto.setTimeClassificado(vencedor);
-                        confronto.setStatusConfronto(StatusConfronto.ENCERRADO);
-                        confrontoRepository.save(confronto);
-
-                        bracketEngine.propagarVencedor(confronto, vencedor)
-                                .ifPresent(confrontoRepository::save);
-
-                        bracketService.verificarFase(confronto.getFaseEliminatoria());
-                    }
-                });
+        processarConfronto(partida);
     }
 
     private void mapearPenaltisParaConfronto(ConfrontoEliminatorio confronto, Partida partida) {
@@ -68,5 +54,29 @@ public class ConfrontoEventListener {
         }
         return c.getPartidaIda().getStatus() == StatusPartida.ENCERRADA
                 && c.getPartidaVolta().getStatus() == StatusPartida.ENCERRADA;
+    }
+
+    public void processarConfronto(Partida partida) {
+        confrontoRepository.findConfrontoByPartidaId(partida.getId())
+                .ifPresent(confronto -> {
+                    if (deveEncerrarConfronto(confronto)) {
+                        mapearPenaltisParaConfronto(confronto, partida);
+
+                        Time vencedor = bracketEngine.resolverVencedor(confronto);
+                        confronto.setTimeClassificado(vencedor);
+                        confronto.setStatusConfronto(StatusConfronto.ENCERRADO);
+                        confrontoRepository.save(confronto);
+
+                        bracketEngine.propagarVencedor(confronto, vencedor)
+                                .ifPresent(confrontoRepository::save);
+
+                        bracketService.verificarFase(confronto.getFaseEliminatoria());
+                    }
+                    pendenteRepository.findByPartidaId(partida.getId())
+                            .ifPresent(p -> {
+                                p.setResolvido(true);
+                                pendenteRepository.save(p);
+                            });
+                });
     }
 }

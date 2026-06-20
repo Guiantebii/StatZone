@@ -1,5 +1,6 @@
 package br.com.statezone.service;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.escalacao.EscalacaoPartidaListResponseDto;
 import br.com.statezone.dto.escalacao.EscalacaoPartidaRequestDto;
 import br.com.statezone.dto.escalacao.EscalacaoPartidaResponseDto;
@@ -18,6 +19,7 @@ import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.SuspensaoRepository;
+import br.com.statezone.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +27,10 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +48,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Import(TestSecurityConfig.class)
 class EscalacaoPartidaServiceTest {
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Mock
     private EscalacaoPartidaRepository escalacaoPartidaRepository;
@@ -72,6 +85,7 @@ class EscalacaoPartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void adicionarJogador_deveSalvarComDefaults() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -106,6 +120,7 @@ class EscalacaoPartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void adicionarJogador_deveBloquearJogadorDeOutroTime() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -126,6 +141,7 @@ class EscalacaoPartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void adicionarJogador_deveBloquearQuandoSuspenso() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -145,6 +161,7 @@ class EscalacaoPartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void adicionarJogador_deveBloquearDuplicidade() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -165,6 +182,7 @@ class EscalacaoPartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void buscarEscalacao_deveSepararTitularesEReservas() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");

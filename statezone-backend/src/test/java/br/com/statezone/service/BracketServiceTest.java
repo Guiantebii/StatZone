@@ -1,5 +1,6 @@
 package br.com.statezone.service;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.eliminatoria.FaseEliminatoriaRequestDto;
 import br.com.statezone.dto.eliminatoria.FaseEliminatoriaResponseDto;
 import br.com.statezone.enums.FaseEnum;
@@ -18,6 +19,7 @@ import br.com.statezone.repository.FaseEliminatoriaRepository;
 import br.com.statezone.repository.GrupoRepository;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.SuspensaoRepository;
+import br.com.statezone.security.JwtService;
 import br.com.statezone.service.ranking.RankingEngine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,10 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +52,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Import(TestSecurityConfig.class)
 class BracketServiceTest {
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Mock
     private FaseEliminatoriaRepository faseEliminatoriaRepository;
@@ -92,6 +105,7 @@ class BracketServiceTest {
     }
 
     @Test
+    @WithMockUser
     void criarFase_deveSalvarFase() {
         Campeonato campeonato = campeonato(1L, 3);
         FaseEliminatoria fase = faseEliminatoria(10L, campeonato, FaseEnum.OITAVAS);
@@ -108,6 +122,7 @@ class BracketServiceTest {
     }
 
     @Test
+    @WithMockUser
     void gerarPrimeiraFase_deveCriarPartidasEResolverSuspensoesPendentes() {
         Campeonato campeonato = campeonato(1L, 3);
         Time a = time(10L, "A");
@@ -160,6 +175,7 @@ class BracketServiceTest {
     }
 
     @Test
+    @WithMockUser
     void encerraConfronto_deveClassificarVencedorEEncerrarConfronto() {
         Campeonato campeonato = campeonato(1L, 3);
         Time a = time(10L, "A");

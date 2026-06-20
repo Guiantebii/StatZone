@@ -1,5 +1,6 @@
 package br.com.statezone.service;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.suspensao.SuspensaoResponseDto;
 import br.com.statezone.enums.MotivoSuspensao;
 import br.com.statezone.enums.TipoEvento;
@@ -12,13 +13,18 @@ import br.com.statezone.model.Suspensao;
 import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.SuspensaoRepository;
+import br.com.statezone.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +39,14 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Import(TestSecurityConfig.class)
 class SuspensaoServiceTest {
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Mock
     private SuspensaoRepository suspensaoRepository;
@@ -51,6 +64,7 @@ class SuspensaoServiceTest {
     private SuspensaoService service;
 
     @Test
+    @WithMockUser
     void listarSuspensoesProximaRodada_deveMapearDtos() {
         Suspensao suspensao = new Suspensao();
         SuspensaoResponseDto dto = new SuspensaoResponseDto(
@@ -75,6 +89,7 @@ class SuspensaoServiceTest {
     }
 
     @Test
+    @WithMockUser
     void registrarEventoDisciplinar_deveCriarSuspensaoPorAcumulacaoDeAmarelos() {
         Campeonato campeonato = campeonato(1L, 3);
         var mandante = time(10L, "Mandante");
@@ -113,6 +128,7 @@ class SuspensaoServiceTest {
     }
 
     @Test
+    @WithMockUser
     void registrarEventoDisciplinar_deveCriarSuspensaoPorVermelho() {
         Campeonato campeonato = campeonato(1L, 3);
         var mandante = time(10L, "Mandante");
@@ -140,6 +156,7 @@ class SuspensaoServiceTest {
     }
 
     @Test
+    @WithMockUser
     void suspenderSeNecessario_naoDeveDuplicarSuspensaoExistente() {
         Campeonato campeonato = campeonato(1L, 3);
         var mandante = time(10L, "Mandante");
@@ -160,6 +177,7 @@ class SuspensaoServiceTest {
     }
 
     @Test
+    @WithMockUser
     void suspenderSeNecessario_quandoNaoExisteProximaPartida_deveSalvarSuspensaoAberta() {
         Campeonato campeonato = campeonato(1L, 3);
         var mandante = time(10L, "Mandante");

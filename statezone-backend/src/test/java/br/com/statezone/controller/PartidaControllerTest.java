@@ -1,8 +1,10 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
+import br.com.statezone.security.JwtService;
 import br.com.statezone.service.EventoPartidaService;
 import br.com.statezone.service.PartidaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -28,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PartidaController.class)
+@Import(TestSecurityConfig.class)
 class PartidaControllerTest {
 
     @Autowired
@@ -37,12 +43,19 @@ class PartidaControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @MockBean
     private PartidaService partidaService;
 
     @MockBean
     private EventoPartidaService eventoPartidaService;
 
     @Test
+    @WithMockUser
     void criarPartida_deveRetornar201ComLocation() throws Exception {
         PartidaRequestDto request = new PartidaRequestDto(
                 "Morumbi",
@@ -89,6 +102,7 @@ class PartidaControllerTest {
     }
 
     @Test
+    @WithMockUser
     void atualizarPartida_deveUsarIdDaUrlComoPrimeiroParametro() throws Exception {
         PartidaRequestDto request = new PartidaRequestDto(
                 "Arena",
@@ -134,6 +148,7 @@ class PartidaControllerTest {
     }
 
     @Test
+    @WithMockUser
     void deletarPartida_deveRetornar204() throws Exception {
         mockMvc.perform(delete("/partidas/{id}", 77L))
                 .andExpect(status().isNoContent());
@@ -142,6 +157,7 @@ class PartidaControllerTest {
     }
 
     @Test
+    @WithMockUser
     void adiarPartida_deveRetornar200() throws Exception {
         PartidaResponseDto response = new PartidaResponseDto(
                 55L,
@@ -171,6 +187,7 @@ class PartidaControllerTest {
     }
 
     @Test
+    @WithMockUser
     void cancelarPartida_deveRetornar200() throws Exception {
         PartidaResponseDto response = new PartidaResponseDto(
                 56L,

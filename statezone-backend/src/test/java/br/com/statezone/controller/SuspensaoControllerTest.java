@@ -1,12 +1,17 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.suspensao.SuspensaoResponseDto;
 import br.com.statezone.enums.MotivoSuspensao;
+import br.com.statezone.security.JwtService;
 import br.com.statezone.service.SuspensaoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -18,15 +23,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SuspensaoController.class)
+@Import(TestSecurityConfig.class)
 class SuspensaoControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @MockBean
     private SuspensaoService suspensaoService;
 
     @Test
+    @WithMockUser
     void listarSuspensoesProximaRodada_deveRetornarLista() throws Exception {
         SuspensaoResponseDto response = new SuspensaoResponseDto(
                 20L,
@@ -49,6 +62,7 @@ class SuspensaoControllerTest {
     }
 
     @Test
+    @WithMockUser
     void listarSuspensoesPorRodada_deveRetornarListaDaRodada() throws Exception {
         SuspensaoResponseDto response = new SuspensaoResponseDto(
                 21L,

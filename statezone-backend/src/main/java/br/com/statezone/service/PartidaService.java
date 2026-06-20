@@ -17,7 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+
+import static br.com.statezone.enums.StatusPartida.*;
 
 @Service
 @Transactional
@@ -32,6 +36,7 @@ public class PartidaService {
     private final PartidaWebSocketService partidaWebSocketService;
     private final ConfrontoEliminatorioRepository confrontoEliminatorioRepository;
     private final EventoPartidaRepository eventoPartidaRepository;
+    private final ProcessamentoConfrontoPendenteRepository processamentoConfrontoPendenteRepository;
 
     public PartidaResponseDto criar(PartidaRequestDto dto) {
 
@@ -84,8 +89,9 @@ public class PartidaService {
     public PartidaResponseDto iniciar(Long id) {
 
         Partida partida = buscarPartida(id);
-
-        validarStatusNaoIniciadaOuEncerrada(partida);
+        if (!Set.of(AGENDADA, ADIADA, CANCELADA).contains(partida.getStatus())) {
+            throw new BusinessException("Partida não pode ser iniciada a partir do status " + partida.getStatus());
+        }
 
         partida.setStatus(StatusPartida.AO_VIVO);
 
@@ -150,6 +156,14 @@ public class PartidaService {
 
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 90);
 
+        processamentoConfrontoPendenteRepository.save(
+                ProcessamentoConfrontoPendente.builder()
+                        .partidaId(partida.getId())
+                        .criadoEm(LocalDateTime.now())
+                        .tentativas(0)
+                        .resolvido(false)
+                        .build()
+        );
         publisher.publishEvent(new PartidaEncerradaEvent(salva));
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
@@ -210,11 +224,11 @@ public class PartidaService {
     }
 
     public PartidaResponseDto adiar(Long id) {
-        return alterarStatusAdministrativo(id, StatusPartida.ADIADA);
+        return alterarStatusAdministrativo(id, ADIADA);
     }
 
     public PartidaResponseDto cancelar(Long id) {
-        return alterarStatusAdministrativo(id, StatusPartida.CANCELADA);
+        return alterarStatusAdministrativo(id, CANCELADA);
     }
 
 
@@ -282,15 +296,6 @@ public class PartidaService {
     private void validarTimes(Time a, Time b) {
         if (a.getId().equals(b.getId())) {
             throw new BusinessException("Times não podem ser iguais");
-        }
-    }
-
-    private void validarStatusNaoIniciadaOuEncerrada(Partida p) {
-        if (p.getStatus() == StatusPartida.AO_VIVO) {
-            throw new ConflictException("Já está em andamento");
-        }
-        if (p.getStatus() == StatusPartida.ENCERRADA) {
-            throw new BusinessException("Já encerrada");
         }
     }
 

@@ -1,10 +1,12 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.estatisticasJogador.EstatisticasJogadorResponseDto;
 import br.com.statezone.dto.jogador.JogadorRequestDto;
 import br.com.statezone.dto.jogador.JogadorResponseDto;
 import br.com.statezone.enums.PeForte;
 import br.com.statezone.enums.Posicao;
+import br.com.statezone.security.JwtService;
 import br.com.statezone.service.EstatisticasJogadorService;
 import br.com.statezone.service.JogadorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -31,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(JogadorController.class)
+@Import(TestSecurityConfig.class)
 class JogadorControllerTest {
 
     @Autowired
@@ -40,12 +46,19 @@ class JogadorControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
+
+    @MockBean
     private JogadorService jogadorService;
 
     @MockBean
     private EstatisticasJogadorService estatisticasJogadorService;
 
     @Test
+    @WithMockUser
     void criarJogador_deveRetornar201ComLocation() throws Exception {
         JogadorRequestDto request = new JogadorRequestDto(
                 "Jogador",
@@ -90,6 +103,7 @@ class JogadorControllerTest {
     }
 
     @Test
+    @WithMockUser
     void listarJogadores_deveRetornarLista() throws Exception {
         JogadorResponseDto response = new JogadorResponseDto(
                 10L,
@@ -118,6 +132,7 @@ class JogadorControllerTest {
     }
 
     @Test
+    @WithMockUser
     void obterJogadorPorId_deveRetornarItem() throws Exception {
         JogadorResponseDto response = new JogadorResponseDto(
                 10L,
@@ -145,6 +160,7 @@ class JogadorControllerTest {
     }
 
     @Test
+    @WithMockUser
     void atualizarJogador_deveUsarIdDaUrl() throws Exception {
         JogadorRequestDto request = new JogadorRequestDto(
                 "Jogador",
@@ -187,6 +203,7 @@ class JogadorControllerTest {
     }
 
     @Test
+    @WithMockUser
     void deletarJogador_deveRetornar204() throws Exception {
         mockMvc.perform(delete("/jogadores/{id}", 10L))
                 .andExpect(status().isNoContent());
@@ -195,6 +212,7 @@ class JogadorControllerTest {
     }
 
     @Test
+    @WithMockUser
     void estatisticas_deveRetornarResumo() throws Exception {
         EstatisticasJogadorResponseDto response = new EstatisticasJogadorResponseDto(
                 10L,

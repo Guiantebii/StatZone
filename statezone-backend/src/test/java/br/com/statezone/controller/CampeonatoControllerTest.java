@@ -1,11 +1,13 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.campeonato.CampeonatoRequestDto;
 import br.com.statezone.dto.campeonato.CampeonatoResponseDto;
 import br.com.statezone.dto.classificacao.ClassificacaoResponseDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.integration.apifootball.ApiFootballClient;
 import br.com.statezone.enums.StatusPartida;
+import br.com.statezone.security.JwtService;
 import br.com.statezone.service.CampeonatoService;
 import br.com.statezone.service.ClassificacaoService;
 import br.com.statezone.service.EstatisticasJogadorService;
@@ -15,7 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -34,7 +39,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CampeonatoController.class)
+@Import(TestSecurityConfig.class)
 class CampeonatoControllerTest {
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -58,6 +70,7 @@ class CampeonatoControllerTest {
     private ApiFootballClient apiFootballClient;
 
     @Test
+    @WithMockUser
     void criarCampeonato_deveRetornar201ComLocation() throws Exception {
         CampeonatoRequestDto request = new CampeonatoRequestDto("Liga", "Brasil", "2026", "https://example.com/logo.png", 3);
         CampeonatoResponseDto response = new CampeonatoResponseDto(1L, "Liga", "Brasil", "2026", "https://example.com/logo.png", LocalDateTime.now(), LocalDateTime.now(), List.of());
@@ -76,6 +89,7 @@ class CampeonatoControllerTest {
     }
 
     @Test
+    @WithMockUser
     void listarCampeonatos_deveRetornarLista() throws Exception {
         CampeonatoResponseDto response = new CampeonatoResponseDto(1L, "Liga", "Brasil", "2026", "logo.png", LocalDateTime.now(), LocalDateTime.now(), List.of(10L));
         when(campeonatoService.listarTodosCampeonatos()).thenReturn(List.of(response));
@@ -89,6 +103,7 @@ class CampeonatoControllerTest {
     }
 
     @Test
+    @WithMockUser
     void adicionarTime_deveRetornar200() throws Exception {
         mockMvc.perform(post("/campeonatos/{campeonatoId}/times/{timeId}", 1L, 10L))
                 .andExpect(status().isOk());
@@ -97,6 +112,7 @@ class CampeonatoControllerTest {
     }
 
     @Test
+    @WithMockUser
     void gerarClassificacao_semTurno_deveRetornarLista() throws Exception {
         ClassificacaoResponseDto response = new ClassificacaoResponseDto(10L, "Time", 6, 2, 2, 0, 0, 4, 1, 3, 1, 100.0);
         when(classificacaoService.gerarClassificacao(1L)).thenReturn(List.of(response));
@@ -110,6 +126,7 @@ class CampeonatoControllerTest {
     }
 
     @Test
+    @WithMockUser
     void gerarClassificacao_comTurno_deveUsarMetodoEspecifico() throws Exception {
         ClassificacaoResponseDto response = new ClassificacaoResponseDto(10L, "Time", 6, 2, 2, 0, 0, 4, 1, 3, 1, 100.0);
         when(classificacaoService.gerarClassificacaoPorTurno(1L, 1)).thenReturn(List.of(response));
@@ -122,6 +139,7 @@ class CampeonatoControllerTest {
     }
 
     @Test
+    @WithMockUser
     void gerarFixtures_deveRetornar201ComLocation() throws Exception {
         PartidaResponseDto response = new PartidaResponseDto(
                 100L,
@@ -152,6 +170,7 @@ class CampeonatoControllerTest {
     }
 
     @Test
+    @WithMockUser
     void atualizarEExcluirCampeonato_devemChamarService() throws Exception {
         CampeonatoRequestDto request = new CampeonatoRequestDto("Liga 2", "Brasil", "2027", "https://example.com/logo2.png", 4);
         CampeonatoResponseDto response = new CampeonatoResponseDto(1L, "Liga 2", "Brasil", "2027", "https://example.com/logo2.png", LocalDateTime.now(), LocalDateTime.now(), List.of());

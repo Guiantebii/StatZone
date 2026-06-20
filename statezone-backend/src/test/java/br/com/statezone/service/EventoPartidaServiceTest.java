@@ -1,5 +1,6 @@
 package br.com.statezone.service;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.eventoPartida.EventoPartidaRequestDto;
 import br.com.statezone.dto.eventoPartida.EventoPartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
@@ -14,6 +15,7 @@ import br.com.statezone.mapper.EventoPartidaMapper;
 import br.com.statezone.repository.EventoPartidaRepository;
 import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
+import br.com.statezone.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +23,11 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.Optional;
 
@@ -38,7 +44,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Import(TestSecurityConfig.class)
 class EventoPartidaServiceTest {
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Mock
     private EventoPartidaRepository eventoPartidaRepository;
@@ -68,6 +81,7 @@ class EventoPartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void registrarEvento_deveAtualizarPlacarERegistrarAssistencia() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -114,6 +128,7 @@ class EventoPartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void registrarEvento_deveAnularGolViaVarEDescontarPlacar() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -159,6 +174,7 @@ class EventoPartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void registrarEvento_deveRejeitarJogadorForaDaPartida() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -189,6 +205,7 @@ class EventoPartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void registrarEvento_deveRejeitarEventoQueExigeJogadorSemInformar() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");

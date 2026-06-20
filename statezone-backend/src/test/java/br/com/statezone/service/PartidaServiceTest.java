@@ -1,5 +1,6 @@
 package br.com.statezone.service;
 
+import br.com.statezone.config.TestSecurityConfig;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
@@ -12,12 +13,9 @@ import br.com.statezone.model.ConfrontoEliminatorio;
 import br.com.statezone.model.EventoPartida;
 import br.com.statezone.model.Partida;
 import br.com.statezone.model.Time;
-import br.com.statezone.repository.CampeonatoRepository;
-import br.com.statezone.repository.ConfrontoEliminatorioRepository;
-import br.com.statezone.repository.EventoPartidaRepository;
-import br.com.statezone.repository.PartidaRepository;
-import br.com.statezone.repository.TimeRepository;
+import br.com.statezone.repository.*;
 import br.com.statezone.mapper.PartidaMapper;
+import br.com.statezone.security.JwtService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +24,11 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -43,7 +45,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Import(TestSecurityConfig.class)
 class PartidaServiceTest {
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Mock
     private PartidaRepository partidaRepository;
@@ -66,6 +75,9 @@ class PartidaServiceTest {
     @Mock
     private EventoPartidaRepository eventoPartidaRepository;
 
+    @Mock
+    private ProcessamentoConfrontoPendenteRepository processamentoConfrontoPendenteRepository;
+
     private PartidaService service;
 
     private final PartidaMapper partidaMapper = Mappers.getMapper(PartidaMapper.class);
@@ -80,11 +92,13 @@ class PartidaServiceTest {
                 publisher,
                 partidaWebSocketService,
                 confrontoEliminatorioRepository,
-                eventoPartidaRepository
+                eventoPartidaRepository,
+                processamentoConfrontoPendenteRepository
         );
     }
 
     @Test
+    @WithMockUser
     void criar_devePersistirPartidaComTimesECampeonato() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -123,6 +137,7 @@ class PartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void criar_deveRejeitarTimesIguais() {
         Campeonato campeonato = campeonato(1L, 3);
         Time time = time(10L, "Mesma equipe");
@@ -150,6 +165,7 @@ class PartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void iniciar_deveAlterarStatusCriarEventoESinalizarWebsocket() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -185,6 +201,7 @@ class PartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void encerrar_deveFinalizarPublicarEventosENotificarWebsocket() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -219,6 +236,7 @@ class PartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void deletar_deveBloquearQuandoVinculadaAConfronto() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -238,6 +256,7 @@ class PartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void iniciarPenaltis_e_encerrarComPenaltis_deveSalvarPlacarDosPenaltis() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
@@ -264,6 +283,7 @@ class PartidaServiceTest {
     }
 
     @Test
+    @WithMockUser
     void encerrarComPenaltis_naoDeveAceitarEmpate() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
