@@ -68,24 +68,21 @@ export default function FasesPage() {
     let isMounted = true;
     setDataLoading(true);
     Promise.all([
-      api.get(`/campeonatos/${campeonatoId}/fases`).then((r) => { if (isMounted) setFases(r.data); }).catch(() => { if (isMounted) { setFases([]); console.error('Erro ao carregar fases'); } }),
-      api.get(`/campeonatos/${campeonatoId}/grupos`).then((r) => { if (isMounted) setGrupos(r.data); }).catch(() => { if (isMounted) { setGrupos([]); console.error('Erro ao carregar grupos'); } }),
-      api.get(`/campeonatos/${campeonatoId}/times`).then((r) => { if (isMounted) setTimes(r.data); }).catch(() => { if (isMounted) { setTimes([]); console.error('Erro ao carregar times'); } }),
-    ]).then(() => {
-      if (!isMounted) return;
-      api.get(`/campeonatos/${campeonatoId}/grupos`).then(async (res) => {
-        const grupos = res.data as Grupo[];
-        if (!isMounted) return;
+      api.get(`/campeonatos/${campeonatoId}/fases`).then((r) => { if (isMounted) setFases(r.data); }).catch(() => { if (isMounted) setFases([]); }),
+      api.get(`/campeonatos/${campeonatoId}/grupos`).then(async (r) => {
+        const grupos = r.data as Grupo[];
+        if (isMounted) setGrupos(grupos);
         const classMap: Record<number, ClassificacaoTime[]> = {};
         await Promise.all(grupos.map(async (g) => {
           try {
-            const r = await api.get(`/campeonatos/${campeonatoId}/grupos/${g.id}/classificacao`);
-            classMap[g.id] = r.data;
+            const cr = await api.get(`/campeonatos/${campeonatoId}/grupos/${g.id}/classificacao`);
+            classMap[g.id] = cr.data;
           } catch {}
         }));
         if (isMounted) setGrupoClassificacoes(classMap);
-      });
-    }).finally(() => { if (isMounted) setDataLoading(false); });
+      }).catch(() => { if (isMounted) { setGrupos([]); } }),
+      api.get(`/campeonatos/${campeonatoId}/times`).then((r) => { if (isMounted) setTimes(r.data); }).catch(() => { if (isMounted) setTimes([]); }),
+    ]).finally(() => { if (isMounted) setDataLoading(false); });
     return () => { isMounted = false; };
   }, [campeonatoId]);
 

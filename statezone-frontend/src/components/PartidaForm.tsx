@@ -43,7 +43,7 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
         estadio,
         arbitro,
         rodada,
-        dataPartida: new Date(dataPartida).toISOString(),
+        dataPartida: dataPartida + ':00',
         status: 'AGENDADA' as StatusPartida,
         campeonatoId,
         timeMandanteId,

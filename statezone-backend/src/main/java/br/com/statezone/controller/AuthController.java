@@ -47,8 +47,8 @@ public class AuthController {
 
         ResponseCookie cookie = ResponseCookie.from("token", token)
                 .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
+                .secure(false)
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(jwtService.getExpirationMs() / 1000)
                 .build();
@@ -83,8 +83,8 @@ public class AuthController {
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from("token", "")
                 .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
+                .secure(false)
+                .sameSite("Lax")
                 .path("/")
                 .maxAge(0)
                 .build();
