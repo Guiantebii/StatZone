@@ -72,8 +72,13 @@ class CampeonatoControllerTest {
     @Test
     @WithMockUser
     void criarCampeonato_deveRetornar201ComLocation() throws Exception {
-        CampeonatoRequestDto request = new CampeonatoRequestDto("Liga", "Brasil", "2026", "https://example.com/logo.png", 3);
-        CampeonatoResponseDto response = new CampeonatoResponseDto(1L, "Liga", "Brasil", "2026", "https://example.com/logo.png", LocalDateTime.now(), LocalDateTime.now(), List.of());
+        CampeonatoRequestDto request = new CampeonatoRequestDto(
+                "Liga", "Brasil", "2026", "https://example.com/logo.png", "PONTOS_CORRIDOS", 3
+        );
+        CampeonatoResponseDto response = new CampeonatoResponseDto(
+                1L, "Liga", "Brasil", "2026", "https://example.com/logo.png", "PONTOS_CORRIDOS", 3,
+                LocalDateTime.now(), LocalDateTime.now(), List.of()
+        );
 
         when(campeonatoService.criarCampeonato(any())).thenReturn(response);
 
@@ -91,7 +96,10 @@ class CampeonatoControllerTest {
     @Test
     @WithMockUser
     void listarCampeonatos_deveRetornarLista() throws Exception {
-        CampeonatoResponseDto response = new CampeonatoResponseDto(1L, "Liga", "Brasil", "2026", "logo.png", LocalDateTime.now(), LocalDateTime.now(), List.of(10L));
+        CampeonatoResponseDto response = new CampeonatoResponseDto(
+                1L, "Liga", "Brasil", "2026", "logo.png", "PONTOS_CORRIDOS", 3,
+                LocalDateTime.now(), LocalDateTime.now(), List.of(10L)
+        );
         when(campeonatoService.listarTodosCampeonatos()).thenReturn(List.of(response));
 
         mockMvc.perform(get("/campeonatos"))
@@ -172,8 +180,13 @@ class CampeonatoControllerTest {
     @Test
     @WithMockUser
     void atualizarEExcluirCampeonato_devemChamarService() throws Exception {
-        CampeonatoRequestDto request = new CampeonatoRequestDto("Liga 2", "Brasil", "2027", "https://example.com/logo2.png", 4);
-        CampeonatoResponseDto response = new CampeonatoResponseDto(1L, "Liga 2", "Brasil", "2027", "https://example.com/logo2.png", LocalDateTime.now(), LocalDateTime.now(), List.of());
+        CampeonatoRequestDto request = new CampeonatoRequestDto(
+                "Liga 2", "Brasil", "2027", "https://example.com/logo2.png", "MATA_MATA", 4
+        );
+        CampeonatoResponseDto response = new CampeonatoResponseDto(
+                1L, "Liga 2", "Brasil", "2027", "https://example.com/logo2.png", "MATA_MATA", 4,
+                LocalDateTime.now(), LocalDateTime.now(), List.of()
+        );
         when(campeonatoService.atualizarCampeonato(eq(request), eq(1L))).thenReturn(response);
 
         mockMvc.perform(put("/campeonatos/{id}", 1L)
