@@ -2,15 +2,17 @@ package br.com.statezone.service;
 
 import br.com.statezone.dto.jogador.JogadorRequestDto;
 import br.com.statezone.dto.jogador.JogadorResponseDto;
+import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.JogadorMapper;
 import br.com.statezone.model.Jogador;
 import br.com.statezone.model.Time;
-import br.com.statezone.repository.JogadorRepository;
-import br.com.statezone.repository.TimeRepository;
+import br.com.statezone.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -21,7 +23,10 @@ public class JogadorService {
     private final JogadorRepository jogadorRepository;
     private final JogadorMapper jogadorMapper;
     private final TimeRepository timeRepository;
-
+    private final EventoPartidaRepository eventoPartidaRepository;
+    private final EstatisticasJogadorRepository estatisticasJogadorRepository;
+    private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
+    private final SuspensaoRepository suspensaoRepository;
 
     public JogadorResponseDto criar(JogadorRequestDto dto) {
         Time time = timeRepository.findById(dto.timeId())
@@ -38,6 +43,13 @@ public class JogadorService {
 
     public List<JogadorResponseDto> listarTodosJogadores() {
         return jogadorRepository.findAll()
+                .stream()
+                .map(jogadorMapper::toDto)
+                .toList();
+    }
+
+    public List<JogadorResponseDto> buscarPorNome(String nome) {
+        return jogadorRepository.findByNomeContainingIgnoreCase(nome)
                 .stream()
                 .map(jogadorMapper::toDto)
                 .toList();
@@ -75,13 +87,44 @@ public class JogadorService {
         return jogadorMapper.toDto(jogadorAtualizado);
     }
 
-    public void deletarJogador(Long id){
+    public void deletarJogador(Long id) {
         Jogador jogador = jogadorRepository.findById(id)
-                .orElseThrow(()->
-                        new ResourceNotFoundException(
-                                "Jogador com id " + id + " não encontrado"
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("Jogador com id " + id + " não encontrado"));
+
+        List<String> dependencias = new ArrayList<>();
+
+        long eventosPrincipal = eventoPartidaRepository.countByJogadorId(id);
+        if (eventosPrincipal > 0) {
+            dependencias.add(eventosPrincipal + " evento(s) como participante");
+        }
+
+        long eventosSecundario = eventoPartidaRepository.countByJogadorSecundarioId(id);
+        if (eventosSecundario > 0) {
+            dependencias.add(eventosSecundario + " evento(s) como jogador secundário");
+        }
+
+        if (estatisticasJogadorRepository.findByJogadorId(id).isPresent()) {
+            dependencias.add("estatísticas de carreira");
+        }
+
+        long statsCampeonato = estatisticasJogadorCampeonatoRepository.countByJogadorId(id);
+        if (statsCampeonato > 0) {
+            dependencias.add(statsCampeonato + " estatística(s) em campeonato(s)");
+        }
+
+        // Suspensões
+        long suspensoes = suspensaoRepository.countByJogadorId(id);
+        if (suspensoes > 0) {
+            dependencias.add(suspensoes + " suspensão(ões)");
+        }
+
+        if (!dependencias.isEmpty()) {
+            throw new BusinessException(
+                    "Não é possível excluir o jogador '" + jogador.getNome() +
+                            "'. Possui: " + String.join(", ", dependencias) + "."
+            );
+        }
+
         jogadorRepository.delete(jogador);
     }
 }

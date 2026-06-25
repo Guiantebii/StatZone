@@ -96,4 +96,5 @@ public interface EstatisticasJogadorCampeonatoRepository
             @Param("campeonatoId") Long campeonatoId,
             Pageable pageable
     );
+    long countByJogadorId(Long jogadorId);
 }

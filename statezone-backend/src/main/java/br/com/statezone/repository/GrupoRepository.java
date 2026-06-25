@@ -20,7 +20,7 @@ public interface GrupoRepository extends JpaRepository<Grupo, Long> {
 
     @Query("""
         SELECT g FROM Grupo g
-        JOIN FETCH g.times t
+        LEFT JOIN FETCH g.times t
         WHERE g.campeonato.id = :campeonatoId
     """)
     List<Grupo> findByCampeonatoIdWithTimes(@Param("campeonatoId") Long campeonatoId);
@@ -36,4 +36,5 @@ public interface GrupoRepository extends JpaRepository<Grupo, Long> {
             @Param("campeonatoId") Long campeonatoId,
             @Param("timeId") Long timeId
     );
+    int countByCampeonatoId(Long campeonatoId);
 }

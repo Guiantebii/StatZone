@@ -10,6 +10,8 @@ import java.util.Optional;
 
 @Repository
 public interface JogadorRepository extends JpaRepository<Jogador,Long> {
+    List<Jogador> findByNomeContainingIgnoreCase(String nome);
+
     List<Jogador> findByTimeId(Long timeId);
     List<Jogador> findByTimeIdIn(List<Long> timeIds);
     List<Jogador> findByTimeIdAndPosicao(Long timeId, Posicao posicao);

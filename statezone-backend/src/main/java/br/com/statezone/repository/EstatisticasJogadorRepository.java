@@ -73,4 +73,5 @@ public interface EstatisticasJogadorRepository extends JpaRepository<Estatistica
     HAVING e.partidasJogadas >= :minPartidas
 """)
     List<EstatisticasJogador> findParaDestaques(@Param("campeonatoId") Long campeonatoId, @Param("minPartidas") int minPartidas);
+
 }
