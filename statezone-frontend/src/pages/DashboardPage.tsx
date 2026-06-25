@@ -46,7 +46,6 @@ export default function DashboardPage() {
             .slice(0, 5)
         );
 
-        // Top scorers from first championship
         if (campeonatosRes.data.length > 0) {
           const artRes = await api.get(`/campeonatos/${campeonatosRes.data[0].id}/artilharia?pagina=0&tamanho=${ARTILHARIA_TOP}`);
           setArtilharia(artRes.data);
@@ -100,7 +99,7 @@ export default function DashboardPage() {
         <p className="text-sm text-slate-500 mt-1">Visão geral da plataforma</p>
       </div>
 
-      {/* Stats cards */}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           icon={<Trophy size={18} />}
@@ -133,9 +132,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Live matches */}
+
         <div className="lg:col-span-2 space-y-4">
-          {/* Ao Vivo */}
+
           {aoVivo.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -150,7 +149,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Últimos resultados */}
+
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Últimos resultados</h2>
@@ -171,7 +170,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Quick actions */}
+
           <Card className="p-4">
             <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-3">Ações rápidas</h2>
             <div className="flex flex-wrap gap-2">
@@ -183,7 +182,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Sidebar: Artilharia */}
+
         <div className="space-y-4">
           {artilharia.length > 0 && (
             <Card className="overflow-hidden">
@@ -213,7 +212,7 @@ export default function DashboardPage() {
             </Card>
           )}
 
-          {/* Progress / Stats */}
+
           <Card className="p-4">
             <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-3">Plataforma</h2>
             <div className="space-y-3">

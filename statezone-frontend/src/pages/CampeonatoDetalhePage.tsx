@@ -63,12 +63,10 @@ export default function CampeonatoDetalhePage() {
               try {
                 const r = await api.get(`/campeonatos/${id}/grupos/${g.id}/classificacao`);
                 classMap[g.id] = r.data;
-              } catch { /* sem partidas */ }
+              } catch {}
             }));
             if (isMounted) setGrupoClassificacoes(classMap);
-          } catch {
-            /* sem grupos */
-          }
+          } catch {}
         }
       } catch (err) {
         if (isMounted) {
@@ -102,7 +100,7 @@ export default function CampeonatoDetalhePage() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      {/* Back + Header */}
+
       <div className="space-y-3">
         <Link to={isAdminContext ? '/dashboard/campeonatos' : '/campeonatos'} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-200 transition-colors">
           <ArrowLeft size={15} />
@@ -120,7 +118,7 @@ export default function CampeonatoDetalhePage() {
         </div>
       </div>
 
-      {/* Tabs */}
+
       <div className="flex gap-1 bg-white/[0.03] rounded-xl p-1">
         {tabs.map((t) => (
           <button
@@ -136,7 +134,7 @@ export default function CampeonatoDetalhePage() {
         ))}
       </div>
 
-      {/* Classificação */}
+
       {tab === 'classificacao' && (
         campeonato.tipoFormato === 'GRUPOS_E_MATA_MATA' ? (
           <div className="space-y-6">
@@ -274,7 +272,7 @@ export default function CampeonatoDetalhePage() {
         )
       )}
 
-      {/* Partidas */}
+
       {tab === 'partidas' && (
         <div>
           {partidas.length === 0 ? (
@@ -284,7 +282,7 @@ export default function CampeonatoDetalhePage() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {/* Agrupamento por rodada */}
+
               {[...new Set(partidas.map((p) => p.rodada))].sort((a, b) => a - b).map((rodada) => {
                 const rodadaPartidas = partidas.filter((p) => p.rodada === rodada);
                 return (
@@ -307,7 +305,7 @@ export default function CampeonatoDetalhePage() {
         </div>
       )}
 
-      {/* Artilharia */}
+
       {tab === 'artilharia' && (
         <Card className="overflow-hidden">
           <div className="px-5 py-3.5 border-b border-white/[0.04]">

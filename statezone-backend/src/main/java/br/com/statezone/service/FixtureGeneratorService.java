@@ -51,9 +51,6 @@ public class FixtureGeneratorService {
 
         List<Partida> partidasCriadas = new ArrayList<>();
 
-        // ==========================================
-        // GERAÇÃO DO 1º TURNO (JOGOS DE IDA)
-        // ==========================================
         for (int rodada = 1; rodada <= totalRodadas; rodada++) {
             for (int j = 0; j < jogosPorRodada; j++) {
 
@@ -78,9 +75,6 @@ public class FixtureGeneratorService {
             times.add(1, ultimo);
         }
 
-        // ==========================================
-        // GERAÇÃO DO 2º TURNO (JOGOS DE VOLTA)
-        // ==========================================
         List<Partida> partidasReturno = new ArrayList<>();
 
         for (Partida partidaIda : partidasCriadas) {

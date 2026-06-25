@@ -40,16 +40,16 @@ export default function FormationView({ titulares, timeNome }: FormationViewProp
       </div>
 
       <div className="relative rounded-xl overflow-hidden aspect-[3/4] max-h-[400px]">
-        {/* Pitch background */}
+
         <div className="absolute inset-0 bg-gradient-to-b from-green-700 via-green-600 to-green-700">
-          {/* Field markings */}
+
           <div className="absolute inset-x-[10%] top-0 bottom-0 border-x border-white/10" />
           <div className="absolute inset-y-[15%] left-0 right-0 border-y border-white/10" />
           <div className="absolute left-1/2 top-0 bottom-0 border-l border-white/10" />
           <div className="absolute left-1/2 top-[15%] -translate-x-1/2 w-16 aspect-square rounded-full border border-white/10" />
         </div>
 
-        {/* Players */}
+
         <div className="absolute inset-0 p-3">
           {rows.map((row, rowIdx) => (
             <div key={rowIdx} className="absolute inset-x-3 flex items-center justify-center gap-1" style={{ top: `${10 + rowIdx * 20}%`, height: '18%' }}>

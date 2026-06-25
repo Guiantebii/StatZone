@@ -112,7 +112,6 @@ public class JogadorService {
             dependencias.add(statsCampeonato + " estatística(s) em campeonato(s)");
         }
 
-        // Suspensões
         long suspensoes = suspensaoRepository.countByJogadorId(id);
         if (suspensoes > 0) {
             dependencias.add(suspensoes + " suspensão(ões)");

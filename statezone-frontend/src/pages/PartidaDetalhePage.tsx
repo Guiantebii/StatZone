@@ -68,7 +68,7 @@ export default function PartidaDetalhePage() {
     try {
       const res = await api.get(`/partidas/${id}/timeline`);
       setTimeline(res.data);
-    } catch { /* timeline may not exist yet */ }
+    } catch {}
   };
 
   const loadEscalacao = async () => {
@@ -76,7 +76,7 @@ export default function PartidaDetalhePage() {
     try {
       const res = await api.get(`/partidas/${id}/escalacao`);
       setEscalacao(res.data);
-    } catch { /* escalacao may not exist yet */ }
+    } catch {}
   };
 
   const loadEstatisticas = async () => {
@@ -84,7 +84,7 @@ export default function PartidaDetalhePage() {
     try {
       const res = await api.get(`/estatisticas/${id}`);
       setEstatisticas(res.data);
-    } catch { /* estatisticas may not exist yet */ }
+    } catch {}
   };
 
   useEffect(() => { if (id) load(); }, [id]);
@@ -187,16 +187,13 @@ export default function PartidaDetalhePage() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      {/* Back button */}
       <button onClick={() => navigate(isAdminContext ? '/dashboard/partidas' : '/partidas')} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-200 transition-colors">
         <ArrowLeft size={15} />
         Voltar para partidas
       </button>
 
-      {/* Header - Teams and Score */}
       <Card className="p-6 md:p-8">
         <div className="flex items-center justify-center gap-4 md:gap-10">
-          {/* Home team */}
           <Link to={`/times/${partida.timeMandanteId}`} className="flex flex-col items-center gap-2 flex-1 text-right hover:opacity-80 transition-opacity">
             <img src={getLogoUrl(partida.timeMandanteNome)} alt={partida.timeMandanteNome} className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/5 ring-2 ring-white/[0.06]" />
             <span className={`text-sm md:text-base font-bold ${isLive && partida.golsMandante > partida.golsVisitante ? 'text-accent' : 'text-slate-100'}`}>
@@ -204,7 +201,6 @@ export default function PartidaDetalhePage() {
             </span>
           </Link>
 
-          {/* Score / Status */}
           <div className="flex flex-col items-center gap-2">
             {(isLive || isFinished) ? (
               <div className="flex items-center gap-3">
@@ -231,7 +227,6 @@ export default function PartidaDetalhePage() {
             </span>
           </div>
 
-          {/* Away team */}
           <Link to={`/times/${partida.timeVisitanteId}`} className="flex flex-col items-center gap-2 flex-1 hover:opacity-80 transition-opacity">
             <img src={getLogoUrl(partida.timeVisitanteNome)} alt={partida.timeVisitanteNome} className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/5 ring-2 ring-white/[0.06]" />
             <span className={`text-sm md:text-base font-bold ${isLive && partida.golsVisitante > partida.golsMandante ? 'text-accent' : 'text-slate-100'}`}>
@@ -240,7 +235,6 @@ export default function PartidaDetalhePage() {
           </Link>
         </div>
 
-        {/* Match info */}
         <div className="flex items-center justify-center gap-4 mt-6 text-xs text-slate-500">
           <span className="flex items-center gap-1"><Trophy size={12} /> {partida.campeonatoNome}</span>
           <span className="text-slate-700">·</span>
@@ -251,7 +245,6 @@ export default function PartidaDetalhePage() {
           <span className="flex items-center gap-1"><Clock size={12} /> {partida.rodada}ª rodada</span>
         </div>
 
-        {/* Action buttons (admin only) */}
         {isAdmin && <div className="flex justify-center gap-2 mt-6 flex-wrap">
           <Button size="sm" variant="secondary" onClick={() => setShowEscalacaoForm(true)}>
             <Users size={14} /> Escalação
@@ -296,7 +289,6 @@ export default function PartidaDetalhePage() {
         </div>}
       </Card>
 
-      {/* Tabs */}
       <div className="flex gap-1 bg-white/[0.03] rounded-xl p-1">
         {[
           { key: 'timeline' as Tab, label: 'Timeline' },
@@ -315,7 +307,6 @@ export default function PartidaDetalhePage() {
         ))}
       </div>
 
-      {/* Tab Content */}
       {tab === 'timeline' && (
         <Card className="p-5">
           <h3 className="text-sm font-semibold text-slate-200 mb-4">Timeline da partida</h3>

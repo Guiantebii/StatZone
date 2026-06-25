@@ -146,7 +146,7 @@ export default function EstatisticasPage() {
         )}
       </div>
 
-      {/* Sub-tabs */}
+
       <div className="flex gap-1 bg-white/[0.03] rounded-xl p-1 overflow-x-auto">
         {tabs.map((t) => (
           <button
@@ -166,7 +166,7 @@ export default function EstatisticasPage() {
         <SkeletonTable rows={8} />
       ) : (
         <>
-          {/* Classificação */}
+
           {tab === 'classificacao' && (
             <Card className="overflow-hidden">
               <div className="px-5 py-3.5 border-b border-white/[0.04]">
@@ -224,7 +224,7 @@ export default function EstatisticasPage() {
             </Card>
           )}
 
-          {/* Artilharia */}
+
           {tab === 'artilharia' && (
             <RankingTable
               title="Artilheiros"
@@ -238,7 +238,7 @@ export default function EstatisticasPage() {
             />
           )}
 
-          {/* Assistências */}
+
           {tab === 'assistencias' && (
             <RankingTable
               title="Assistências"
@@ -252,7 +252,7 @@ export default function EstatisticasPage() {
             />
           )}
 
-          {/* Cartões */}
+
           {tab === 'cartoes' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RankingTable
@@ -278,7 +278,7 @@ export default function EstatisticasPage() {
             </div>
           )}
 
-          {/* Goleiros */}
+
           {tab === 'goleiros' && (
             <Card className="overflow-hidden">
               <div className="px-5 py-3.5 border-b border-white/[0.04]">
@@ -331,7 +331,7 @@ export default function EstatisticasPage() {
             </Card>
           )}
 
-          {/* Seleção do campeonato */}
+
           {tab === 'selecao' && (
             <Card className="p-5">
               <h3 className="text-sm font-semibold text-slate-200 mb-4">Seleção do campeonato</h3>
@@ -358,7 +358,7 @@ export default function EstatisticasPage() {
             </Card>
           )}
 
-          {/* MVP */}
+
           {tab === 'mvp' && (
             <Card className="p-6">
               {!mvp ? (

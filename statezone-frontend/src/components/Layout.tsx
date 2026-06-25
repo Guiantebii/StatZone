@@ -19,7 +19,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-primary-dark flex">
-      {/* Sidebar para desktop */}
+
       <aside
         className={`hidden md:flex flex-col bg-primary border-r border-white/[0.04] transition-all duration-300 ${
           sidebarCollapse ? 'w-20' : 'w-64'
@@ -47,7 +47,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Sidebar móvel (drawer) */}
+
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
@@ -63,9 +63,9 @@ export default function Layout() {
         </div>
       )}
 
-      {/* Conteúdo principal */}
+
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Navbar superior (mobile) */}
+
         <header className="md:hidden glass border-b border-white/[0.04] text-white px-4 h-14 flex items-center gap-3 sticky top-0 z-40">
           <button onClick={() => setSidebarOpen(true)} className="text-slate-300 hover:text-white p-1" aria-label="Abrir menu">
             <Menu size={20} />
@@ -73,7 +73,7 @@ export default function Layout() {
           <Logo to="/dashboard" />
         </header>
 
-        {/* Topbar desktop */}
+
         <header className="hidden md:flex items-center justify-between px-6 h-16 border-b border-white/[0.04] glass-strong sticky top-0 z-40">
           <div className="flex items-center gap-3">
             {breadcrumbs.map((crumb, i) => (
@@ -95,7 +95,7 @@ export default function Layout() {
           </div>
         </header>
 
-        {/* Área de conteúdo */}
+
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto animate-fade-in-up">
             <Outlet />

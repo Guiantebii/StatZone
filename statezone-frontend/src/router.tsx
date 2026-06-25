@@ -22,7 +22,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import NotFoundPage from './pages/NotFoundPage';
 
 export const router = createBrowserRouter([
-  // Public routes (no auth required)
+
   {
     element: <PublicLayout />,
     children: [
@@ -37,10 +37,10 @@ export const router = createBrowserRouter([
       { path: '/estatisticas', element: <EstatisticasPage /> },
     ],
   },
-  // Auth routes
+
   { path: '/login', element: <LoginPage /> },
   { path: '/registro', element: <RegisterPage /> },
-  // Admin routes (protected, nested under /dashboard)
+
   {
     path: '/dashboard',
     element: <ProtectedRoute />,

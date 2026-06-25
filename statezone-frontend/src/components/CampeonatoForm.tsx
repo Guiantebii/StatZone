@@ -72,7 +72,7 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-[#0d1f3c] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-        {/* Header */}
+
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07]">
           <div>
             <h3 className="text-base font-semibold text-slate-100">
@@ -93,7 +93,7 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
           </button>
         </div>
 
-        {/* Body */}
+
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
             {error && (
@@ -105,7 +105,7 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
               </div>
             )}
 
-            {/* Nome + País */}
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="nome">Nome *</Label>
@@ -131,7 +131,7 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
               </div>
             </div>
 
-            {/* Temporada + Logo */}
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="temporada">Temporada *</Label>
@@ -156,7 +156,7 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
               </div>
             </div>
 
-            {/* Formato */}
+
             <div>
               <Label htmlFor="tipoFormato">Formato</Label>
               <select
@@ -172,7 +172,7 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
               </select>
             </div>
 
-            {/* Amarelos */}
+
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <Label htmlFor="amarelos">Amarelos para suspensão</Label>
@@ -196,7 +196,7 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
             </div>
           </div>
 
-          {/* Footer */}
+
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/[0.07]">
             <button
               type="button"

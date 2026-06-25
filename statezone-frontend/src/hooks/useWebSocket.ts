@@ -84,7 +84,6 @@ export function usePartidaWebSocket(
           const data = JSON.parse(message.body);
           updateRef.current(data);
         } catch {
-          // ignore parse errors
         }
       });
 
@@ -93,7 +92,6 @@ export function usePartidaWebSocket(
           const data = JSON.parse(message.body);
           eventRef.current?.(data);
         } catch {
-          // ignore parse errors
         }
       });
     };

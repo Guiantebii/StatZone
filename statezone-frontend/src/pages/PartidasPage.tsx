@@ -88,7 +88,7 @@ export default function PartidasPage() {
         }
       />
 
-      {/* Live matches section */}
+
       {aoVivo.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -104,7 +104,7 @@ export default function PartidasPage() {
         </div>
       )}
 
-      {/* Filters */}
+
       <Card className="p-3">
         <div className="flex items-center gap-4 flex-wrap">
           <Filter size={14} className="text-slate-500" />
@@ -139,7 +139,7 @@ export default function PartidasPage() {
         </div>
       </Card>
 
-      {/* Matches grid */}
+
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center glass rounded-2xl">
           <div className="w-14 h-14 rounded-2xl bg-accent/5 flex items-center justify-center mb-4">

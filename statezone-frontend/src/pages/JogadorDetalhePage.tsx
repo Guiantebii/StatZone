@@ -108,13 +108,13 @@ export default function JogadorDetalhePage() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      {/* Back */}
+
       <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-200 transition-colors">
         <ArrowLeft size={15} />
         Voltar
       </button>
 
-      {/* Header */}
+
       <Card className="overflow-hidden">
         <div className="flex items-center gap-5 p-6">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center shrink-0">
@@ -143,7 +143,7 @@ export default function JogadorDetalhePage() {
         </div>
       </Card>
 
-      {/* Info grid */}
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {infoItems.map((item) => (
           <Card key={item.label} className="p-4 text-center">
@@ -152,7 +152,7 @@ export default function JogadorDetalhePage() {
             <p className="text-sm font-semibold text-slate-200 mt-0.5">{item.value}</p>
           </Card>
         ))}
-        {/* Valor de mercado mobile */}
+
         <Card className="p-4 text-center sm:hidden">
           <DollarSign size={16} className="text-emerald-400/60 mx-auto mb-1.5" />
           <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Valor</p>
@@ -160,7 +160,7 @@ export default function JogadorDetalhePage() {
         </Card>
       </div>
 
-      {/* Stats */}
+
       {stats && (
         <Card className="overflow-hidden">
           <div className="px-5 py-3.5 border-b border-white/[0.04]">

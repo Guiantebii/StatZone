@@ -38,23 +38,19 @@ export default function FasesPage() {
   const [grupoClassificacoes, setGrupoClassificacoes] = useState<Record<number, ClassificacaoTime[]>>({});
   const [dataLoading, setDataLoading] = useState(false);
 
-  // Create phase
   const [showCreatePhase, setShowCreatePhase] = useState(false);
   const [selectedFase, setSelectedFase] = useState<FaseEnum>('QUARTAS');
   const [jogoUnico, setJogoUnico] = useState(false);
   const [createPhaseLoading, setCreatePhaseLoading] = useState(false);
 
-  // Create group
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [grupoNome, setGrupoNome] = useState('');
   const [createGroupLoading, setCreateGroupLoading] = useState(false);
 
-  // Add team to group
   const [showAddTeam, setShowAddTeam] = useState<number | null>(null);
   const [selectedTimeId, setSelectedTimeId] = useState<number>(0);
   const [addingTeam, setAddingTeam] = useState(false);
 
-  // Generate fixtures
   const [generatingFixtures, setGeneratingFixtures] = useState<number | null>(null);
 
   useEffect(() => {
@@ -85,7 +81,7 @@ export default function FasesPage() {
           try {
             const r = await api.get(`/campeonatos/${campeonatoId}/grupos/${g.id}/classificacao`);
             classMap[g.id] = r.data;
-          } catch { /* sem partidas ainda */ }
+          } catch {}
         }));
         if (isMounted) setGrupoClassificacoes(classMap);
       });
@@ -157,7 +153,7 @@ export default function FasesPage() {
     try {
       const r = await api.get(`/campeonatos/${campeonatoId}/grupos/${grupoId}/classificacao`);
       setGrupoClassificacoes((prev) => ({ ...prev, [grupoId]: r.data }));
-    } catch { /* sem partidas */ }
+    } catch {}
   };
 
   const handleGenerateFixtures = async (grupoId: number) => {
@@ -230,7 +226,7 @@ export default function FasesPage() {
         </div>
       ) : (
         <>
-          {/* GRUPOS */}
+
           {subTab === 'grupos' && (
             <div className="space-y-4">
               <div className="flex justify-end">
@@ -340,7 +336,7 @@ export default function FasesPage() {
                 </div>
               )}
 
-              {/* Create Group Modal */}
+
               {showCreateGroup && (
                 <Modal title="Novo grupo" onClose={() => setShowCreateGroup(false)}>
                   <div className="space-y-4">
@@ -364,7 +360,7 @@ export default function FasesPage() {
                 </Modal>
               )}
 
-              {/* Add Team Modal */}
+
               {showAddTeam && (
                 <Modal title="Adicionar time" onClose={() => setShowAddTeam(null)}>
                   <div className="space-y-4">
@@ -394,7 +390,7 @@ export default function FasesPage() {
             </div>
           )}
 
-          {/* MATA-MATA */}
+
           {subTab === 'matamata' && (
             <div className="space-y-6">
               <div className="flex justify-end">
@@ -440,7 +436,7 @@ export default function FasesPage() {
                 ))
               )}
 
-              {/* Create Phase Modal */}
+
               {showCreatePhase && (
                 <Modal title="Nova fase" onClose={() => setShowCreatePhase(false)}>
                   <div className="space-y-4">

@@ -80,7 +80,7 @@ export default function TimeDetalhePage() {
         Voltar para times
       </button>
 
-      {/* Team Header */}
+
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
           <img
@@ -111,7 +111,7 @@ export default function TimeDetalhePage() {
         </div>
       </Card>
 
-      {/* Form */}
+
       {forma && forma.forma.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -135,7 +135,7 @@ export default function TimeDetalhePage() {
         </Card>
       )}
 
-      {/* Stats */}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatBox label="Jogadores" value={jogadores.length} />
         <StatBox label="Partidas" value={estatisticas?.partidas ?? '-'} />
@@ -143,7 +143,7 @@ export default function TimeDetalhePage() {
         <StatBox label="Gols marcados" value={estatisticas?.golsMarcados ?? '-'} />
       </div>
 
-      {/* Partidas */}
+
       {partidas && (partidas.ultimasPartidas.length > 0 || partidas.proximasPartidas.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {partidas.ultimasPartidas.length > 0 && (
@@ -175,7 +175,7 @@ export default function TimeDetalhePage() {
         </div>
       )}
 
-      {/* Players */}
+
       <Card className="overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.04]">
           <Users size={14} className="text-slate-500" />

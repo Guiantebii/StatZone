@@ -19,16 +19,16 @@ export default function PublicLayout() {
 
   return (
     <div className="min-h-screen bg-primary-dark">
-      {/* Top bar */}
+
       <header className="sticky top-0 z-50 bg-primary/90 backdrop-blur-xl border-b border-white/[0.04]">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between h-14 md:h-16">
-            {/* Logo */}
+
             <Link to="/" className="shrink-0">
               <Logo />
             </Link>
 
-            {/* Desktop nav */}
+
             <nav className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => (
                 <NavLink
@@ -49,9 +49,9 @@ export default function PublicLayout() {
               ))}
             </nav>
 
-            {/* Right side */}
+
             <div className="flex items-center gap-3">
-              {/* Desktop search */}
+
               <div className="hidden md:block">
                 <SearchBar
                   placeholder="Buscar times, jogadores..."
@@ -59,7 +59,7 @@ export default function PublicLayout() {
                 />
               </div>
 
-              {/* Auth */}
+
               {isAdmin ? (
                 <div className="hidden md:flex items-center gap-3">
                   <Link
@@ -104,7 +104,7 @@ export default function PublicLayout() {
                 </div>
               )}
 
-              {/* Mobile hamburger */}
+
               <button
                 onClick={() => setMobileOpen(true)}
                 className="md:hidden p-2 text-slate-400 hover:text-white"
@@ -117,7 +117,7 @@ export default function PublicLayout() {
         </div>
       </header>
 
-      {/* Mobile drawer */}
+
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
@@ -129,7 +129,7 @@ export default function PublicLayout() {
               </button>
             </div>
 
-            {/* Mobile search */}
+
             <div className="mb-6">
               <SearchBar placeholder="Buscar times, jogadores..." />
             </div>
@@ -205,7 +205,7 @@ export default function PublicLayout() {
         </div>
       )}
 
-      {/* Content */}
+
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
         <Outlet />
       </main>

@@ -61,7 +61,7 @@ function TeamSection({ timeNome, timeId, jogadores, escalados, onAdd }: TeamSect
         {timeNome}
       </h3>
 
-      {/* Add player */}
+
       <div className="space-y-1">
         <div className="flex gap-2 items-end">
           <div className="flex-1">
@@ -98,7 +98,7 @@ function TeamSection({ timeNome, timeId, jogadores, escalados, onAdd }: TeamSect
         </div>
       </div>
 
-      {/* Titulares */}
+
       {titulares.length > 0 && (
         <div>
           <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">Titulares</p>
@@ -114,7 +114,7 @@ function TeamSection({ timeNome, timeId, jogadores, escalados, onAdd }: TeamSect
         </div>
       )}
 
-      {/* Reservas */}
+
       {reservas.length > 0 && (
         <div>
           <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">Reservas</p>

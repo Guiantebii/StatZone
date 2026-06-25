@@ -93,7 +93,7 @@ export default function PublicHomePage() {
 
   return (
     <div className="space-y-8 animate-fade-in-up">
-      {/* Hero - Ao Vivo */}
+
       {aoVivo.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-4">
@@ -146,7 +146,7 @@ export default function PublicHomePage() {
         </section>
       )}
 
-      {/* Campeonatos grid */}
+
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-slate-100 uppercase tracking-wider">Campeonatos</h2>
@@ -176,9 +176,9 @@ export default function PublicHomePage() {
         </div>
       </section>
 
-      {/* Próximas partidas + Artilharia */}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Próximas */}
+
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-100 uppercase tracking-wider">Próximas partidas</h2>
@@ -223,7 +223,7 @@ export default function PublicHomePage() {
             </div>
           )}
 
-          {/* Últimos resultados */}
+
           {recentes.length > 0 && (
             <div>
               <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-3">Últimos resultados</h3>
@@ -256,9 +256,9 @@ export default function PublicHomePage() {
           )}
         </div>
 
-        {/* Sidebar */}
+
         <div className="space-y-4">
-          {/* Artilharia */}
+
           {artilharia.length > 0 && (
             <Card className="overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.04]">
@@ -287,7 +287,7 @@ export default function PublicHomePage() {
             </Card>
           )}
 
-          {/* Links rápidos */}
+
           <Card className="p-4">
             <h3 className="text-sm font-semibold text-slate-200 mb-3">Navegar</h3>
             <div className="space-y-1">
@@ -303,7 +303,7 @@ export default function PublicHomePage() {
             </div>
           </Card>
 
-          {/* Stats minimal */}
+
           <Card className="p-4">
             <div className="grid grid-cols-2 gap-3 text-center">
               <div>
