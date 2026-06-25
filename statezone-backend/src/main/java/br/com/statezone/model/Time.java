@@ -25,6 +25,9 @@ public class Time {
 
     private String sigla;
 
+    @Enumerated(EnumType.STRING)
+    private TipoTime tipo;
+
     private String cidade;
 
     private String pais;

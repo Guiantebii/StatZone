@@ -1,7 +1,9 @@
 package br.com.statezone.controller;
 
+import br.com.statezone.dto.classificacao.ClassificacaoResponseDto;
 import br.com.statezone.dto.eliminatoria.GrupoRequestDto;
 import br.com.statezone.dto.eliminatoria.GrupoResponseDto;
+import br.com.statezone.service.ClassificacaoService;
 import br.com.statezone.service.GrupoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.util.List;
 public class GrupoController {
 
     private final GrupoService grupoService;
+    private final ClassificacaoService classificacaoService;
 
     @PostMapping("/{campeonatoId}/grupos")
     public ResponseEntity<GrupoResponseDto> criarGrupo(
@@ -59,5 +62,13 @@ public class GrupoController {
     ) {
         grupoService.gerarFixturesPorGrupo(campeonatoId, grupoId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{campeonatoId}/grupos/{grupoId}/classificacao")
+    public ResponseEntity<List<ClassificacaoResponseDto>> classificacaoDoGrupo(
+            @PathVariable Long campeonatoId,
+            @PathVariable Long grupoId
+    ) {
+        return ResponseEntity.ok(classificacaoService.gerarClassificacaoPorGrupo(grupoId));
     }
 }

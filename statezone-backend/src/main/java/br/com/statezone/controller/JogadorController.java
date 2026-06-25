@@ -35,7 +35,12 @@ public class JogadorController {
     }
 
     @GetMapping
-    public ResponseEntity<List<JogadorResponseDto>> listarJogadores(){
+    public ResponseEntity<List<JogadorResponseDto>> listarJogadores(
+            @RequestParam(required = false, defaultValue = "") String nome
+    ) {
+        if (!nome.isBlank()) {
+            return ResponseEntity.ok(jogadorService.buscarPorNome(nome));
+        }
         return ResponseEntity.ok(jogadorService.listarTodosJogadores());
     }
 

@@ -1,6 +1,8 @@
 package br.com.statezone.controller;
 
 import br.com.statezone.dto.jogador.JogadorResponseDto;
+import br.com.statezone.dto.time.TimeEstatisticasResponseDto;
+import br.com.statezone.dto.time.TimePartidasResponseDto;
 import br.com.statezone.dto.time.TimeRequestDto;
 import br.com.statezone.dto.time.TimeResponseDto;
 import br.com.statezone.dto.time.UltimasPartidasTimeResponseDto;
@@ -35,7 +37,12 @@ public class TimeController {
                 .body(response);
     }
     @GetMapping
-    public ResponseEntity<List<TimeResponseDto>> listarTimes(){
+    public ResponseEntity<List<TimeResponseDto>> listarTimes(
+            @RequestParam(required = false, defaultValue = "") String nome
+    ) {
+        if (!nome.isBlank()) {
+            return ResponseEntity.ok(timeService.buscarPorNome(nome));
+        }
         return ResponseEntity.ok(timeService.listarTodosTimes());
     }
 
@@ -70,5 +77,15 @@ public class TimeController {
     @GetMapping("/{id}/forma")
     public ResponseEntity<UltimasPartidasTimeResponseDto> ultimas5Partidas(@PathVariable Long id){
         return ResponseEntity.ok(timeService.ultimas5Partidas(id));
+    }
+
+    @GetMapping("/{id}/estatisticas")
+    public ResponseEntity<TimeEstatisticasResponseDto> obterEstatisticas(@PathVariable Long id){
+        return ResponseEntity.ok(timeService.obterEstatisticas(id));
+    }
+
+    @GetMapping("/{id}/partidas")
+    public ResponseEntity<TimePartidasResponseDto> obterPartidas(@PathVariable Long id){
+        return ResponseEntity.ok(timeService.obterPartidas(id));
     }
 }

@@ -184,6 +184,7 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 90);
+        publisher.publishEvent(new PartidaEncerradaEvent(salva));
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
         return partidaMapper.toDto(salva);
     }
@@ -200,6 +201,7 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 90);
+        publisher.publishEvent(new PartidaEncerradaEvent(salva));
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
         return partidaMapper.toDto(salva);
     }

@@ -92,11 +92,9 @@ public class RankingEngine {
             int golsMandante = partida.getGolsMandante();
             int golsVisitante = partida.getGolsVisitante();
 
-            // jogos
             statsMandante.setJogos(statsMandante.getJogos() + 1);
             statsVisitante.setJogos(statsVisitante.getJogos() + 1);
 
-            // gols
             statsMandante.setGolsFeitos(statsMandante.getGolsFeitos() + golsMandante);
             statsMandante.setGolsSofridos(statsMandante.getGolsSofridos() + golsVisitante);
 
@@ -110,8 +108,6 @@ public class RankingEngine {
             statsVisitante.setSaldoGols(
                     statsVisitante.getGolsFeitos() - statsVisitante.getGolsSofridos()
             );
-
-            // resultado
             if (golsMandante > golsVisitante) {
 
                 statsMandante.setVitorias(statsMandante.getVitorias() + 1);
@@ -133,7 +129,6 @@ public class RankingEngine {
             }
         }
 
-        // ordenação
         List<ClassificacaoStats> ranking =
                 tabela.values()
                         .stream()

@@ -83,4 +83,30 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
     List<Partida> findProximasPartidasDoTime(Long campeonatoId, Long timeId, Pageable pageable);
 
     List<Partida> findByGrupoIdAndStatusIn(Long grupoId, List<StatusPartida> status);
+
+    @Query("""
+    SELECT p FROM Partida p
+    JOIN FETCH p.timeMandante
+    JOIN FETCH p.timeVisitante
+    WHERE (p.timeMandante.id = :timeId OR p.timeVisitante.id = :timeId)
+    AND p.status IN ('AGENDADA', 'AO_VIVO', 'INTERVALO', 'PENALTIS')
+    ORDER BY p.dataPartida ASC
+    """)
+    List<Partida> findProximasPartidas(
+            @Param("timeId") Long timeId,
+            Pageable pageable
+    );
+
+    @Query("""
+    SELECT p FROM Partida p
+    JOIN FETCH p.timeMandante
+    JOIN FETCH p.timeVisitante
+    WHERE (p.timeMandante.id = :timeId OR p.timeVisitante.id = :timeId)
+    AND p.status = br.com.statezone.enums.StatusPartida.ENCERRADA
+    ORDER BY p.dataPartida DESC
+    """)
+    List<Partida> findUltimasPartidasComTimes(
+            @Param("timeId") Long timeId,
+            Pageable pageable
+    );
 }

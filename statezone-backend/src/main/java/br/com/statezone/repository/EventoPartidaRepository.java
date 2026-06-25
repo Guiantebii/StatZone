@@ -25,4 +25,7 @@ public interface EventoPartidaRepository extends JpaRepository<EventoPartida,Lon
     int countGolsByPartidaAndTime(Long partidaId, Long timeId);
 
 
+    long countByJogadorId(Long jogadorId);
+    long countByJogadorSecundarioId(Long jogadorId);
+
 }
