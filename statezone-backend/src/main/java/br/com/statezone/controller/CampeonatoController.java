@@ -5,7 +5,7 @@ import br.com.statezone.dto.campeonato.CampeonatoResponseDto;
 import br.com.statezone.dto.classificacao.ClassificacaoResponseDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.dto.rankings.*;
-import br.com.statezone.integration.apifootball.ApiFootballClient;
+import br.com.statezone.dto.time.TimeResponseDto;
 import br.com.statezone.service.CampeonatoService;
 import br.com.statezone.service.ClassificacaoService;
 import br.com.statezone.service.EstatisticasJogadorService;
@@ -26,7 +26,6 @@ public class CampeonatoController {
     private final ClassificacaoService classificacaoService;
     private final FixtureGeneratorService fixtureGeneratorService;
     private final EstatisticasJogadorService estatisticasJogadorService;
-    private final ApiFootballClient apiFootballClient;
 
         @PostMapping
         public ResponseEntity<CampeonatoResponseDto> criarCampeonato(@RequestBody @Valid CampeonatoRequestDto dto){
@@ -64,6 +63,11 @@ public class CampeonatoController {
         campeonatoService.adicionarTime(campeonatoId, timeId);
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{campeonatoId}/times")
+    public ResponseEntity<List<TimeResponseDto>> listarTimesDoCampeonato(@PathVariable Long campeonatoId) {
+        return ResponseEntity.ok(campeonatoService.listarTimesDoCampeonato(campeonatoId));
     }
     @GetMapping("/{campeonatoId}/classificacao")
     public ResponseEntity<List<ClassificacaoResponseDto>> gerarClassificacao(

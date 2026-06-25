@@ -1,6 +1,5 @@
 package br.com.statezone.controller;
 
-import br.com.statezone.dto.eventoPartida.EventoTimelineResponseDto;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.dto.partida.PenaltisRequestDto;
@@ -57,42 +56,42 @@ public class PartidaController {
         return ResponseEntity.ok(partidaService.encerrar(id));
     }
 
-    @PatchMapping("/{id}/intervalo")
+    @PostMapping("/{id}/intervalo")
     public ResponseEntity<PartidaResponseDto> intervalo(@PathVariable Long id) {
         return ResponseEntity.ok(partidaService.intervalo(id));
     }
 
-    @PatchMapping("/{id}/segundo-tempo")
+    @PostMapping("/{id}/segundo-tempo")
     public ResponseEntity<PartidaResponseDto> iniciarSegundoTempo(@PathVariable Long id) {
         return ResponseEntity.ok(partidaService.iniciarSegundoTempo(id));
     }
 
-    @PatchMapping("/{id}/adiar")
+    @PostMapping("/{id}/adiar")
     public ResponseEntity<PartidaResponseDto> adiar(@PathVariable Long id) {
         return ResponseEntity.ok(partidaService.adiar(id));
     }
 
-    @PatchMapping("/{id}/cancelar")
+    @PostMapping("/{id}/cancelar")
     public ResponseEntity<PartidaResponseDto> cancelar(@PathVariable Long id) {
         return ResponseEntity.ok(partidaService.cancelar(id));
     }
 
-    @PatchMapping("/{id}/wo-mandante")
+    @PostMapping("/{id}/wo-mandante")
     public ResponseEntity<PartidaResponseDto> woMandante(@PathVariable Long id) {
         return ResponseEntity.ok(partidaService.woMandante(id));
     }
 
-    @PatchMapping("/{id}/wo-visitante")
+    @PostMapping("/{id}/wo-visitante")
     public ResponseEntity<PartidaResponseDto> woVisitante(@PathVariable Long id) {
         return ResponseEntity.ok(partidaService.woVisitante(id));
     }
 
-    @PatchMapping("/{id}/penaltis")
+    @PostMapping("/{id}/penaltis")
     public ResponseEntity<PartidaResponseDto> iniciarPenaltis(@PathVariable Long id) {
         return ResponseEntity.ok(partidaService.iniciarPenaltis(id));
     }
 
-    @PatchMapping("/{id}/encerrar-penaltis")
+    @PostMapping("/{id}/encerrar-penaltis")
     public ResponseEntity<PartidaResponseDto> encerrarComPenaltis(
             @PathVariable Long id,
             @RequestBody @Valid PenaltisRequestDto dto

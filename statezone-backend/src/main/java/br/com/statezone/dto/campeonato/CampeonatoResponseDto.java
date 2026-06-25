@@ -15,6 +15,10 @@ public record CampeonatoResponseDto(
 
         String logoUrl,
 
+        String tipoFormato,
+
+        Integer amarelosParaSuspensao,
+        
         LocalDateTime criadoEm,
 
         LocalDateTime atualizadoEm,

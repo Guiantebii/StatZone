@@ -17,6 +17,8 @@ public record CampeonatoRequestDto(
         @Size(max = 20, message = "A temporada deve ter no máximo 20 caracteres")
         String temporada,
 
+        String tipoFormato,
+
         @NotBlank(message = "A logo URL é obrigatória")
         String logoUrl,
 
