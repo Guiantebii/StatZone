@@ -1,5 +1,6 @@
 package br.com.statezone.dto.time;
 
+import br.com.statezone.model.TipoTime;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
@@ -15,7 +16,8 @@ public record TimeRequestDto(
         @Size(min = 2, max = 5)
         String sigla,
 
-        @NotBlank(message = "Cidade é obrigatória")
+        TipoTime tipo,
+
         String cidade,
 
         @NotBlank(message = "País é obrigatório")
@@ -23,10 +25,8 @@ public record TimeRequestDto(
 
         String escudoUrl,
 
-        @NotBlank(message = "Técnico é obrigatório")
         String tecnico,
 
-        @NotBlank(message = "Estádio é obrigatório")
         String estadio,
 
         @Past(message = "Data de fundação deve estar no passado")
