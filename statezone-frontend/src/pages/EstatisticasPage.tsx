@@ -10,6 +10,7 @@ import type {
 } from '../types/estatisticas';
 import Card from '../components/ui/Card';
 import { SkeletonCard, SkeletonTable } from '../components/ui/Skeleton';
+import PaginationBar from '../components/ui/PaginationBar';
 import { toast } from 'sonner';
 
 type Tab = 'classificacao' | 'artilharia' | 'assistencias' | 'cartoes' | 'goleiros' | 'selecao' | 'mvp';
@@ -41,6 +42,8 @@ export default function EstatisticasPage() {
   const [goleiros, setGoleiros] = useState<RankingGoleiro[]>([]);
   const [selecao, setSelecao] = useState<SelecaoCampeonato[]>([]);
   const [mvp, setMvp] = useState<CraqueCampeonato | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
 
   useEffect(() => {
@@ -67,32 +70,32 @@ export default function EstatisticasPage() {
     }
     if (tab === 'artilharia') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/artilharia?pagina=0&tamanho=${PAGE_SIZE}`)
-          .then((r) => setArtilharia(r.data))
+        api.get(`/campeonatos/${campeonatoId}/artilharia?pagina=${page}&tamanho=${PAGE_SIZE}`)
+          .then((r) => { setArtilharia(r.data); setHasMore(r.data.length >= PAGE_SIZE); })
           .catch(() => setArtilharia([]))
       );
     }
     if (tab === 'assistencias') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/assistencias?pagina=0&tamanho=${PAGE_SIZE}`)
-          .then((r) => setAssistencias(r.data))
+        api.get(`/campeonatos/${campeonatoId}/assistencias?pagina=${page}&tamanho=${PAGE_SIZE}`)
+          .then((r) => { setAssistencias(r.data); setHasMore(r.data.length >= PAGE_SIZE); })
           .catch(() => setAssistencias([]))
       );
     }
     if (tab === 'cartoes') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/ranking/cartoes-amarelos?pagina=0&tamanho=${PAGE_SIZE}`)
-          .then((r) => setCartoesAmarelos(r.data))
+        api.get(`/campeonatos/${campeonatoId}/ranking/cartoes-amarelos?pagina=${page}&tamanho=${PAGE_SIZE}`)
+          .then((r) => { setCartoesAmarelos(r.data); setHasMore(r.data.length >= PAGE_SIZE); })
           .catch(() => setCartoesAmarelos([])),
-        api.get(`/campeonatos/${campeonatoId}/ranking/cartoes-vermelhos?pagina=0&tamanho=${PAGE_SIZE}`)
+        api.get(`/campeonatos/${campeonatoId}/ranking/cartoes-vermelhos?pagina=${page}&tamanho=${PAGE_SIZE}`)
           .then((r) => setCartoesVermelhos(r.data))
           .catch(() => setCartoesVermelhos([]))
       );
     }
     if (tab === 'goleiros') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/ranking/goleiros?pagina=0&tamanho=${PAGE_SIZE}`)
-          .then((r) => setGoleiros(r.data))
+        api.get(`/campeonatos/${campeonatoId}/ranking/goleiros?pagina=${page}&tamanho=${PAGE_SIZE}`)
+          .then((r) => { setGoleiros(r.data); setHasMore(r.data.length >= PAGE_SIZE); })
           .catch(() => setGoleiros([]))
       );
     }
@@ -112,7 +115,7 @@ export default function EstatisticasPage() {
     }
 
     Promise.all(promises).finally(() => setDataLoading(false));
-  }, [campeonatoId, tab]);
+  }, [campeonatoId, tab, page]);
 
   if (loading) return (
     <div className="space-y-6">
@@ -151,7 +154,7 @@ export default function EstatisticasPage() {
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); setPage(0); }}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
               tab === t.key ? 'bg-accent/10 text-accent shadow-sm' : 'text-slate-500 hover:text-slate-300'
             }`}
@@ -235,6 +238,7 @@ export default function EstatisticasPage() {
               )}
               getJogador={(a) => ({ nome: (a as Artilharia).nomeJogador, time: (a as Artilharia).nomeTime })}
               emptyText="Nenhum gol registrado"
+              pagination={{ page, hasMore, onPrev: () => setPage(p => p - 1), onNext: () => setPage(p => p + 1) }}
             />
           )}
 
@@ -249,6 +253,7 @@ export default function EstatisticasPage() {
               )}
               getJogador={(a) => ({ nome: (a as AssistenciaRanking).nomeJogador, time: (a as AssistenciaRanking).nomeTime })}
               emptyText="Nenhuma assistência registrada"
+              pagination={{ page, hasMore, onPrev: () => setPage(p => p - 1), onNext: () => setPage(p => p + 1) }}
             />
           )}
 
@@ -327,6 +332,9 @@ export default function EstatisticasPage() {
                     ))}
                   </tbody>
                 </table>
+              )}
+              {goleiros.length > 0 && (
+                <PaginationBar page={page} hasMore={hasMore} onPrev={() => setPage(p => p - 1)} onNext={() => setPage(p => p + 1)} />
               )}
             </Card>
           )}
@@ -414,9 +422,15 @@ interface RankingTableProps<T> {
   renderValue: (item: T) => React.ReactNode;
   getJogador: (item: T) => { nome: string; time?: string };
   emptyText: string;
+  pagination?: {
+    page: number;
+    hasMore: boolean;
+    onPrev: () => void;
+    onNext: () => void;
+  };
 }
 
-function RankingTable<T>({ title, headers, data, renderValue, getJogador, emptyText }: RankingTableProps<T>) {
+function RankingTable<T>({ title, headers, data, renderValue, getJogador, emptyText, pagination }: RankingTableProps<T>) {
   return (
     <Card className="overflow-hidden">
       <div className="px-5 py-3.5 border-b border-white/[0.04]">
@@ -466,6 +480,9 @@ function RankingTable<T>({ title, headers, data, renderValue, getJogador, emptyT
             })}
           </tbody>
         </table>
+      )}
+      {pagination && data.length > 0 && (
+        <PaginationBar page={pagination.page} hasMore={pagination.hasMore} onPrev={pagination.onPrev} onNext={pagination.onNext} />
       )}
     </Card>
   );

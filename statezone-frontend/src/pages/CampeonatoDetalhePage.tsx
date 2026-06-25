@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, Trophy, Swords, Medal, Calendar, Zap } from 'lucide-react';
+import { ArrowLeft, Trophy, Swords, Medal, Star, Calendar, Zap } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
 import { PAGE_SIZE } from '../constants/pagination';
 import type { Campeonato } from '../types/campeonato';
-import type { ClassificacaoTime, Artilharia } from '../types/estatisticas';
+import type { ClassificacaoTime, Artilharia, SelecaoCampeonato, CraqueCampeonato } from '../types/estatisticas';
 import type { Partida } from '../types/partida';
 import type { Grupo } from '../types/fases';
 import Card from '../components/ui/Card';
@@ -13,12 +13,14 @@ import PartidaCard from '../components/PartidaCard';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
 
-type Tab = 'classificacao' | 'partidas' | 'artilharia';
+type Tab = 'classificacao' | 'partidas' | 'artilharia' | 'selecao' | 'mvp';
 
 const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: 'classificacao', label: 'Classificação', icon: <Trophy size={14} /> },
   { key: 'partidas', label: 'Partidas', icon: <Swords size={14} /> },
   { key: 'artilharia', label: 'Artilharia', icon: <Medal size={14} /> },
+  { key: 'selecao', label: 'Seleção', icon: <Star size={14} /> },
+  { key: 'mvp', label: 'MVP', icon: <Medal size={14} /> },
 ];
 
 export default function CampeonatoDetalhePage() {
@@ -30,6 +32,8 @@ export default function CampeonatoDetalhePage() {
   const [classificacao, setClassificacao] = useState<ClassificacaoTime[]>([]);
   const [partidas, setPartidas] = useState<Partida[]>([]);
   const [artilharia, setArtilharia] = useState<Artilharia[]>([]);
+  const [selecao, setSelecao] = useState<SelecaoCampeonato[]>([]);
+  const [mvp, setMvp] = useState<CraqueCampeonato | null>(null);
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [grupoClassificacoes, setGrupoClassificacoes] = useState<Record<number, ClassificacaoTime[]>>({});
   const [loading, setLoading] = useState(true);
@@ -40,17 +44,21 @@ export default function CampeonatoDetalhePage() {
     let isMounted = true;
     const load = async () => {
       try {
-        const [campRes, classRes, partRes, artRes] = await Promise.all([
+        const [campRes, classRes, partRes, artRes, selRes, mvpRes] = await Promise.all([
           api.get(`/campeonatos/${id}`),
           api.get(`/campeonatos/${id}/classificacao`),
           api.get(`/campeonatos/${id}/partidas`),
           api.get(`/campeonatos/${id}/artilharia?pagina=0&tamanho=${PAGE_SIZE}`),
+          api.get(`/campeonatos/${id}/selecao-do-campeonato`),
+          api.get(`/campeonatos/${id}/mvp`),
         ]);
         if (!isMounted) return;
         setCampeonato(campRes.data);
         setClassificacao(classRes.data);
         setPartidas(partRes.data);
         setArtilharia(artRes.data);
+        setSelecao(selRes.data);
+        setMvp(mvpRes.data);
 
         const camp = campRes.data as Campeonato;
         if (camp.tipoFormato === 'GRUPOS_E_MATA_MATA') {
@@ -332,6 +340,80 @@ export default function CampeonatoDetalhePage() {
                   <span className="text-lg font-bold text-accent font-mono">{a.gols}</span>
                 </Link>
               ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+
+      {tab === 'selecao' && (
+        <Card className="p-5">
+          <h3 className="text-sm font-semibold text-slate-200 mb-4">Seleção do campeonato</h3>
+          {selecao.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-10">Nenhuma seleção disponível</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {selecao.map((j) => (
+                <div key={`${j.posicao}-${j.nomeJogador}`} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0">
+                    {j.posicao.substring(0, 2)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-200">{j.nomeJogador}</p>
+                    <p className="text-[10px] text-slate-500">{j.nomeTime}</p>
+                  </div>
+                  <div className="ml-auto text-right">
+                    <span className="text-xs font-mono text-accent">{j.score.toFixed(1)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+
+      {tab === 'mvp' && (
+        <Card className="p-6">
+          {!mvp ? (
+            <p className="text-sm text-slate-500 text-center py-10">Nenhum MVP disponível</p>
+          ) : (
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 ring-4 ring-accent/20">
+                <Medal size={36} className="text-accent" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-100">{mvp.nomeJogador}</h3>
+              <p className="text-sm text-slate-400 mt-1">{mvp.nomeTime}</p>
+
+              <div className="flex items-center gap-1 mt-2">
+                <Star size={14} className="text-accent fill-accent" />
+                <span className="text-sm font-semibold text-accent font-mono">{mvp.score.toFixed(1)}</span>
+                <span className="text-xs text-slate-500">de rating</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 w-full max-w-md">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="text-xl font-extrabold font-mono text-accent">{mvp.gols}</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Gols</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="text-xl font-extrabold font-mono text-blue-400">{mvp.assistencias}</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Assists</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="text-xl font-extrabold font-mono text-emerald-400">{mvp.defesas}</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Defesas</div>
+                </div>
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <div className="text-xl font-extrabold font-mono text-yellow-400">{mvp.penaltisDefendidos}</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">Pênaltis</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 mt-4 text-xs text-slate-500">
+                <span>&#x1F7E8; {mvp.cartoesAmarelos} amarelos</span>
+                <span>&#x1F7E5; {mvp.cartoesVermelhos} vermelhos</span>
+                <span>&#x274C; {mvp.penaltisPerdidos} pênaltis perdidos</span>
+              </div>
             </div>
           )}
         </Card>

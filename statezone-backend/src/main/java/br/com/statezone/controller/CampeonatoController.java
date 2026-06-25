@@ -155,4 +155,10 @@ public class CampeonatoController {
         return ResponseEntity.ok(estatisticasJogadorService.rankingGoleiros(id, pagina, tamanho));
     }
 
+    @PostMapping("/{id}/reprocessar-estatisticas")
+    public ResponseEntity<Void> reprocessarEstatisticas(@PathVariable Long id) {
+        campeonatoService.reprocessarEstatisticas(id);
+        return ResponseEntity.ok().build();
+    }
+
 }
