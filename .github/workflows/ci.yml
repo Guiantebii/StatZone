@@ -34,22 +34,23 @@ jobs:
         shell: bash
         run: |
           mvn test -e 2>&1 | tee test-output.log
-          exit ${PIPESTATUS[0]}
       - name: Show failure
         if: failure()
         shell: bash
         run: |
-          echo "::group::Test Results"
-          grep -E "Tests run:" test-output.log | tail -1 | while IFS= read -r line; do echo "::error::$line"; done
-          echo "::endgroup::"
-          echo "::group::AuthFlowIntegrationTest full context"
-          # Find the AuthFlowIntegrationTest error and show 20 lines around it
-          lineno=$(grep -n "AuthFlowIntegrationTest" test-output.log | head -1 | cut -d: -f1)
-          if [ -n "$lineno" ]; then
-            start=$((lineno > 20 ? lineno - 20 : 1))
-            sed -n "${start},$((lineno + 30))p" test-output.log | while IFS= read -r line; do echo "::error::$line"; done
-          fi
-          echo "::endgroup::"
+          msg=""
+          add_line() { msg="${msg}%0A$1"; }
+          add_line "=== Test Summary ==="
+          add_line "$(grep -E "Tests run:" test-output.log | tail -1 || echo '(no summary)')"
+          add_line "=== AuthFlowIntegrationTest error ==="
+          while IFS= read -r line; do
+            add_line "$line"
+          done <<< "$(grep -n -A 20 "AuthFlowIntegrationTest" test-output.log | head -30 || echo '(no error context)')"
+          add_line "=== Placeholder errors ==="
+          while IFS= read -r line; do
+            add_line "$line"
+          done <<< "$(grep -n -i "placeholder\|Could not resolve" test-output.log | head -15 || echo '(none)')"
+          echo "::error::$msg"
 
   frontend:
     runs-on: ubuntu-latest
