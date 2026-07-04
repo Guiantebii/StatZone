@@ -1,0 +1,12 @@
+{
+  "statezone-frontend/**/*.{ts,tsx}": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "statezone-frontend/**/*.{css,json,md}": [
+    "prettier --write"
+  ],
+  "statezone-backend/**/*.java": [
+    "prettier --write"
+  ]
+}

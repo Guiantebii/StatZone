@@ -57,11 +57,23 @@ export function useWebSocket(options?: UseWebSocketOptions) {
 
     window.addEventListener('auth:token-changed', onTokenChange);
 
+    function onVisibilityChange() {
+      const c = clientRef.current;
+      if (!c) return;
+      if (document.hidden) {
+        try { c.deactivate(); } catch {}
+      } else {
+        c.activate();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     return () => {
       try {
         client.deactivate();
       } catch {}
       window.removeEventListener('auth:token-changed', onTokenChange);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -139,8 +151,20 @@ export function usePartidaWebSocket(
 
     window.addEventListener('auth:token-changed', onTokenChange);
 
+    function onVisibilityChange() {
+      const c = clientRef.current;
+      if (!c) return;
+      if (document.hidden) {
+        try { c.deactivate(); } catch {}
+      } else {
+        c.activate();
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     return () => {
       window.removeEventListener('auth:token-changed', onTokenChange);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       try {
         client.deactivate();
       } catch {}

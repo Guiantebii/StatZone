@@ -1,13 +1,13 @@
 import { ChevronRight, Trophy } from 'lucide-react';
+import { getLogoUrl } from '../constants/helpers';
 import type { ConfrontoEliminatorio } from '../types/fases';
 import Card from './ui/Card';
 
 interface ConfrontoCardProps {
   confronto: ConfrontoEliminatorio;
-  getLogoUrl: (nome: string) => string;
 }
 
-export default function ConfrontoCard({ confronto, getLogoUrl }: ConfrontoCardProps) {
+export default function ConfrontoCard({ confronto }: ConfrontoCardProps) {
   const isFinished = confronto.statusConfronto === 'ENCERRADO';
 
   const statusBadge = () => {

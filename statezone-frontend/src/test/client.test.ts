@@ -8,7 +8,7 @@ function makeError(status: number, url: string, retry = false): AxiosError {
     config: {
       url,
       _retry: retry,
-    } as InternalAxiosRequestConfig,
+    } as unknown as InternalAxiosRequestConfig,
     isAxiosError: true,
     toJSON: () => ({}),
     name: 'AxiosError',
