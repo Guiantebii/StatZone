@@ -42,12 +42,10 @@ jobs:
           add_line() { msg="${msg}%0A$1"; }
           add_line "=== Test Summary ==="
           add_line "$(grep -E "Tests run:" test-output.log | tail -1 || echo '(no summary)')"
-          add_line "=== Context load error (after AuthFlowIntegrationTest) ==="
+          add_line "=== Context load error ==="
           lineno=$(grep -n "AuthFlowIntegrationTest" test-output.log | head -1 | cut -d: -f1)
           if [ -n "$lineno" ]; then
-            start=$lineno
-            end=$((lineno + 120))
-            sed -n "${start},${end}p" test-output.log | head -120 | while IFS= read -r line; do
+            sed -n "${lineno},$((lineno + 120))p" test-output.log | while IFS= read -r line; do
               add_line "$line"
             done
           fi
