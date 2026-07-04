@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, master ]
 
+env:
+  VITE_API_URL: https://api.statzonepro.com
+  VITE_WS_URL: https://api.statzonepro.com/ws
+
 jobs:
   backend:
     runs-on: ubuntu-latest
