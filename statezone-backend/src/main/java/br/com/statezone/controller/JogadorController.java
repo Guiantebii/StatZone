@@ -8,6 +8,7 @@ import br.com.statezone.service.JogadorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -21,6 +22,7 @@ public class JogadorController {
     private final EstatisticasJogadorService estatisticasJogadorService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<JogadorResponseDto> criarJogador(
             @RequestBody
             @Valid
@@ -50,11 +52,13 @@ public class JogadorController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<JogadorResponseDto> atualizarJogador(@RequestBody @Valid JogadorRequestDto dto, @PathVariable Long id){
        return ResponseEntity.ok(jogadorService.atualizarJogador(dto,id));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletarJogador(@PathVariable Long id){
         jogadorService.deletarJogador(id);
         return ResponseEntity.noContent().build();

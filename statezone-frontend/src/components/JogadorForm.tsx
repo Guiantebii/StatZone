@@ -19,34 +19,36 @@ const Label = ({ children, htmlFor }: { children: React.ReactNode; htmlFor?: str
 );
 
 export default function JogadorForm({ jogador, onClose, onSaved }: JogadorFormProps) {
-  const [nome, setNome] = useState(jogador?.nome || '');
-  const [dataNascimento, setDataNascimento] = useState(jogador?.dataNascimento || '');
-  const [nacionalidade, setNacionalidade] = useState(jogador?.nacionalidade || '');
-  const [posicao, setPosicao] = useState(jogador?.posicao || 'MEIO_CAMPO');
-  const [numeroCamisa, setNumeroCamisa] = useState(jogador?.numeroCamisa || 1);
-  const [altura, setAltura] = useState(jogador?.altura || 1.80);
-  const [peso, setPeso] = useState(jogador?.peso || 75);
-  const [valorMercado, setValorMercado] = useState(jogador?.valorMercado || 0);
-  const [peForte, setPeForte] = useState(jogador?.peForte || 'DIREITO');
-  const [fotoUrl, setFotoUrl] = useState(jogador?.fotoUrl || '');
+  const [nome, setNome] = useState(jogador?.nome ?? '');
+  const [dataNascimento, setDataNascimento] = useState(jogador?.dataNascimento ?? '');
+  const [nacionalidade, setNacionalidade] = useState(jogador?.nacionalidade ?? '');
+  const [posicao, setPosicao] = useState(jogador?.posicao ?? 'MEIO_CAMPO');
+  const [numeroCamisa, setNumeroCamisa] = useState(jogador?.numeroCamisa ?? 1);
+  const [altura, setAltura] = useState<string | number>(jogador ? (jogador.altura ?? '') : 1.80);
+  const [peso, setPeso] = useState<string | number>(jogador ? (jogador.peso ?? '') : 75);
+  const [valorMercado, setValorMercado] = useState(jogador?.valorMercado ?? 0);
+  const [peForte, setPeForte] = useState(jogador?.peForte ?? 'DIREITO');
+  const [fotoUrl, setFotoUrl] = useState(jogador?.fotoUrl ?? '');
   const [fotoManual, setFotoManual] = useState(!!jogador?.fotoUrl);
-  const [timeId, setTimeId] = useState<number | ''>(jogador?.timeId || '');
+  const [timeId, setTimeId] = useState<number | ''>(jogador?.timeId ?? '');
   const [times, setTimes] = useState<TimeOption[]>([]);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!fotoManual && nome) setFotoUrl(PLAYER_PHOTO(nome));
-  }, [nome, fotoManual]);
+  const fotoUrlFinal = fotoManual ? fotoUrl : PLAYER_PHOTO(nome || jogador?.nome || '');
 
   useEffect(() => {
-    api.get('/times').then(res => setTimes(res.data)).catch(err => toast.error(getApiError(err, 'Erro ao carregar times')));
+    let isCancelled = false;
+    api.get('/times').then(res => {
+      if (!isCancelled) setTimes(res.data);
+    }).catch(err => toast.error(getApiError(err, 'Erro ao carregar times')));
+    return () => { isCancelled = true; };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = { nome, dataNascimento: dataNascimento || null, nacionalidade, posicao, numeroCamisa, altura, peso, valorMercado, peForte, fotoUrl, timeId: timeId || null };
+      const payload = { nome, dataNascimento: dataNascimento || null, nacionalidade, posicao, numeroCamisa, altura: altura || null, peso: peso || null, valorMercado, peForte, fotoUrl: fotoUrlFinal, timeId: timeId || null };
       if (jogador) {
         await api.put(`/jogadores/${jogador.id}`, payload);
         toast.success('Jogador atualizado');
@@ -112,6 +114,8 @@ export default function JogadorForm({ jogador, onClose, onSaved }: JogadorFormPr
                   <option value="LATERAL_ESQUERDO">Lateral Esquerdo</option>
                   <option value="VOLANTE">Volante</option>
                   <option value="MEIO_CAMPO">Meio-Campo</option>
+                  <option value="MEIO_ESQUERDO">Meio Esquerdo</option>
+                  <option value="MEIO_DIREITO">Meio Direito</option>
                   <option value="PONTA_DIREITA">Ponta Direita</option>
                   <option value="PONTA_ESQUERDA">Ponta Esquerda</option>
                   <option value="MEIA_ATACANTE">Meia-Atacante</option>

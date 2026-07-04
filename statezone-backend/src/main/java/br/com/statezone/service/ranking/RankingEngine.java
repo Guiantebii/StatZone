@@ -49,10 +49,10 @@ public class RankingEngine {
                         STATUSES_QUE_CONTAM
                 );
 
-        if (turno != null) {
+        if (turno != null && !partidas.isEmpty()) {
             Integer maxRodada = partidaRepository.findMaxRodada(campeonatoId);
 
-            if (maxRodada != null) {
+            if (maxRodada != null && maxRodada > 0) {
                 int rodadasPorTurno = maxRodada / 2;
 
                 partidas = partidas.stream()
@@ -89,8 +89,8 @@ public class RankingEngine {
                             id -> new ClassificacaoStats(visitante)
                     );
 
-            int golsMandante = partida.getGolsMandante();
-            int golsVisitante = partida.getGolsVisitante();
+            int golsMandante = partida.getGolsMandante() != null ? partida.getGolsMandante() : 0;
+            int golsVisitante = partida.getGolsVisitante() != null ? partida.getGolsVisitante() : 0;
 
             statsMandante.setJogos(statsMandante.getJogos() + 1);
             statsVisitante.setJogos(statsVisitante.getJogos() + 1);

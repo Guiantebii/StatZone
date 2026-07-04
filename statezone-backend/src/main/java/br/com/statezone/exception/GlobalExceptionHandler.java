@@ -2,6 +2,7 @@ package br.com.statezone.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -28,10 +29,22 @@ import java.util.Map;
             return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
         }
 
+        @ExceptionHandler(UnauthorizedException.class)
+        public ResponseEntity<Map<String, Object>> handleUnauthorized(UnauthorizedException ex) {
+            log.warn("Unauthorized: {}", ex.getMessage());
+            return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        }
+
         @ExceptionHandler(BusinessException.class)
         public ResponseEntity<Map<String, Object>> handleBusiness(BusinessException ex) {
             log.warn("Business error: {}", ex.getMessage());
             return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+        }
+
+        @ExceptionHandler(AuthenticationException.class)
+        public ResponseEntity<Map<String, Object>> handleAuthentication(AuthenticationException ex) {
+            log.warn("Authentication failed: {}", ex.getMessage());
+            return buildResponse(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
         }
 
         @ExceptionHandler(Exception.class)

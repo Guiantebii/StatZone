@@ -24,11 +24,13 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
   const [timeMandanteId, setTimeMandanteId] = useState<number>(0);
   const [timeVisitanteId, setTimeVisitanteId] = useState<number>(0);
   const [saving, setSaving] = useState(false);
-  const [loadingTimes, setLoadingTimes] = useState(false);
 
   useEffect(() => {
-    setLoadingTimes(true);
-    api.get('/times').then((res) => setTimes(res.data)).catch(() => console.error('Erro ao carregar times')).finally(() => setLoadingTimes(false));
+    let isCancelled = false;
+    api.get('/times').then((res) => {
+      if (!isCancelled) setTimes(res.data);
+    }).catch(() => console.error('Erro ao carregar times'));
+    return () => { isCancelled = true; };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

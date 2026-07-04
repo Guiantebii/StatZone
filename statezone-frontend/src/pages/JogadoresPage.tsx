@@ -3,6 +3,7 @@ import { Search, UserPlus, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
+import { posicaoLabel, getJogadorAvatarUrl } from '../constants/helpers';
 import type { Jogador } from '../types/jogador';
 import JogadorForm from '../components/JogadorForm';
 import ConfirmModal from '../components/ui/ConfirmModal';
@@ -22,18 +23,23 @@ export default function JogadoresPage() {
   const [search, setSearch] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; nome: string } | null>(null);
 
-  const load = async () => {
-    try {
-      const res = await api.get('/jogadores');
-      setJogadores(res.data);
-    } catch (err) {
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/jogadores').then((res) => {
+      if (isMounted) setJogadores(res.data);
+    }).catch((err) => {
       toast.error(getApiError(err, 'Erro ao carregar jogadores'));
-    } finally {
-      setLoading(false);
-    }
-  };
+    }).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+    return () => { isMounted = false; };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  const load = () => {
+    api.get('/jogadores').then((res) => setJogadores(res.data)).catch((err) => {
+      toast.error(getApiError(err, 'Erro ao carregar jogadores'));
+    });
+  };
 
   const handleDelete = (id: number, nome: string) => {
     setDeleteTarget({ id, nome });
@@ -43,19 +49,9 @@ export default function JogadoresPage() {
   const handleSaved = () => { handleFormClose(); load(); };
   const openEdit = (jogador: Jogador) => { setEditData(jogador); setShowForm(true); };
 
-  const posicaoLabel = (p: string) => {
-    const map: Record<string, string> = {
-      GOLEIRO: 'Goleiro', ZAGUEIRO: 'Zagueiro', LATERAL_DIREITO: 'Lateral Direito',
-      LATERAL_ESQUERDO: 'Lateral Esquerdo', VOLANTE: 'Volante', MEIO_CAMPO: 'Meio-Campo',
-      PONTA_DIREITA: 'Ponta Direita', PONTA_ESQUERDA: 'Ponta Esquerda',
-      MEIA_ATACANTE: 'Meia-Atacante', CENTROAVANTE: 'Centroavante'
-    };
-    return map[p] || p;
-  };
-
   const posicaoBadgeClass = (posicao: string) => {
     const defesas = ['GOLEIRO', 'ZAGUEIRO', 'LATERAL_DIREITO', 'LATERAL_ESQUERDO'];
-    const meias = ['VOLANTE', 'MEIO_CAMPO', 'MEIA_ATACANTE'];
+    const meias = ['VOLANTE', 'MEIO_CAMPO', 'MEIO_ESQUERDO', 'MEIO_DIREITO', 'MEIA_ATACANTE'];
     if (defesas.includes(posicao)) return 'bg-info-bg text-info border border-info-border';
     if (meias.includes(posicao)) return 'bg-success-bg text-success border border-success-border';
     return 'bg-warning-bg text-warning border border-warning-border';
@@ -85,7 +81,7 @@ export default function JogadoresPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in-up">
       <PageHeader
         title="Jogadores"
         description="Gerencie todos os jogadores cadastrados na plataforma"
@@ -136,10 +132,10 @@ export default function JogadoresPage() {
                     <td className="px-5 py-3.5">
                       <Link to={`/jogadores/${j.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <img
-                          src={j.fotoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(j.nome)}&background=1B5E20&color=fff&size=32`}
+                          src={j.fotoUrl || getJogadorAvatarUrl(j.nome, 32)}
                           alt={j.nome}
                           className="w-9 h-9 rounded-full object-cover bg-white/5 ring-2 ring-white/[0.06]"
-                          onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=??&background=1B5E20&color=fff&size=32`; }}
+                          onError={(e) => { (e.target as HTMLImageElement).src = getJogadorAvatarUrl('??', 32); }}
                         />
                         <div>
                           <p className="text-sm font-medium text-slate-200">{j.nome}</p>

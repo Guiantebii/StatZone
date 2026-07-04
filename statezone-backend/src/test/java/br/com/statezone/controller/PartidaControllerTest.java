@@ -84,6 +84,8 @@ class PartidaControllerTest {
                 "Mandante",
                 11L,
                 "Visitante",
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -131,6 +133,8 @@ class PartidaControllerTest {
                 "Mandante",
                 11L,
                 "Visitante",
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
@@ -174,12 +178,14 @@ class PartidaControllerTest {
                 "Mandante",
                 11L,
                 "Visitante",
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
         when(partidaService.adiar(55L)).thenReturn(response);
 
-        mockMvc.perform(patch("/partidas/{id}/adiar", 55L))
+        mockMvc.perform(post("/partidas/{id}/adiar", 55L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ADIADA"));
 
@@ -204,12 +210,14 @@ class PartidaControllerTest {
                 "Mandante",
                 11L,
                 "Visitante",
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );
         when(partidaService.cancelar(56L)).thenReturn(response);
 
-        mockMvc.perform(patch("/partidas/{id}/cancelar", 56L))
+        mockMvc.perform(post("/partidas/{id}/cancelar", 56L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELADA"));
 

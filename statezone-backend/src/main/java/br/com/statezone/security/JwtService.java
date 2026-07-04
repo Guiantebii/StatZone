@@ -1,9 +1,13 @@
 package br.com.statezone.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +17,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class JwtService {
 
@@ -53,8 +58,22 @@ public class JwtService {
     }
 
     public boolean isTokenValido(String token, UserDetails userDetails) {
-        String email = extrairEmail(token);
-        return email.equals(userDetails.getUsername()) && !isTokenExpirado(token);
+        try {
+            String email = extrairEmail(token);
+            return email.equals(userDetails.getUsername()) && !isTokenExpirado(token);
+        } catch (ExpiredJwtException e) {
+            log.warn("Token expirado para usuário: {}", userDetails.getUsername());
+            return false;
+        } catch (SignatureException e) {
+            log.error("Possível ataque: Assinatura JWT inválida ou manipulada");
+            return false;
+        } catch (JwtException e) {
+            log.warn("Token JWT inválido: {}", e.getMessage());
+            return false;
+        } catch (Exception e) {
+            log.error("Erro ao validar token", e);
+            return false;
+        }
     }
 
     private boolean isTokenExpirado(String token) {

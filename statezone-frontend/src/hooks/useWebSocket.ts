@@ -17,7 +17,7 @@ interface UseWebSocketOptions {
 function createClient(): Client {
   const token = getToken();
   return new Client({
-    webSocketFactory: () => new SockJS(token ? `${SOCKET_URL}?token=${token}` : SOCKET_URL),
+    webSocketFactory: () => new SockJS(SOCKET_URL),
     connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
     reconnectDelay: 5000,
     heartbeatIncoming: 10000,
@@ -45,7 +45,7 @@ export function useWebSocket(options?: UseWebSocketOptions) {
     return () => {
       client.deactivate();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const subscribe = useCallback((topic: string, callback: (body: string) => void) => {
     const client = clientRef.current;
@@ -69,9 +69,12 @@ export function usePartidaWebSocket(
   onEvent?: (data: unknown) => void,
 ) {
   const updateRef = useRef(onUpdate);
-  updateRef.current = onUpdate;
   const eventRef = useRef(onEvent);
-  eventRef.current = onEvent;
+
+  useEffect(() => {
+    updateRef.current = onUpdate;
+    eventRef.current = onEvent;
+  });
 
   useEffect(() => {
     if (!partidaId) return;
@@ -83,7 +86,8 @@ export function usePartidaWebSocket(
         try {
           const data = JSON.parse(message.body);
           updateRef.current(data);
-        } catch {
+        } catch (err) {
+          console.warn('WebSocket: erro ao parsear atualização da partida', err);
         }
       });
 
@@ -91,7 +95,8 @@ export function usePartidaWebSocket(
         try {
           const data = JSON.parse(message.body);
           eventRef.current?.(data);
-        } catch {
+        } catch (err) {
+          console.warn('WebSocket: erro ao parsear evento da partida', err);
         }
       });
     };

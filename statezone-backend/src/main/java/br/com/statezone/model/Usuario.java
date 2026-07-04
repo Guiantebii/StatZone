@@ -27,6 +27,7 @@ public class Usuario implements UserDetails {
     private String senha;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private Role role = Role.USER;
 
     @Override

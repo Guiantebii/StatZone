@@ -38,6 +38,8 @@ public class EventoPartidaService {
                 Long partidaId
         ) {
 
+                validarInputs(dto);
+
                 Partida partida = partidaRepository.findById(partidaId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException("Partida não encontrada"));
@@ -204,6 +206,9 @@ public class EventoPartidaService {
         }
 
         private void validarJogadorNaPartida(Partida partida, Jogador jogador) {
+                if (jogador.getTime() == null) {
+                        throw new BusinessException("Jogador não possui time vinculado");
+                }
 
                 boolean ok =
                         jogador.getTime().getId().equals(partida.getTimeMandante().getId()) ||
@@ -216,10 +221,27 @@ public class EventoPartidaService {
         }
 
         private void validarStatusPartida(Partida partida) {
-                if (partida.getStatus() != StatusPartida.AO_VIVO) {
+                if (partida.getStatus() != StatusPartida.AO_VIVO
+                        && partida.getStatus() != StatusPartida.PENALTIS) {
                         throw new BusinessException(
-                                "Só é possível registrar eventos em partidas ao vivo. " +
+                                "Só é possível registrar eventos em partidas ao vivo ou em pênaltis. " +
                                         "Status atual: " + partida.getStatus());
+                }
+        }
+
+        private void validarInputs(EventoPartidaRequestDto dto) {
+                if (dto.tipoEvento() == null) {
+                        throw new BusinessException("Tipo de evento é obrigatório");
+                }
+
+                if (dto.minuto() != null && (dto.minuto() < 0 || dto.minuto() > 150)) {
+                        throw new BusinessException(
+                                "Minuto deve estar entre 0 e 150. Valor fornecido: " + dto.minuto());
+                }
+
+                if (dto.minutoExtra() != null && (dto.minutoExtra() < 0 || dto.minutoExtra() > 50)) {
+                        throw new BusinessException(
+                                "Minuto extra deve estar entre 0 e 50. Valor fornecido: " + dto.minutoExtra());
                 }
         }
 
@@ -252,6 +274,8 @@ public class EventoPartidaService {
                              INICIO_PRIMEIRO_TEMPO,
                              FIM_PRIMEIRO_TEMPO,
                              INICIO_SEGUNDO_TEMPO,
+                             INICIO_PRORROGACAO,
+                             FIM_PRORROGACAO,
                              FIM_PARTIDA -> false;
                 };
         }

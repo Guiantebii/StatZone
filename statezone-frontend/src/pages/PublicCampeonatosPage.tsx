@@ -5,6 +5,7 @@ import api from '../api/client';
 import type { Campeonato } from '../types/campeonato';
 import Card from '../components/ui/Card';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { toast } from 'sonner';
 
 export default function PublicCampeonatosPage() {
   const [campeonatos, setCampeonatos] = useState<Campeonato[]>([]);
@@ -13,7 +14,7 @@ export default function PublicCampeonatosPage() {
   useEffect(() => {
     api.get('/campeonatos')
       .then((r) => setCampeonatos(r.data))
-      .catch(() => { console.error('Erro ao carregar campeonatos'); })
+      .catch(() => { toast.error('Erro ao carregar campeonatos'); })
       .finally(() => setLoading(false));
   }, []);
 

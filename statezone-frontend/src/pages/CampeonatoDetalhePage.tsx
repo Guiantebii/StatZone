@@ -1,27 +1,47 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, Trophy, Swords, Medal, Star, Calendar, Zap } from 'lucide-react';
+import { ArrowLeft, Trophy, Swords, Medal, Star, Calendar, Zap, RefreshCw, GitBranch } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
 import { PAGE_SIZE } from '../constants/pagination';
+import { getLogoUrl, getAvatarUrl } from '../constants/helpers';
 import type { Campeonato } from '../types/campeonato';
 import type { ClassificacaoTime, Artilharia, SelecaoCampeonato, CraqueCampeonato } from '../types/estatisticas';
 import type { Partida } from '../types/partida';
-import type { Grupo } from '../types/fases';
+import type { Grupo, FaseEliminatoria } from '../types/fases';
 import Card from '../components/ui/Card';
 import PartidaCard from '../components/PartidaCard';
+import BracketView from '../components/BracketView';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
 
-type Tab = 'classificacao' | 'partidas' | 'artilharia' | 'selecao' | 'mvp';
+type Tab = 'classificacao' | 'partidas' | 'artilharia' | 'selecao' | 'mvp' | 'chaveamento';
 
-const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: 'classificacao', label: 'Classificação', icon: <Trophy size={14} /> },
-  { key: 'partidas', label: 'Partidas', icon: <Swords size={14} /> },
-  { key: 'artilharia', label: 'Artilharia', icon: <Medal size={14} /> },
-  { key: 'selecao', label: 'Seleção', icon: <Star size={14} /> },
-  { key: 'mvp', label: 'MVP', icon: <Medal size={14} /> },
-];
+function buildTabs(tipoFormato: string | null): { key: Tab; label: string; icon: React.ReactNode }[] {
+  const base = [
+    { key: 'partidas' as Tab, label: 'Partidas', icon: <Swords size={14} /> },
+    { key: 'artilharia' as Tab, label: 'Artilharia', icon: <Medal size={14} /> },
+    { key: 'selecao' as Tab, label: 'Seleção', icon: <Star size={14} /> },
+    { key: 'mvp' as Tab, label: 'MVP', icon: <Medal size={14} /> },
+  ];
+  if (tipoFormato === 'MATA_MATA') {
+    return [
+      { key: 'chaveamento' as Tab, label: 'Chaveamento', icon: <GitBranch size={14} /> },
+      ...base,
+    ];
+  }
+  if (tipoFormato === 'GRUPOS_E_MATA_MATA') {
+    return [
+      { key: 'classificacao' as Tab, label: 'Classificação', icon: <Trophy size={14} /> },
+      { key: 'chaveamento' as Tab, label: 'Chaveamento', icon: <GitBranch size={14} /> },
+      ...base,
+    ];
+  }
+  return [
+    { key: 'classificacao' as Tab, label: 'Classificação', icon: <Trophy size={14} /> },
+    ...base,
+  ];
+}
 
 export default function CampeonatoDetalhePage() {
   const { id } = useParams<{ id: string }>();
@@ -34,9 +54,11 @@ export default function CampeonatoDetalhePage() {
   const [artilharia, setArtilharia] = useState<Artilharia[]>([]);
   const [selecao, setSelecao] = useState<SelecaoCampeonato[]>([]);
   const [mvp, setMvp] = useState<CraqueCampeonato | null>(null);
+  const [fases, setFases] = useState<FaseEliminatoria[]>([]);
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [grupoClassificacoes, setGrupoClassificacoes] = useState<Record<number, ClassificacaoTime[]>>({});
   const [loading, setLoading] = useState(true);
+  const [reprocessing, setReprocessing] = useState(false);
   const [tab, setTab] = useState<Tab>('classificacao');
 
   useEffect(() => {
@@ -71,10 +93,20 @@ export default function CampeonatoDetalhePage() {
               try {
                 const r = await api.get(`/campeonatos/${id}/grupos/${g.id}/classificacao`);
                 classMap[g.id] = r.data;
-              } catch {}
+              } catch {
+                classMap[g.id] = [];
+              }
             }));
             if (isMounted) setGrupoClassificacoes(classMap);
-          } catch {}
+          } catch {
+            // ignore - grupos sem classificação ainda
+          }
+        }
+        if (camp.tipoFormato === 'MATA_MATA' || camp.tipoFormato === 'GRUPOS_E_MATA_MATA') {
+          try {
+            const fasesRes = await api.get(`/campeonatos/${id}/fases`);
+            if (isMounted) setFases(fasesRes.data);
+          } catch { if (isMounted) setFases([]); }
         }
       } catch (err) {
         if (isMounted) {
@@ -87,10 +119,27 @@ export default function CampeonatoDetalhePage() {
     };
     load();
     return () => { isMounted = false; };
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getLogoUrl = (nome: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=32&bold=true`;
+  const handleReprocess = async () => {
+    if (!id || reprocessing) return;
+    setReprocessing(true);
+    try {
+      await api.post(`/campeonatos/${id}/reprocessar-estatisticas`);
+      toast.success('Estatísticas reprocessadas com sucesso');
+      const promises = [
+        api.get(`/campeonatos/${id}/classificacao`).then((r) => setClassificacao(r.data)).catch(() => undefined),
+        api.get(`/campeonatos/${id}/artilharia?pagina=0&tamanho=${PAGE_SIZE}`).then((r) => setArtilharia(r.data)).catch(() => undefined),
+        api.get(`/campeonatos/${id}/selecao-do-campeonato`).then((r) => setSelecao(r.data)).catch(() => undefined),
+        api.get(`/campeonatos/${id}/mvp`).then((r) => setMvp(r.data)).catch(() => undefined),
+      ];
+      await Promise.all(promises);
+    } catch (err) {
+      toast.error(getApiError(err, 'Erro ao reprocessar estatísticas'));
+    } finally {
+      setReprocessing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -115,20 +164,30 @@ export default function CampeonatoDetalhePage() {
           Todos os campeonatos
         </Link>
 
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent shrink-0">
-            <Trophy size={28} />
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent shrink-0">
+              <Trophy size={28} />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-slate-100 tracking-tight">{campeonato.nome}</h1>
+              <p className="text-sm text-slate-500 mt-0.5">{campeonato.pais} · Temporada {campeonato.temporada}</p>
+            </div>
+            {isAdminContext && (
+              <button
+                onClick={handleReprocess}
+                disabled={reprocessing}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={13} className={reprocessing ? 'animate-spin' : ''} />
+                {reprocessing ? 'Reprocessando...' : 'Reprocessar estatísticas'}
+              </button>
+            )}
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-100 tracking-tight">{campeonato.nome}</h1>
-            <p className="text-sm text-slate-500 mt-0.5">{campeonato.pais} · Temporada {campeonato.temporada}</p>
-          </div>
-        </div>
       </div>
 
 
       <div className="flex gap-1 bg-white/[0.03] rounded-xl p-1">
-        {tabs.map((t) => (
+        {buildTabs(campeonato.tipoFormato || null).map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
@@ -174,7 +233,7 @@ export default function CampeonatoDetalhePage() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/[0.03]">
-                          {dados.map((c) => (
+                           {dados.map((c) => (
                             <tr
                               key={c.timeId}
                               className={`hover:bg-white/[0.02] transition-colors cursor-pointer ${c.posicao <= 4 ? 'bg-success/5' : ''}`}
@@ -243,11 +302,15 @@ export default function CampeonatoDetalhePage() {
                     {classificacao.map((c) => (
                       <tr
                         key={c.timeId}
-                        className={`hover:bg-white/[0.02] transition-colors cursor-pointer ${c.posicao <= 4 ? 'bg-success/5' : ''}`}
+                        className={`hover:bg-white/[0.02] transition-colors cursor-pointer ${
+                          classificacao.length >= 4 && c.posicao >= classificacao.length - 3 ? 'bg-danger/5' : c.posicao <= 4 ? 'bg-success/5' : ''
+                        }`}
                         onClick={() => navigate(`${isAdminContext ? '/dashboard' : ''}/times/${c.timeId}`)}
                       >
                         <td className="px-5 py-3">
-                          <span className={`text-sm font-bold font-mono ${c.posicao <= 4 ? 'text-accent' : 'text-slate-400'}`}>
+                          <span className={`text-sm font-bold font-mono ${
+                            classificacao.length >= 4 && c.posicao >= classificacao.length - 3 ? 'text-danger' : c.posicao <= 4 ? 'text-accent' : 'text-slate-400'
+                          }`}>
                             {c.posicao}
                           </span>
                         </td>
@@ -329,7 +392,7 @@ export default function CampeonatoDetalhePage() {
                     {a.posicao}
                   </span>
                   <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(a.nomeJogador)}&background=1a3460&color=fff&size=24`}
+                    src={getAvatarUrl(a.nomeJogador, 24)}
                     alt={a.nomeJogador}
                     className="w-8 h-8 rounded-full bg-white/5"
                   />
@@ -415,6 +478,18 @@ export default function CampeonatoDetalhePage() {
                 <span>&#x274C; {mvp.penaltisPerdidos} pênaltis perdidos</span>
               </div>
             </div>
+          )}
+        </Card>
+      )}
+
+
+      {tab === 'chaveamento' && (
+        <Card className="overflow-hidden p-5">
+          <h3 className="text-sm font-semibold text-slate-200 mb-4">Chaveamento</h3>
+          {fases.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-10">Nenhuma fase eliminatória disponível</p>
+          ) : (
+            <BracketView fases={fases} getLogoUrl={getLogoUrl} />
           )}
         </Card>
       )}

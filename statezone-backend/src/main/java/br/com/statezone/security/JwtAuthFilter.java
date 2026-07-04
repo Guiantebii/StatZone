@@ -56,7 +56,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             email = jwtService.extrairEmail(token);
         } catch (Exception e) {
-            filterChain.doFilter(request, response);
+            response.setStatus(401);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(
+                    "{\"timestamp\":\"" + java.time.Instant.now() + "\",\"status\":401,\"error\":\"UNAUTHORIZED\",\"message\":\"Token inválido ou expirado\"}");
             return;
         }
 

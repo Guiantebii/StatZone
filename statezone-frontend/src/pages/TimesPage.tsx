@@ -10,6 +10,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import StatCard from '../components/ui/StatCard';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { getAvatarUrl } from '../constants/helpers';
 import { toast } from 'sonner';
 
 export default function TimesPage() {
@@ -20,18 +21,23 @@ export default function TimesPage() {
   const [editData, setEditData] = useState<Time | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; nome: string } | null>(null);
 
-  const load = async () => {
-    try {
-      const res = await api.get('/times');
-      setTimes(res.data);
-    } catch (err) {
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/times').then((res) => {
+      if (isMounted) setTimes(res.data);
+    }).catch((err) => {
       toast.error(getApiError(err, 'Erro ao carregar times'));
-    } finally {
-      setLoading(false);
-    }
-  };
+    }).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+    return () => { isMounted = false; };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  const load = () => {
+    api.get('/times').then((res) => setTimes(res.data)).catch((err) => {
+      toast.error(getApiError(err, 'Erro ao carregar times'));
+    });
+  };
 
   const handleDelete = (id: number, nome: string) => {
     setDeleteTarget({ id, nome });
@@ -77,7 +83,7 @@ export default function TimesPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in-up">
       <PageHeader
         title="Times"
         description="Gerencie clubes e seleções cadastrados"
@@ -113,7 +119,7 @@ export default function TimesPage() {
                     src={t.escudoUrl}
                     alt={t.nome}
                     className="w-16 h-16 object-contain mb-3 rounded-full bg-white/5 ring-2 ring-white/[0.06] relative"
-                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(t.sigla || '?')}&background=DC052D&color=fff&size=64`; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = getAvatarUrl(t.sigla || '?', 64, 'DC052D', 'fff'); }}
                   />
                 </div>
                 <h3 className="text-base font-bold text-slate-100 text-center">{t.nome}</h3>

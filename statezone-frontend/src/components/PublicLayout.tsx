@@ -24,9 +24,9 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between h-14 md:h-16">
 
-            <Link to="/" className="shrink-0">
+            <div className="shrink-0">
               <Logo />
-            </Link>
+            </div>
 
 
             <nav className="hidden md:flex items-center gap-1">

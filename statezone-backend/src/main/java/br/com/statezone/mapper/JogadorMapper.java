@@ -16,12 +16,14 @@ public interface JogadorMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "time", ignore = true)
+    @Mapping(target = "apiFootballId", ignore = true)
     @Mapping(target = "criadoEm", ignore = true)
     @Mapping(target = "atualizadoEm", ignore = true)
     Jogador toEntity(JogadorRequestDto dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "time", ignore = true)
+    @Mapping(target = "apiFootballId", ignore = true)
     @Mapping(target = "criadoEm", ignore = true)
     @Mapping(target = "atualizadoEm", ignore = true)
     void updateJogadorFromDto(JogadorRequestDto dto,

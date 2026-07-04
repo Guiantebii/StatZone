@@ -28,7 +28,9 @@ public enum TipoEvento {
     INICIO_PRIMEIRO_TEMPO(false, false, false, false),
     FIM_PRIMEIRO_TEMPO(false, false, false, false),
     INICIO_SEGUNDO_TEMPO(false, false, false, false),
-    FIM_PARTIDA(false, false, false, false);
+    FIM_PARTIDA(false, false, false, false),
+    INICIO_PRORROGACAO(false, false, false, false),
+    FIM_PRORROGACAO(false, false, false, false);
 
     private final boolean geraGol;
     private final boolean contaFinalizacao;

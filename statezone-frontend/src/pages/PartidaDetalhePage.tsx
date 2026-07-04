@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, User, Trophy, Play, Square, Pause, Ban, Users, Trash2 } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, User, Trophy, Play, Square, Pause, Ban, Users, Trash2, CircleDot, ArrowLeftRight, Ban as BanIcon, Shield, ShieldAlert, Eye, CheckCircle, Circle, Play as PlayIcon, Flag } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
+import { getLogoUrl, getAvatarUrl } from '../constants/helpers';
 import type { Partida, EventoTimeline, EscalacaoPartidaList, EstatisticasPartida } from '../types/partida';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import Button from '../components/ui/Button';
@@ -13,21 +14,11 @@ import EscalacaoForm from '../components/EscalacaoForm';
 import FormationView from '../components/FormationView';
 import { usePartidaWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from '../context/AuthContext';
-import { STATUS_PARTIDA, STATUS_AO_VIVO, STATUS_ENCERRADA } from '../constants/status';
+import { STATUS_PARTIDA, STATUS_LABEL, isLiveStatus, isFinishedStatus } from '../constants/status';
 
 type Tab = 'timeline' | 'escalacao' | 'estatisticas';
 
-const statusLabel: Record<string, string> = {
-  AO_VIVO: 'Ao Vivo',
-  INTERVALO: 'Intervalo',
-  PENALTIS: 'Pênaltis',
-  ENCERRADA: 'Encerrada',
-  AGENDADA: 'Agendada',
-  ADIADA: 'Adiada',
-  CANCELADA: 'Cancelada',
-  WO_MANDANTE: 'W.O. Mandante',
-  WO_VISITANTE: 'W.O. Visitante',
-};
+const statusLabel = STATUS_LABEL;
 
 export default function PartidaDetalhePage() {
   const { id } = useParams<{ id: string }>();
@@ -45,23 +36,6 @@ export default function PartidaDetalhePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const { isAdmin } = useAuth();
   const [deleteTarget, setDeleteTarget] = useState<boolean>(false);
-
-  const load = async () => {
-    try {
-      const pRes = await api.get(`/partidas/${id}`);
-      setPartida(pRes.data);
-      await Promise.all([
-        loadTimeline(),
-        loadEscalacao(),
-        loadEstatisticas(),
-      ]);
-    } catch (err) {
-      toast.error(getApiError(err, 'Erro ao carregar partida'));
-      navigate(isAdminContext ? '/dashboard/partidas' : '/partidas');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const loadTimeline = async () => {
     if (!id) return;
@@ -87,7 +61,25 @@ export default function PartidaDetalhePage() {
     } catch {}
   };
 
-  useEffect(() => { if (id) load(); }, [id]);
+  useEffect(() => {
+    if (!id) return;
+    let isMounted = true;
+    api.get(`/partidas/${id}`).then((pRes) => {
+      if (!isMounted) return;
+      setPartida(pRes.data);
+      Promise.all([
+        api.get(`/partidas/${id}/timeline`).then((r) => { if (isMounted) setTimeline(r.data); }).catch(() => undefined),
+        api.get(`/partidas/${id}/escalacao`).then((r) => { if (isMounted) setEscalacao(r.data); }).catch(() => undefined),
+        api.get(`/estatisticas/${id}`).then((r) => { if (isMounted) setEstatisticas(r.data); }).catch(() => undefined),
+      ]);
+    }).catch((err) => {
+      toast.error(getApiError(err, 'Erro ao carregar partida'));
+      navigate(isAdminContext ? '/dashboard/partidas' : '/partidas');
+    }).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+    return () => { isMounted = false; };
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleWsUpdate = useCallback((data: unknown) => {
     setPartida(data as Partida);
@@ -106,13 +98,21 @@ export default function PartidaDetalhePage() {
   useEffect(() => {
     if (!id) return;
     const p = partida;
-    if (!p || !(STATUS_AO_VIVO as readonly string[]).includes(p.status)) return;
-    const interval = setInterval(() => {
-      loadTimeline();
-      loadEstatisticas();
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [id, partida?.status]);
+    if (!p || !isLiveStatus(p.status)) return;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let isCancelled = false;
+    const poll = async () => {
+      await Promise.all([loadTimeline(), loadEstatisticas()]);
+      if (!isCancelled) {
+        timeoutId = setTimeout(poll, 10000);
+      }
+    };
+    timeoutId = setTimeout(poll, 10000);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [id, partida?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAction = async (action: string, body?: unknown) => {
     setActionLoading(true);
@@ -139,28 +139,25 @@ export default function PartidaDetalhePage() {
     });
   };
 
-  const getLogoUrl = (nome: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=64&bold=true`;
-
-  const isLive = partida ? (STATUS_AO_VIVO as readonly string[]).includes(partida.status) : false;
+  const isLive = partida ? isLiveStatus(partida.status) : false;
   const isScheduled = partida?.status === STATUS_PARTIDA.AGENDADA;
-  const isFinished = partida ? (STATUS_ENCERRADA as readonly string[]).includes(partida.status) : false;
+  const isFinished = partida ? isFinishedStatus(partida.status) : false;
 
   const eventIcon = (tipo: string) => {
     switch (tipo) {
-      case 'GOL': case 'PENALTI_GOL': return '⚽';
-      case 'GOL_CONTRA': return '⚽🔄';
-      case 'CARTAO_AMARELO': return '🟨';
-      case 'CARTAO_VERMELHO': return '🟥';
-      case 'SUBSTITUICAO': return '🔄';
-      case 'PENALTI_PERDIDO': return '❌';
-      case 'PENALTI_DEFENDIDO': return '🧤';
-      case 'VAR_GOL_ANULADO': return '📺❌';
-      case 'VAR_GOL_CONFIRMADO': return '📺✅';
-      case 'FIM_PRIMEIRO_TEMPO': return '⏸️';
-      case 'INICIO_SEGUNDO_TEMPO': return '▶️';
-      case 'FIM_PARTIDA': return '🏁';
-      default: return '•';
+      case 'GOL': case 'PENALTI_GOL': return <CircleDot size={14} className="text-accent" aria-label="Gol" />;
+      case 'GOL_CONTRA': return <ArrowLeftRight size={14} className="text-danger" aria-label="Gol contra" />;
+      case 'CARTAO_AMARELO': return <Shield size={14} className="text-yellow-400" aria-label="Cartão amarelo" />;
+      case 'CARTAO_VERMELHO': return <ShieldAlert size={14} className="text-danger" aria-label="Cartão vermelho" />;
+      case 'SUBSTITUICAO': return <ArrowLeftRight size={14} className="text-slate-400" aria-label="Substituição" />;
+      case 'PENALTI_PERDIDO': return <BanIcon size={14} className="text-danger" aria-label="Pênalti perdido" />;
+      case 'PENALTI_DEFENDIDO': return <Eye size={14} className="text-info" aria-label="Pênalti defendido" />;
+      case 'VAR_GOL_ANULADO': return <CheckCircle size={14} className="text-danger" aria-label="Gol anulado pelo VAR" />;
+      case 'VAR_GOL_CONFIRMADO': return <CheckCircle size={14} className="text-success" aria-label="Gol confirmado pelo VAR" />;
+      case 'FIM_PRIMEIRO_TEMPO': return <Pause size={14} className="text-warning" aria-label="Fim do primeiro tempo" />;
+      case 'INICIO_SEGUNDO_TEMPO': return <PlayIcon size={14} className="text-info" aria-label="Início do segundo tempo" />;
+      case 'FIM_PARTIDA': return <Flag size={14} className="text-slate-400" aria-label="Fim da partida" />;
+      default: return <Circle size={14} className="text-slate-600" aria-label="Evento" />;
     }
   };
 
@@ -352,11 +349,12 @@ export default function PartidaDetalhePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[partida.timeMandanteId, partida.timeVisitanteId].map((timeId, idx) => {
             const timeNome = idx === 0 ? partida.timeMandanteNome : partida.timeVisitanteNome;
+            const formacao = idx === 0 ? partida.formacaoMandante : partida.formacaoVisitante;
             const titulares = escalacao?.titulares?.filter((e) => e.nomeTime === timeNome) || [];
             const reservas = escalacao?.reservas?.filter((e) => e.nomeTime === timeNome) || [];
             return (
               <Card key={timeId} className="p-5">
-                <Link to={`/times/${timeId}`} className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
+                <Link to={`/times/${timeId}`} className="flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity">
                   <img src={getLogoUrl(timeNome)} alt={timeNome} className="w-8 h-8 rounded-full bg-white/5" />
                   <h3 className="text-sm font-bold text-slate-200">{timeNome}</h3>
                 </Link>
@@ -365,7 +363,7 @@ export default function PartidaDetalhePage() {
                 ) : (
                   <>
                     {titulares.length > 0 && (
-                      <FormationView titulares={titulares} timeNome={timeNome} />
+                      <FormationView titulares={titulares} formacao={formacao} />
                     )}
                     {reservas.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-white/[0.06]">
@@ -375,7 +373,7 @@ export default function PartidaDetalhePage() {
                             <div key={j.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04]">
                               <span className="text-[10px] font-mono text-slate-500">{j.numeroCamisa}</span>
                               <img
-                                src={j.fotoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(j.nomeJogador)}&background=333&color=fff&size=16`}
+                                src={j.fotoUrl || getAvatarUrl(j.nomeJogador, 16, '333', 'fff')}
                                 alt={j.nomeJogador}
                                 className="w-4 h-4 rounded-full bg-white/5"
                               />
@@ -428,15 +426,21 @@ export default function PartidaDetalhePage() {
           timeVisitanteId={partida.timeVisitanteId}
           timeMandanteNome={partida.timeMandanteNome}
           timeVisitanteNome={partida.timeVisitanteNome}
+          formacaoMandante={partida.formacaoMandante}
+          formacaoVisitante={partida.formacaoVisitante}
           onClose={() => setShowEscalacaoForm(false)}
-          onSaved={() => { setShowEscalacaoForm(false); loadEscalacao(); }}
+          onSaved={() => {
+            setShowEscalacaoForm(false);
+            loadEscalacao();
+            api.get(`/partidas/${partida.id}`).then((r) => setPartida(r.data)).catch(() => undefined);
+          }}
         />
       )}
 
       {deleteTarget && (
         <ConfirmModal
           title="Excluir partida"
-          message={`Tem certeza que deseja excluir "${partida!.timeMandanteNome} x ${partida!.timeVisitanteNome}"?`}
+          message={`Tem certeza que deseja excluir "${partida?.timeMandanteNome ?? '...'} x ${partida?.timeVisitanteNome ?? '...'}"?`}
           onConfirm={async () => {
             try {
               await api.delete(`/partidas/${id}`);

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import type { JSX } from 'react/jsx-runtime';
+import type { JSX } from 'react';
 
 type IconKey = keyof typeof icons;
 

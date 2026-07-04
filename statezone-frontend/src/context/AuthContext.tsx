@@ -1,6 +1,7 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import api from '../api/client';
-import { setToken as setGlobalToken } from '../api/tokenManager';
+import { setToken as setGlobalToken, getToken, clearToken } from '../api/tokenManager';
 
 interface AuthContextType {
   token: string | null;
@@ -25,7 +26,11 @@ function parseJwt(token: string) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => {
+    const storedToken = getToken();
+    if (storedToken) setGlobalToken(storedToken);
+    return storedToken ?? null;
+  });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -38,13 +43,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserEmail(data.email);
         setIsAdmin(data.role === 'ADMIN');
         setIsAuthenticated(true);
-        setGlobalToken(null);
       })
       .catch(() => {
         setIsAuthenticated(false);
         setIsAdmin(false);
         setUserEmail(null);
-        setGlobalToken(null);
+        clearToken();
       })
       .finally(() => setLoading(false));
   }, []);
@@ -71,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.post('/api/auth/logout');
     } catch {}
     setToken(null);
-    setGlobalToken(null);
+    clearToken();
     setIsAuthenticated(false);
     setIsAdmin(false);
     setUserEmail(null);

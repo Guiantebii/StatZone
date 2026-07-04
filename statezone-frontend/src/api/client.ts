@@ -10,6 +10,7 @@ if (!baseURL) {
 const api = axios.create({
   baseURL,
   timeout: 15000,
+  withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
@@ -23,7 +24,11 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (
+      error.response?.status === 401 &&
+      !error.config.url?.includes('/api/auth/') &&
+      !window.location.pathname.startsWith('/login')
+    ) {
       window.location.href = '/login';
     }
     return Promise.reject(error);

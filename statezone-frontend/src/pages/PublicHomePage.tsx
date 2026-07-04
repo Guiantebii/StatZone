@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trophy, Clock, ArrowRight, Users, ChevronRight, Medal, Calendar } from 'lucide-react';
 import api from '../api/client';
+import { getLogoUrl, getAvatarUrl } from '../constants/helpers';
 import type { Partida } from '../types/partida';
 import type { Campeonato } from '../types/campeonato';
 import type { Artilharia } from '../types/estatisticas';
 import Card from '../components/ui/Card';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { ARTILHARIA_TOP } from '../constants/pagination';
-import { STATUS_PARTIDA, STATUS_AO_VIVO, STATUS_ENCERRADA } from '../constants/status';
+import { STATUS_PARTIDA, isLiveStatus, isFinishedStatus } from '../constants/status';
+import { toast } from 'sonner';
 
 export default function PublicHomePage() {
   const navigate = useNavigate();
@@ -29,16 +31,14 @@ export default function PublicHomePage() {
 
         const todas: Partida[] = partidasRes.data;
 
-        const live = todas.filter(
-          (p) => STATUS_AO_VIVO.includes(p.status as typeof STATUS_AO_VIVO[number])
-        );
+        const live = todas.filter((p) => isLiveStatus(p.status));
         const scheduled = todas
           .filter((p) => p.status === STATUS_PARTIDA.AGENDADA)
           .sort((a, b) => new Date(a.dataPartida).getTime() - new Date(b.dataPartida).getTime())
           .slice(0, 8);
 
         const finished = todas
-          .filter((p) => STATUS_ENCERRADA.includes(p.status as typeof STATUS_ENCERRADA[number]))
+          .filter((p) => isFinishedStatus(p.status))
           .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
           .slice(0, 5);
 
@@ -52,7 +52,7 @@ export default function PublicHomePage() {
           setArtilharia(artRes.data);
         }
       } catch {
-        console.error('Erro ao carregar dados da página inicial');
+        toast.error('Erro ao carregar dados da página inicial');
       } finally {
         setLoading(false);
       }
@@ -66,19 +66,14 @@ export default function PublicHomePage() {
       try {
         const res = await api.get('/partidas');
         const todas: Partida[] = res.data;
-        const live = todas.filter(
-          (p) => STATUS_AO_VIVO.includes(p.status as typeof STATUS_AO_VIVO[number])
-        );
+        const live = todas.filter((p) => isLiveStatus(p.status));
         setAoVivo(live);
       } catch {
-        console.error('Erro ao atualizar partidas ao vivo');
+        toast.error('Erro ao atualizar partidas ao vivo');
       }
     }, 15000);
     return () => clearInterval(interval);
   }, [aoVivo.length]);
-
-  const getLogoUrl = (nome: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=64&bold=true`;
 
   if (loading) {
     return (
@@ -272,7 +267,7 @@ export default function PublicHomePage() {
                       {a.posicao}
                     </span>
                     <img
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(a.nomeJogador)}&background=1a3460&color=fff&size=24`}
+                      src={getAvatarUrl(a.nomeJogador, 24)}
                       alt={a.nomeJogador}
                       className="w-7 h-7 rounded-full bg-white/5"
                     />

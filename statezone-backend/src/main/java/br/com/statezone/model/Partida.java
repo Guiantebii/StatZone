@@ -1,5 +1,6 @@
 package br.com.statezone.model;
 
+import br.com.statezone.enums.Formacao;
 import br.com.statezone.enums.StatusPartida;
 import jakarta.persistence.*;
 import lombok.*;
@@ -69,6 +70,14 @@ public class Partida {
 
     @Column(name = "api_football_id", unique = true)
     private Long apiFootballId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "formacao_mandante")
+    private Formacao formacaoMandante;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "formacao_visitante")
+    private Formacao formacaoVisitante;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fase_eliminatoria_id")
     private FaseEliminatoria faseEliminatoria;
