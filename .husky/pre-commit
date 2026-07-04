@@ -1,2 +1,1 @@
-cd statezone-frontend
-npx lint-staged
+npx --prefix statezone-frontend lint-staged --config .lintstagedrc.json
