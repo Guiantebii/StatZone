@@ -33,18 +33,15 @@ jobs:
       - name: Test
         shell: bash
         run: |
+          set -o pipefail
           mvn test -e 2>&1 | tee test-output.log
-          exit_code=${PIPESTATUS[0]}
-          # Build a single annotation with key info
-          summary=$(grep -E "Tests run:|BUILD|FAILURE|COMPILATION" test-output.log | head -5 | tr '\n' ';' | sed 's/;/%0A/g')
-          if [ -n "$summary" ]; then
-            echo "::error title=Maven Test Results::$summary"
-          fi
-          # Also output test count for each test class
-          grep -E "Running " test-output.log | head -20 | while IFS= read -r line; do
-            echo "::debug::$line"
+      - name: Show failure
+        if: failure()
+        shell: bash
+        run: |
+          grep -E "Tests run:|BUILD|FAILURE|COMPILATION|ERROR|Cause|exception" test-output.log | head -20 | while IFS= read -r line; do
+            echo "::error::$line"
           done
-          exit $exit_code
 
   frontend:
     runs-on: ubuntu-latest
