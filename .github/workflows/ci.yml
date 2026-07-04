@@ -34,12 +34,12 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          mvn test -e 2>&1 | tee test-output.log | tail -100
-      - name: Show test output on failure
+          mvn test -e 2>&1 | tee test-output.log
+      - name: Show last 200 lines of test output
         if: failure()
         run: |
-          echo "=== Full test output ==="
-          cat test-output.log
+          echo "=== Last 200 lines of test output ==="
+          tail -200 test-output.log
 
   frontend:
     runs-on: ubuntu-latest
