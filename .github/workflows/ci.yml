@@ -35,32 +35,16 @@ jobs:
         run: |
           mvn test -e 2>&1 | tee test-output.log
           exit_code=${PIPESTATUS[0]}
-          # Also check surefire reports for granular detail
-          if [ -d target/surefire-reports ]; then
-            for report in target/surefire-reports/*.xml; do
-              if grep -q 'failures="[1-9]\|errors="[1-9]' "$report" 2>/dev/null; then
-                test_name=$(basename "$report" .xml)
-                failures=$(grep -o 'failures="[0-9]*"' "$report" | grep -o '[0-9]*')
-                errors=$(grep -o 'errors="[0-9]*"' "$report" | grep -o '[0-9]*')
-                echo "::error::FAILED TEST: $test_name (failures=$failures errors=$errors)"
-              fi
-            done
+          # Build a single annotation with key info
+          summary=$(grep -E "Tests run:|BUILD|FAILURE|COMPILATION" test-output.log | head -5 | tr '\n' ';' | sed 's/;/%0A/g')
+          if [ -n "$summary" ]; then
+            echo "::error title=Maven Test Results::$summary"
           fi
+          # Also output test count for each test class
+          grep -E "Running " test-output.log | head -20 | while IFS= read -r line; do
+            echo "::debug::$line"
+          done
           exit $exit_code
-      - name: Summarize failures
-        if: failure()
-        shell: bash
-        run: |
-          echo "=== Surefire reports ==="
-          if [ -d target/surefire-reports ]; then
-            for f in target/surefire-reports/*.txt; do
-              [ -f "$f" ] && echo "--- $(basename $f) ---" && cat "$f"
-            done
-          fi
-          echo "=== Test Output Summary ==="
-          grep -E "Tests run:|BUILD|FAILURE|ERROR|COMPILATION" test-output.log || echo "(no summary found)"
-          echo "=== Last 20 lines ==="
-          tail -20 test-output.log
 
   frontend:
     runs-on: ubuntu-latest
