@@ -17,6 +17,9 @@ jobs:
       run:
         working-directory: statezone-backend
 
+    env:
+      DB_USERNAME: test
+      DB_PASSWORD: test
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
