@@ -5,8 +5,5 @@
   ],
   "statezone-frontend/**/*.{css,json,md}": [
     "prettier --write"
-  ],
-  "statezone-backend/**/*.java": [
-    "prettier --write"
   ]
 }
