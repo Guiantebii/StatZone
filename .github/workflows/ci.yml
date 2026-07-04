@@ -28,7 +28,7 @@ jobs:
       - name: Compile
         run: mvn compile -q
       - name: Test
-        run: mvn test
+        run: mvn test -e
 
   frontend:
     runs-on: ubuntu-latest
