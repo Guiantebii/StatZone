@@ -33,13 +33,22 @@ jobs:
       - name: Test
         shell: bash
         run: |
-          set -o pipefail
           mvn test -e 2>&1 | tee test-output.log
+          exit ${PIPESTATUS[0]}
       - name: Show failure
         if: failure()
         shell: bash
         run: |
-          grep -E "Tests run:|BUILD|FAILURE|COMPILATION|ERROR|Cause|exception" test-output.log | head -20 | while IFS= read -r line; do
+          # Overall summary (after "Results:")
+          awk '/Results:/{found=1} found{print}' test-output.log | grep -E "Tests run:" | while IFS= read -r line; do
+            echo "::error::$line"
+          done
+          # Build result
+          grep "BUILD" test-output.log | while IFS= read -r line; do
+            echo "::error::$line"
+          done
+          # Errors/exceptions near the end
+          grep -E "^\[ERROR\]|Caused by|Exception|FAILURE" test-output.log | tail -20 | while IFS= read -r line; do
             echo "::error::$line"
           done
 
