@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Trophy, Search, Plus, Shield, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Trophy, Search, Plus } from 'lucide-react';
+import { getLogoUrl } from '../constants/helpers';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
 import type { Campeonato } from '../types/campeonato';
@@ -16,6 +18,7 @@ import { SkeletonCard, SkeletonTable } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
 
 export default function CampeonatosPage() {
+  const navigate = useNavigate();
   const [campeonatos, setCampeonatos] = useState<Campeonato[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -29,18 +32,23 @@ export default function CampeonatosPage() {
   const [selectedAddTimeId, setSelectedAddTimeId] = useState(0);
   const [manageLoading, setManageLoading] = useState(false);
 
-  const load = async () => {
-    try {
-      const res = await api.get('/campeonatos');
-      setCampeonatos(res.data);
-    } catch {
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/campeonatos').then((res) => {
+      if (isMounted) setCampeonatos(res.data);
+    }).catch(() => {
       toast.error('Erro ao carregar campeonatos');
-    } finally {
-      setLoading(false);
-    }
-  };
+    }).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+    return () => { isMounted = false; };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  const load = () => {
+    api.get('/campeonatos').then((res) => setCampeonatos(res.data)).catch(() => {
+      toast.error('Erro ao carregar campeonatos');
+    });
+  };
 
   const handleDelete = (id: number, nome: string) => {
     setDeleteTarget({ id, nome });
@@ -152,7 +160,7 @@ export default function CampeonatosPage() {
   const { tipo: fmtTipo, count: fmtCount } = formatoMaisUsado();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in-up">
       <PageHeader
         title="Campeonatos"
         description="Gerencie todos os campeonatos cadastrados na plataforma"
@@ -216,7 +224,11 @@ export default function CampeonatosPage() {
             </thead>
             <tbody className="divide-y divide-white/[0.03]">
               {filtered.map((c) => (
-                <tr key={c.id} className="group hover:bg-white/[0.02] transition-colors">
+                <tr
+                  key={c.id}
+                  className="group hover:bg-white/[0.02] transition-colors cursor-pointer"
+                  onClick={() => navigate(`/dashboard/campeonatos/${c.id}`)}
+                >
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       {c.logoUrl ? (
@@ -249,21 +261,21 @@ export default function CampeonatosPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => openManageTimes(c)}
+                        onClick={(e) => { e.stopPropagation(); openManageTimes(c); }}
                       >
                         Times
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => openEdit(c)}
+                        onClick={(e) => { e.stopPropagation(); openEdit(c); }}
                       >
                         Editar
                       </Button>
                       <Button
                         variant="danger"
                         size="sm"
-                        onClick={() => handleDelete(c.id, c.nome)}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(c.id, c.nome); }}
                       >
                         Excluir
                       </Button>
@@ -318,7 +330,7 @@ export default function CampeonatosPage() {
                     {campeonatoTimes.map((t) => (
                       <div key={t.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-white/[0.02]">
                         <img
-                          src={t.escudoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(t.nome)}&background=1a3460&color=FFD700&size=24`}
+                          src={t.escudoUrl || getLogoUrl(t.nome, 24)}
                           alt={t.nome}
                           className="w-5 h-5 rounded-full bg-white/5"
                         />

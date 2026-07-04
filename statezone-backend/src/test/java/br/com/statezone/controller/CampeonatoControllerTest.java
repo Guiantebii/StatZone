@@ -164,6 +164,8 @@ class CampeonatoControllerTest {
                 "Mandante",
                 11L,
                 "Visitante",
+                null,
+                null,
                 LocalDateTime.now(),
                 LocalDateTime.now()
         );

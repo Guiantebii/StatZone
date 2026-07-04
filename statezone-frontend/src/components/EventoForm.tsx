@@ -44,7 +44,6 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
 
   useEffect(() => {
     let isMounted = true;
-    setLoadingJogadores(true);
     api.get<EscalacaoPartidaList>(`/partidas/${partidaId}/escalacao`)
       .then((res) => {
         if (!isMounted) return;

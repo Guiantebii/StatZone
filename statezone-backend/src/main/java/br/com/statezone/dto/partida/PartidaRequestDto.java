@@ -1,7 +1,6 @@
 package br.com.statezone.dto.partida;
 
 import br.com.statezone.enums.StatusPartida;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,7 +20,6 @@ public record PartidaRequestDto(
         Integer rodada,
 
         @NotNull(message = "A data da partida é obrigatória")
-        @Future(message = "A data da partida deve ser futura")
         LocalDateTime dataPartida,
 
         @NotNull(message = "O status é obrigatório")

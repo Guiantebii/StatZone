@@ -65,10 +65,11 @@ export default function ImportacaoPage() {
   const [msgTimes, setMsgTimes] = useState('');
   const [msgJogadoresTodos, setMsgJogadoresTodos] = useState('');
   const [msgJogadoresTime, setMsgJogadoresTime] = useState('');
+  const [loadingTimes, setLoadingTimes] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    api.get('/times').then((res) => { if (isMounted) setTimes(res.data); }).catch(() => { console.error('Erro ao carregar times'); });
+    api.get('/times').then((res) => { if (isMounted) setTimes(res.data); }).catch(() => { toast.error('Erro ao carregar times'); }).finally(() => { if (isMounted) setLoadingTimes(false); });
     return () => { isMounted = false; };
   }, []);
 
@@ -115,7 +116,7 @@ export default function ImportacaoPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in-up">
       <PageHeader
         title="Importação"
         description="Importe times e jogadores via API-Football"
@@ -164,16 +165,21 @@ export default function ImportacaoPage() {
               }`}>{msgJogadoresTime}</p>
             )}
             <div className="mt-4 flex items-center gap-3">
+              {loadingTimes ? (
+                <div className="min-w-[200px] h-9 animate-shimmer rounded-lg" />
+              ) : (
               <select
                 value={selectedTimeId}
                 onChange={(e) => setSelectedTimeId(e.target.value ? Number(e.target.value) : '')}
                 className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-accent/40 min-w-[200px]"
               >
                 <option value="">Selecione um time</option>
+                {times.length === 0 && <option value="" disabled>Nenhum time disponível</option>}
                 {times.map((t) => (
                   <option key={t.id} value={t.id}>{t.nome}</option>
                 ))}
               </select>
+              )}
               <Button
                 size="sm"
                 onClick={importarJogadoresTime}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { ChevronRight, Menu, X } from 'lucide-react';
 import Logo from './Logo';
 import NavItems from './navigation/NavItems';

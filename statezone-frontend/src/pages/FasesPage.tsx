@@ -12,6 +12,7 @@ import { VAGAS_PADRAO } from '../constants/pagination';
 import Modal from '../components/ui/Modal';
 import BracketView from '../components/BracketView';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { getLogoUrl } from '../constants/helpers';
 import { toast } from 'sonner';
 
 type SubTab = 'grupos' | 'matamata';
@@ -36,7 +37,7 @@ export default function FasesPage() {
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [times, setTimes] = useState<Time[]>([]);
   const [grupoClassificacoes, setGrupoClassificacoes] = useState<Record<number, ClassificacaoTime[]>>({});
-  const [dataLoading, setDataLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   const [showCreatePhase, setShowCreatePhase] = useState(false);
   const [selectedFase, setSelectedFase] = useState<FaseEnum>('QUARTAS');
@@ -66,7 +67,6 @@ export default function FasesPage() {
   useEffect(() => {
     if (!campeonatoId) return;
     let isMounted = true;
-    setDataLoading(true);
     Promise.all([
       api.get(`/campeonatos/${campeonatoId}/fases`).then((r) => { if (isMounted) setFases(r.data); }).catch(() => { if (isMounted) setFases([]); }),
       api.get(`/campeonatos/${campeonatoId}/grupos`).then(async (r) => {
@@ -77,7 +77,9 @@ export default function FasesPage() {
           try {
             const cr = await api.get(`/campeonatos/${campeonatoId}/grupos/${g.id}/classificacao`);
             classMap[g.id] = cr.data;
-          } catch {}
+          } catch {
+            // grupo sem classificação ainda
+          }
         }));
         if (isMounted) setGrupoClassificacoes(classMap);
       }).catch(() => { if (isMounted) { setGrupos([]); } }),
@@ -150,7 +152,9 @@ export default function FasesPage() {
     try {
       const r = await api.get(`/campeonatos/${campeonatoId}/grupos/${grupoId}/classificacao`);
       setGrupoClassificacoes((prev) => ({ ...prev, [grupoId]: r.data }));
-    } catch {}
+    } catch {
+      // classificacao not available yet
+    }
   };
 
   const handleGenerateFixtures = async (grupoId: number) => {
@@ -165,9 +169,6 @@ export default function FasesPage() {
       setGeneratingFixtures(null);
     }
   };
-
-  const getLogoUrl = (nome: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=24&bold=true`;
 
   if (loading) return (
     <div className="space-y-6">

@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface EstatisticasJogadorRepository extends JpaRepository<EstatisticasJogador,Long> {
     Optional<EstatisticasJogador> findByJogadorId(Long JogadorId);
+    void deleteByJogadorIdIn(List<Long> jogadorIds);
 
     @Query("""
         SELECT DISTINCT e FROM EstatisticasJogador e

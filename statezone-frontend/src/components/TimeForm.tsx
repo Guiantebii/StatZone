@@ -29,20 +29,18 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
   const [fundadoEm, setFundadoEm] = useState(time?.fundadoEm || '');
   const [saving, setSaving] = useState(false);
 
+  const escudoUrlFinal = escudoManual ? escudoUrl : TEAM_LOGO(nome || time?.nome || '');
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  useEffect(() => {
-    if (!escudoManual && nome) setEscudoUrl(TEAM_LOGO(nome));
-  }, [nome, escudoManual]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload: Record<string, unknown> = { nome, sigla, tipo, pais, escudoUrl, fundadoEm: fundadoEm || null };
+      const payload: Record<string, unknown> = { nome, sigla, tipo, pais, escudoUrl: escudoUrlFinal, fundadoEm: fundadoEm || null };
       if (tipo === 'CLUBE') {
         payload.cidade = cidade;
         payload.tecnico = tecnico;

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Plus, Filter, Calendar } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
@@ -12,12 +11,12 @@ import Card from '../components/ui/Card';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import PartidaForm from '../components/PartidaForm';
 import { toast } from 'sonner';
+import { STATUS_LABEL } from '../constants/status';
 import { useAuth } from '../context/AuthContext';
 
-const statusList = ['TODOS', 'AO_VIVO', 'INTERVALO', 'AGENDADA', 'ENCERRADA', 'ADIADA', 'CANCELADA', 'WO_MANDANTE', 'WO_VISITANTE'] as const;
+const statusList = ['TODOS', 'AO_VIVO', 'INTERVALO', 'PENALTIS', 'AGENDADA', 'ENCERRADA', 'ADIADA', 'CANCELADA', 'WO_MANDANTE', 'WO_VISITANTE'] as const;
 
 export default function PartidasPage() {
-  const navigate = useNavigate();
   const [partidas, setPartidas] = useState<Partida[]>([]);
   const [campeonatos, setCampeonatos] = useState<Campeonato[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,22 +25,34 @@ export default function PartidasPage() {
   const [filterStatus, setFilterStatus] = useState<string>('TODOS');
   const [filterCampeonato, setFilterCampeonato] = useState<string>('TODOS');
 
-  const load = async () => {
-    try {
-      const [partidasRes, campeonatosRes] = await Promise.all([
-        api.get('/partidas'),
-        api.get('/campeonatos'),
-      ]);
+  useEffect(() => {
+    let isMounted = true;
+    Promise.all([
+      api.get('/partidas'),
+      api.get('/campeonatos'),
+    ]).then(([partidasRes, campeonatosRes]) => {
+      if (!isMounted) return;
       setPartidas(partidasRes.data);
       setCampeonatos(campeonatosRes.data);
-    } catch (err) {
+    }).catch((err) => {
       toast.error(getApiError(err, 'Erro ao carregar partidas'));
-    } finally {
-      setLoading(false);
-    }
-  };
+    }).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+    return () => { isMounted = false; };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  const load = () => {
+    Promise.all([
+      api.get('/partidas'),
+      api.get('/campeonatos'),
+    ]).then(([partidasRes, campeonatosRes]) => {
+      setPartidas(partidasRes.data);
+      setCampeonatos(campeonatosRes.data);
+    }).catch((err) => {
+      toast.error(getApiError(err, 'Erro ao carregar partidas'));
+    });
+  };
 
   const filtered = partidas.filter((p) => {
     if (filterStatus !== 'TODOS' && p.status !== filterStatus) return false;
@@ -74,7 +85,7 @@ export default function PartidasPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in-up">
       <PageHeader
         title="Partidas"
         description="Acompanhe as partidas"
@@ -120,7 +131,7 @@ export default function PartidasPage() {
                     : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] border border-transparent'
                 }`}
               >
-                {status === 'TODOS' ? 'Todas' : status === 'AO_VIVO' ? 'Ao Vivo' : status === 'AGENDADA' ? 'Agendadas' : status === 'ENCERRADA' ? 'Encerradas' : status}
+                {status === 'TODOS' ? 'Todas' : STATUS_LABEL[status] || status}
               </button>
             ))}
           </div>
@@ -159,7 +170,7 @@ export default function PartidasPage() {
             </div>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
-            {(filterStatus !== 'TODOS' ? filtered : filtered.filter(p => p.status !== 'AO_VIVO' && p.status !== 'PENALTIS' && p.status !== 'INTERVALO')).map((p) => (
+            {(filterStatus !== 'TODOS' ? filtered : filtered.filter(p => p.status === 'AGENDADA')).map((p) => (
               <PartidaCard key={p.id} partida={p} />
             ))}
           </div>

@@ -1,8 +1,9 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { Clock, Calendar, Trophy } from 'lucide-react';
+import { getLogoUrl } from '../constants/helpers';
 import type { Partida } from '../types/partida';
 import Card from './ui/Card';
-import { STATUS_AO_VIVO, STATUS_ENCERRADA } from '../constants/status';
+import { isLiveStatus, isFinishedStatus } from '../constants/status';
 
 interface PartidaCardProps {
   partida: Partida;
@@ -22,8 +23,8 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 export default function PartidaCard({ partida }: PartidaCardProps) {
   const navigate = useNavigate();
-  const isLive = (STATUS_AO_VIVO as readonly string[]).includes(partida.status);
-  const isFinished = (STATUS_ENCERRADA as readonly string[]).includes(partida.status);
+  const isLive = isLiveStatus(partida.status);
+  const isFinished = isFinishedStatus(partida.status);
   const showScore = isLive || isFinished;
 
   const statusInfo = statusConfig[partida.status] || statusConfig.AGENDADA;
@@ -36,10 +37,6 @@ export default function PartidaCard({ partida }: PartidaCardProps) {
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getTeamLogoUrl = (nome: string) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=48&bold=true`;
   };
 
   return (
@@ -67,7 +64,7 @@ export default function PartidaCard({ partida }: PartidaCardProps) {
               {partida.timeMandanteNome}
             </span>
             <img
-              src={getTeamLogoUrl(partida.timeMandanteNome)}
+              src={getLogoUrl(partida.timeMandanteNome)}
               alt={partida.timeMandanteNome}
               className="w-8 h-8 rounded-full bg-white/5"
             />
@@ -91,7 +88,7 @@ export default function PartidaCard({ partida }: PartidaCardProps) {
         <div className="flex-1 flex items-center gap-2">
           <Link to={`/times/${partida.timeVisitanteId}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img
-              src={getTeamLogoUrl(partida.timeVisitanteNome)}
+              src={getLogoUrl(partida.timeVisitanteNome)}
               alt={partida.timeVisitanteNome}
               className="w-8 h-8 rounded-full bg-white/5"
             />

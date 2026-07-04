@@ -6,7 +6,7 @@ import br.com.statezone.dto.security.LoginResponse;
 import br.com.statezone.dto.security.RegistroRequest;
 import br.com.statezone.enums.Role;
 import br.com.statezone.exception.ConflictException;
-import br.com.statezone.exception.ResourceNotFoundException;
+import br.com.statezone.exception.UnauthorizedException;
 import br.com.statezone.model.Usuario;
 import br.com.statezone.repository.UsuarioRepository;
 import br.com.statezone.security.JwtService;
@@ -64,7 +64,7 @@ public class AuthController {
                 .getContext().getAuthentication();
 
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            throw new ResourceNotFoundException("Usuário não autenticado");
+            throw new UnauthorizedException("Usuário não autenticado");
         }
 
         UserDetails user = (UserDetails) auth.getPrincipal();

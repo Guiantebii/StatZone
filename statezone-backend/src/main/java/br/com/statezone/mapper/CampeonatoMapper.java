@@ -16,13 +16,25 @@ public interface CampeonatoMapper {
     @Mapping(target = "timesIds", source = "times")
     CampeonatoResponseDto toDto(Campeonato entity);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "apiFootballId", ignore = true)
+    @Mapping(target = "partidas", ignore = true)
+    @Mapping(target = "times", ignore = true)
+    @Mapping(target = "criadoEm", ignore = true)
+    @Mapping(target = "atualizadoEm", ignore = true)
     Campeonato toEntity(CampeonatoRequestDto dto);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "apiFootballId", ignore = true)
+    @Mapping(target = "partidas", ignore = true)
+    @Mapping(target = "times", ignore = true)
+    @Mapping(target = "criadoEm", ignore = true)
+    @Mapping(target = "atualizadoEm", ignore = true)
     void updateCampeonatoFromDto(CampeonatoRequestDto dto,
                                  @MappingTarget Campeonato entity);
 
     default List<Long> mapTimes(List<Time> times) {
-        if (times == null) return null;
+        if (times == null) return List.of();
 
         return times.stream()
                 .map(br.com.statezone.model.Time::getId)

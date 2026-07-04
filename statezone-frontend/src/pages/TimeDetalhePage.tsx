@@ -8,8 +8,9 @@ import type { TimeEstatisticas } from '../types/estatisticas';
 import type { TimePartidas, Partida } from '../types/partida';
 import Card from '../components/ui/Card';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { posicaoLabel, getLogoUrl, getJogadorAvatarUrl } from '../constants/helpers';
 import { toast } from 'sonner';
-import { STATUS_ENCERRADA } from '../constants/status';
+import { isFinishedStatus } from '../constants/status';
 
 interface TimeForma {
   timeId: number;
@@ -30,28 +31,27 @@ export default function TimeDetalhePage() {
 
   useEffect(() => {
     if (!id) return;
+    let isCancelled = false;
     Promise.all([
-      api.get(`/times/${id}`).then((r) => setTime(r.data)),
-      api.get(`/times/${id}/jogadores`).then((r) => setJogadores(r.data)),
-      api.get(`/times/${id}/forma`).then((r) => setForma(r.data)),
-      api.get(`/times/${id}/estatisticas`).then((r) => setEstatisticas(r.data)),
-      api.get(`/times/${id}/partidas`).then((r) => setPartidas(r.data)),
-    ]).catch(() => toast.error('Erro ao carregar time'))
-      .finally(() => setLoading(false));
+      api.get(`/times/${id}`),
+      api.get(`/times/${id}/jogadores`),
+      api.get(`/times/${id}/forma`),
+      api.get(`/times/${id}/estatisticas`),
+      api.get(`/times/${id}/partidas`),
+    ]).then(([t, j, f, e, p]) => {
+      if (isCancelled) return;
+      setTime(t.data);
+      setJogadores(j.data);
+      setForma(f.data);
+      setEstatisticas(e.data);
+      setPartidas(p.data);
+    }).catch(() => {
+      if (!isCancelled) toast.error('Erro ao carregar time');
+    }).finally(() => {
+      if (!isCancelled) setLoading(false);
+    });
+    return () => { isCancelled = true; };
   }, [id]);
-
-  const posicaoLabel = (p: string) => {
-    const map: Record<string, string> = {
-      GOLEIRO: 'Goleiro', ZAGUEIRO: 'Zagueiro', LATERAL_DIREITO: 'Lateral Direito',
-      LATERAL_ESQUERDO: 'Lateral Esquerdo', VOLANTE: 'Volante', MEIO_CAMPO: 'Meio-Campo',
-      PONTA_DIREITA: 'Ponta Direita', PONTA_ESQUERDA: 'Ponta Esquerda',
-      MEIA_ATACANTE: 'Meia-Atacante', CENTROAVANTE: 'Centroavante',
-    };
-    return map[p] || p;
-  };
-
-  const getLogoUrl = (nome: string, size = 80) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=${size}&bold=true`;
 
   if (loading) return (
     <div className="space-y-6">
@@ -84,7 +84,7 @@ export default function TimeDetalhePage() {
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
           <img
-            src={time.escudoUrl || getLogoUrl(time.nome)}
+            src={time.escudoUrl || getLogoUrl(time.nome, 80)}
             alt={time.nome}
             className="w-20 h-20 rounded-2xl bg-white/5 ring-2 ring-white/[0.06] object-contain"
           />
@@ -188,7 +188,7 @@ export default function TimeDetalhePage() {
             {jogadores.map((j) => (
               <Link key={j.id} to={`/jogadores/${j.id}`} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-colors">
                 <img
-                  src={j.fotoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(j.nome)}&background=1B5E20&color=fff&size=40`}
+                  src={j.fotoUrl || getJogadorAvatarUrl(j.nome, 40)}
                   alt={j.nome}
                   className="w-10 h-10 rounded-full bg-white/5 ring-2 ring-white/[0.06] object-cover"
                 />
@@ -212,16 +212,10 @@ export default function TimeDetalhePage() {
 function PartidaRow({ partida, timeId }: { partida: Partida; timeId: number }) {
   const navigate = useNavigate();
   const mandante = partida.timeMandanteId === timeId;
-  const isFinished = (STATUS_ENCERRADA as readonly string[]).includes(partida.status);
+  const isFinished = isFinishedStatus(partida.status);
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-
-  const formatTime = (dateStr: string) =>
-    new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-  const getLogoUrl = (nome: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=24&bold=true`;
 
   return (
     <button
@@ -229,7 +223,7 @@ function PartidaRow({ partida, timeId }: { partida: Partida; timeId: number }) {
       className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
     >
       <span className="text-[10px] text-slate-600 w-5 font-mono text-right">{partida.campeonatoNome?.charAt(0)}</span>
-      <img src={getLogoUrl(mandante ? partida.timeVisitanteNome : partida.timeMandanteNome)} alt={mandante ? partida.timeVisitanteNome : partida.timeMandanteNome} className="w-5 h-5 rounded-full bg-white/5 shrink-0" />
+      <img src={getLogoUrl(mandante ? partida.timeVisitanteNome : partida.timeMandanteNome, 24)} alt={mandante ? partida.timeVisitanteNome : partida.timeMandanteNome} className="w-5 h-5 rounded-full bg-white/5 shrink-0" />
       <span className="text-xs text-slate-400 flex-1 truncate">
         {mandante ? partida.timeVisitanteNome : partida.timeMandanteNome}
       </span>

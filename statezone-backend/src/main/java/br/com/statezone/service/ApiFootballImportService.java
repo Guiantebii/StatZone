@@ -41,8 +41,10 @@ public class ApiFootballImportService {
             time.setPais(item.team().country());
             time.setEscudoUrl(item.team().logo());
 
-            time.setCidade(item.venue().city());
-            time.setEstadio(item.venue().name());
+            if (item.venue() != null) {
+                time.setCidade(item.venue().city());
+                time.setEstadio(item.venue().name());
+            }
 
             times.add(time);
         }

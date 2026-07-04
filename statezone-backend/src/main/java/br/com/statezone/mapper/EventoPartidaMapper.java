@@ -10,6 +10,14 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface EventoPartidaMapper {
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "eventoRelacionado", ignore = true)
+    @Mapping(target = "anulado", ignore = true)
+    @Mapping(target = "partida", ignore = true)
+    @Mapping(target = "jogador", ignore = true)
+    @Mapping(target = "time", ignore = true)
+    @Mapping(target = "jogadorSecundario", ignore = true)
+    @Mapping(target = "criadoEm", ignore = true)
     EventoPartida toEntity(EventoPartidaRequestDto dto);
 
     @Mapping(target = "partidaId", source = "partida.id")
@@ -27,14 +35,14 @@ public interface EventoPartidaMapper {
     @Mapping(target = "tipo", source = "tipoEvento")
     @Mapping(target = "tempo", expression = "java(formatarTempo(entity))")
 
-    @Mapping(target = "timeId", source = "time.id")
-    @Mapping(target = "nomeTime", source = "time.nome")
+    @Mapping(target = "timeId", expression = "java(entity.getTime() != null ? entity.getTime().getId() : null)")
+    @Mapping(target = "nomeTime", expression = "java(entity.getTime() != null ? entity.getTime().getNome() : null)")
 
-    @Mapping(target = "jogadorId", source = "jogador.id")
-    @Mapping(target = "jogador", source = "jogador.nome")
+    @Mapping(target = "jogadorId", expression = "java(entity.getJogador() != null ? entity.getJogador().getId() : null)")
+    @Mapping(target = "jogador", expression = "java(entity.getJogador() != null ? entity.getJogador().getNome() : null)")
 
-    @Mapping(target = "jogadorSecundarioId", source = "jogadorSecundario.id")
-    @Mapping(target = "jogadorSecundario", source = "jogadorSecundario.nome")
+    @Mapping(target = "jogadorSecundarioId", expression = "java(entity.getJogadorSecundario() != null ? entity.getJogadorSecundario().getId() : null)")
+    @Mapping(target = "jogadorSecundario", expression = "java(entity.getJogadorSecundario() != null ? entity.getJogadorSecundario().getNome() : null)")
     EventoTimelineResponseDto toTimelineDto(EventoPartida entity);
 
     default String formatarTempo(EventoPartida evento) {

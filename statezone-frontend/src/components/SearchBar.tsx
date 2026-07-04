@@ -28,35 +28,38 @@ export default function SearchBar({
   const navigate = useNavigate();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (!query.trim()) {
-      setResults({ times: [], jogadores: [] });
-      setOpen(false);
       return;
     }
 
-    setLoading(true);
+    let isCancelled = false;
     clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(async () => {
+      setLoading(true);
+      setOpen(true);
       try {
         const [timesRes, jogadoresRes] = await Promise.all([
           api.get<Time[]>('/times', { params: { nome: query } }),
           api.get<Jogador[]>('/jogadores', { params: { nome: query } }),
         ]);
         const data = { times: timesRes.data, jogadores: jogadoresRes.data };
+        if (isCancelled) return;
         setResults(data);
-        setOpen(data.times.length > 0 || data.jogadores.length > 0);
       } catch {
-        setResults({ times: [], jogadores: [] });
+        if (!isCancelled) setResults({ times: [], jogadores: [] });
       } finally {
-        setLoading(false);
+        if (!isCancelled) setLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(timerRef.current);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timerRef.current);
+    };
   }, [query]);
 
   useEffect(() => {
@@ -89,6 +92,7 @@ export default function SearchBar({
           ref={inputRef}
           type="text"
           placeholder={placeholder}
+          aria-label={placeholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => { if (results.times.length > 0 || results.jogadores.length > 0) setOpen(true); }}

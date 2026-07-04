@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Trophy, Shield, Users, Calendar, Plus, ArrowRight, Medal } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
+import { getLogoUrl, getAvatarUrl } from '../constants/helpers';
 import type { Partida } from '../types/partida';
 import type { Artilharia } from '../types/estatisticas';
 import Card from '../components/ui/Card';
@@ -10,7 +11,7 @@ import Button from '../components/ui/Button';
 import { ARTILHARIA_TOP } from '../constants/pagination';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
-import { STATUS_AO_VIVO, STATUS_ENCERRADA } from '../constants/status';
+import { isLiveStatus, isFinishedStatus } from '../constants/status';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -38,10 +39,10 @@ export default function DashboardPage() {
         });
 
         const todas: Partida[] = partidasRes.data;
-        setAoVivo(todas.filter((p) => (STATUS_AO_VIVO as readonly string[]).includes(p.status)));
+        setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
         setRecentes(
           todas
-            .filter((p) => (STATUS_ENCERRADA as readonly string[]).includes(p.status))
+            .filter((p) => isFinishedStatus(p.status))
             .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
             .slice(0, 5)
         );
@@ -60,15 +61,14 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (aoVivo.length === 0) return;
     const interval = setInterval(async () => {
       try {
         const res = await api.get('/partidas');
         const todas: Partida[] = res.data;
-        setAoVivo(todas.filter((p) => (STATUS_AO_VIVO as readonly string[]).includes(p.status)));
+        setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
         setRecentes(
           todas
-            .filter((p) => (STATUS_ENCERRADA as readonly string[]).includes(p.status))
+            .filter((p) => isFinishedStatus(p.status))
             .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
             .slice(0, 5)
         );
@@ -77,10 +77,7 @@ export default function DashboardPage() {
       }
     }, 15000);
     return () => clearInterval(interval);
-  }, [aoVivo.length]);
-
-  const getLogoUrl = (nome: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=32&bold=true`;
+  }, []);
 
   if (loading) return (
     <div className="space-y-6">
@@ -197,7 +194,7 @@ export default function DashboardPage() {
                       {a.posicao}
                     </span>
                     <img
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(a.nomeJogador)}&background=1a3460&color=fff&size=24`}
+                      src={getAvatarUrl(a.nomeJogador, 24)}
                       alt={a.nomeJogador}
                       className="w-7 h-7 rounded-full bg-white/5"
                     />

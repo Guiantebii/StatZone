@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
 import type { Campeonato } from '../types/campeonato';
@@ -34,15 +34,13 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!logoManual && nome) setLogoUrl(CAMPEONATO_LOGO(nome));
-  }, [nome, logoManual]);
+  const logoUrlFinal = logoManual ? logoUrl : CAMPEONATO_LOGO(nome || campeonato?.nome || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (logoUrl && !/^https?:\/\/.+/.test(logoUrl)) {
+    if (logoManual && logoUrl && !/^https?:\/\/.+/.test(logoUrl)) {
       const msg = 'URL da logo inválida. Insira uma URL válida começando com http:// ou https://';
       setError(msg);
       toast.error(msg);
@@ -51,7 +49,7 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
 
     setSaving(true);
     try {
-      const payload = { nome, pais, temporada, logoUrl, tipoFormato, amarelosParaSuspensao };
+      const payload = { nome, pais, temporada, logoUrl: logoUrlFinal, tipoFormato, amarelosParaSuspensao };
       if (campeonato) {
         await api.put(`/campeonatos/${campeonato.id}`, payload);
         toast.success('Campeonato atualizado');

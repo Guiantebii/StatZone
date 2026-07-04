@@ -171,8 +171,8 @@ public class TimeService {
 
         for (Partida p : partidas) {
             boolean mandante = p.getTimeMandante().getId().equals(timeId);
-            int golsTime = mandante ? p.getGolsMandante() : p.getGolsVisitante();
-            int golsAdv = mandante ? p.getGolsVisitante() : p.getGolsMandante();
+            int golsTime = mandante ? (p.getGolsMandante() != null ? p.getGolsMandante() : 0) : (p.getGolsVisitante() != null ? p.getGolsVisitante() : 0);
+            int golsAdv = mandante ? (p.getGolsVisitante() != null ? p.getGolsVisitante() : 0) : (p.getGolsMandante() != null ? p.getGolsMandante() : 0);
 
             golsMarcados += golsTime;
             golsSofridos += golsAdv;
@@ -191,8 +191,8 @@ public class TimeService {
     private String calcularResultado(Partida partida, Long timeId) {
         boolean mandante = partida.getTimeMandante().getId().equals(timeId);
 
-        int golsTime = mandante ? partida.getGolsMandante() : partida.getGolsVisitante();
-        int golsAdversario = mandante ? partida.getGolsVisitante() : partida.getGolsMandante();
+        int golsTime = mandante ? (partida.getGolsMandante() != null ? partida.getGolsMandante() : 0) : (partida.getGolsVisitante() != null ? partida.getGolsVisitante() : 0);
+        int golsAdversario = mandante ? (partida.getGolsVisitante() != null ? partida.getGolsVisitante() : 0) : (partida.getGolsMandante() != null ? partida.getGolsMandante() : 0);
 
         if (golsTime > golsAdversario) return "V";
         if (golsTime < golsAdversario) return "D";

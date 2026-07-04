@@ -68,8 +68,8 @@ public class BracketEngine {
 
         validarPartidaEncerrada(ida, "Partida de ida");
 
-        int golsA = ida.getGolsMandante();
-        int golsB = ida.getGolsVisitante();
+        int golsA = ida.getGolsMandante() != null ? ida.getGolsMandante() : 0;
+        int golsB = ida.getGolsVisitante() != null ? ida.getGolsVisitante() : 0;
 
         if (volta != null) {
             validarPartidaEncerrada(volta, "Partida de volta");

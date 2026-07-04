@@ -2,7 +2,6 @@ package br.com.statezone.service;
 
 import br.com.statezone.dto.rankings.*;
 import br.com.statezone.dto.estatisticasJogador.EstatisticasJogadorResponseDto;
-import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.EstatisticasJogadorMapper;
 import br.com.statezone.model.EstatisticasJogador;
@@ -107,11 +106,9 @@ public class EstatisticasJogadorService {
     }
 
     public List<SelecaoCampeonatoResponseDto> gerarSelecaoDoCampeonato(Long campeonatoId) {
-        long totalPartidasEncerradas = partidaRepository
-                .countByCampeonatoIdAndStatus(campeonatoId, StatusPartida.ENCERRADA);
-
-        int minPartidas = (totalPartidasEncerradas > 0)
-                ? (int) (totalPartidasEncerradas / 2)
+        Integer maxRodada = partidaRepository.findMaxRodada(campeonatoId);
+        int minPartidas = (maxRodada != null && maxRodada > 0)
+                ? Math.max(1, maxRodada / 2)
                 : 1;
 
         List<EstatisticasJogadorCampeonato> estatisticas =
@@ -137,11 +134,9 @@ public class EstatisticasJogadorService {
     }
 
     public CraqueCampeonatoResponseDto mvpCampeonato(Long campeonatoId) {
-        long totalPartidasEncerradas = partidaRepository
-                .countByCampeonatoIdAndStatus(campeonatoId, StatusPartida.ENCERRADA);
-
-        int minPartidas = (totalPartidasEncerradas > 0)
-                ? (int) (totalPartidasEncerradas / 2)
+        Integer maxRodada = partidaRepository.findMaxRodada(campeonatoId);
+        int minPartidas = (maxRodada != null && maxRodada > 0)
+                ? Math.max(1, maxRodada / 2)
                 : 1;
 
         List<EstatisticasJogadorCampeonato> estatisticas =
@@ -151,7 +146,7 @@ public class EstatisticasJogadorService {
         EstatisticasJogadorCampeonato mvp = estatisticas.stream()
                 .max(Comparator.comparingDouble(this::calcularScore))
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Nenhum jogador encontrado"));
+                        "Nenhum MVP encontrado para este campeonato"));
 
         return estatisticasJogadorMapper.toCraqueCampeonatoDto(mvp, calcularScore(mvp));
     }
@@ -179,12 +174,16 @@ public class EstatisticasJogadorService {
     }
 
     private double calcularScore(EstatisticasJogadorCampeonato e) {
-        return (e.getGols() * 5.0)
-                + (e.getAssistencias() * 3.0)
-                + (e.getDefesas() * 1.5)
-                + (e.getPenaltisDefendidos() * 4.0)
-                - (e.getPenaltisPerdidos() * 1.0)
-                - (e.getCartoesAmarelos() * 0.5)
-                - (e.getCartoesVermelhos() * 2.0);
+        return (toZero(e.getGols()) * 5.0)
+                + (toZero(e.getAssistencias()) * 3.0)
+                + (toZero(e.getDefesas()) * 1.5)
+                + (toZero(e.getPenaltisDefendidos()) * 4.0)
+                - (toZero(e.getPenaltisPerdidos()) * 1.0)
+                - (toZero(e.getCartoesAmarelos()) * 0.5)
+                - (toZero(e.getCartoesVermelhos()) * 2.0);
+    }
+
+    private int toZero(Integer value) {
+        return value != null ? value : 0;
     }
 }

@@ -8,6 +8,8 @@ export default function Input({
   leftIcon,
   ...props
 }: InputProps) {
+  // If no aria-label or id is provided, generate one from placeholder
+  const inputId = props.id || (props.placeholder ? `input-${props.placeholder.replace(/\s+/g, '-').toLowerCase()}` : undefined);
   return (
     <div className="relative">
       {leftIcon && (
@@ -16,6 +18,7 @@ export default function Input({
         </div>
       )}
       <input
+        id={inputId}
         {...props}
         className={`
           w-full

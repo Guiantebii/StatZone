@@ -32,19 +32,20 @@ public class ConfrontoPendenteJob {
 
         for (ProcessamentoConfrontoPendente p : pendentes) {
             try {
-                Partida partida = partidaRepository.findById(p.getPartidaId()).orElse(null);
-                if (partida == null) {
-                    p.setResolvido(true);
-                    pendenteRepository.save(p);
-                    continue;
-                }
+                Partida partida = partidaRepository.findById(p.getPartidaId())
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Partida não encontrada com ID: " + p.getPartidaId()));
+
                 confrontoEventListener.processarConfronto(partida);
 
+            } catch (IllegalArgumentException e) {
+                log.warn("Partida não encontrada no processamento de confronto: {}", e.getMessage());
+                p.setResolvido(true);
+                pendenteRepository.save(p);
             } catch (Exception e) {
                 p.setTentativas(p.getTentativas() + 1);
                 p.setUltimoErro(e.getMessage());
                 if (p.getTentativas() >= MAX_TENTATIVAS) {
-
                     log.error("Falha definitiva ao processar confronto da partida {}", p.getPartidaId(), e);
                 }
                 pendenteRepository.save(p);
