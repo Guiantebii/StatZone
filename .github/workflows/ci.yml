@@ -37,8 +37,9 @@ jobs:
           mvn test -e 2>&1 | tee test-output.log
           rc=${PIPESTATUS[0]}
           if [ $rc -ne 0 ]; then
-            echo "::error::$(grep -E 'Tests run:' test-output.log | tail -1 || echo '(no summary)')"
-            echo "::error::$(grep -m 1 -B 2 -A 100 'AuthFlowIntegrationTest' test-output.log || echo '(no error context)')"
+            echo "::error::$(grep -E 'Tests run:' test-output.log | tail -1 || echo NONE)"
+            echo "::error::$(grep -E '^\[ERROR\]' test-output.log | tail -15 || echo NONE)"
+            echo "::error::$(grep -oE 'Could not resolve placeholder[^"]*"' test-output.log | head -3 || echo NO_PLACEHOLDER_ERRORS)"
           fi
           exit $rc
 
