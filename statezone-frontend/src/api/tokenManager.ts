@@ -1,6 +1,8 @@
 const STORAGE_KEY = 'auth_token';
 let currentToken: string | null = null;
 
+// Persists token by default to localStorage to keep UX (reloads).
+// For better security prefer httpOnly cookies from the server.
 export function setToken(token: string | null) {
   currentToken = token;
   if (token) {
@@ -8,6 +10,10 @@ export function setToken(token: string | null) {
   } else {
     localStorage.removeItem(STORAGE_KEY);
   }
+  // Notify listeners (e.g., websocket clients) that token changed
+  try {
+    window.dispatchEvent(new CustomEvent('auth:token-changed', { detail: token }));
+  } catch {}
 }
 
 export function getToken(): string | null {
@@ -23,4 +29,7 @@ export function getToken(): string | null {
 export function clearToken() {
   currentToken = null;
   localStorage.removeItem(STORAGE_KEY);
+  try {
+    window.dispatchEvent(new CustomEvent('auth:token-changed', { detail: null }));
+  } catch {}
 }

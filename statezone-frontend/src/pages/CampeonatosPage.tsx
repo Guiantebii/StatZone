@@ -34,39 +34,54 @@ export default function CampeonatosPage() {
 
   useEffect(() => {
     let isMounted = true;
-    api.get('/campeonatos').then((res) => {
-      if (isMounted) setCampeonatos(res.data);
-    }).catch(() => {
-      toast.error('Erro ao carregar campeonatos');
-    }).finally(() => {
-      if (isMounted) setLoading(false);
-    });
-    return () => { isMounted = false; };
+    api
+      .get('/campeonatos')
+      .then((res) => {
+        if (isMounted) setCampeonatos(res.data);
+      })
+      .catch(() => {
+        toast.error('Erro ao carregar campeonatos');
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const load = () => {
-    api.get('/campeonatos').then((res) => setCampeonatos(res.data)).catch(() => {
-      toast.error('Erro ao carregar campeonatos');
-    });
+    api
+      .get('/campeonatos')
+      .then((res) => setCampeonatos(res.data))
+      .catch(() => {
+        toast.error('Erro ao carregar campeonatos');
+      });
   };
 
   const handleDelete = (id: number, nome: string) => {
     setDeleteTarget({ id, nome });
   };
 
-  const handleFormClose = () => { setShowForm(false); setEditData(null); };
-  const handleSaved = () => { handleFormClose(); load(); };
-  const openEdit = (campeonato: Campeonato) => { setEditData(campeonato); setShowForm(true); };
+  const handleFormClose = () => {
+    setShowForm(false);
+    setEditData(null);
+  };
+  const handleSaved = () => {
+    handleFormClose();
+    load();
+  };
+  const openEdit = (campeonato: Campeonato) => {
+    setEditData(campeonato);
+    setShowForm(true);
+  };
 
   const openManageTimes = async (campeonato: Campeonato) => {
     setManageTarget({ id: campeonato.id, nome: campeonato.nome });
     setSelectedAddTimeId(0);
     setManageLoading(true);
     try {
-      const [timesRes, allRes] = await Promise.all([
-        api.get(`/campeonatos/${campeonato.id}/times`),
-        api.get('/times'),
-      ]);
+      const [timesRes, allRes] = await Promise.all([api.get(`/campeonatos/${campeonato.id}/times`), api.get('/times')]);
       setCampeonatoTimes(timesRes.data);
       setAllTimes(allRes.data);
     } catch {
@@ -97,9 +112,12 @@ export default function CampeonatosPage() {
 
   const formatarTipo = (tipo?: string) => {
     switch (tipo) {
-      case 'MATA_MATA': return 'Mata-Mata';
-      case 'GRUPOS_E_MATA_MATA': return 'Grupos e Mata-Mata';
-      default: return 'Pontos Corridos';
+      case 'MATA_MATA':
+        return 'Mata-Mata';
+      case 'GRUPOS_E_MATA_MATA':
+        return 'Grupos e Mata-Mata';
+      default:
+        return 'Pontos Corridos';
     }
   };
 
@@ -115,11 +133,15 @@ export default function CampeonatosPage() {
   };
 
   const initials = (nome: string) =>
-    nome.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+    nome
+      .split(' ')
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
 
-  const filtered = campeonatos.filter((c) =>
-    c.nome.toLowerCase().includes(search.toLowerCase()) ||
-    c.pais?.toLowerCase().includes(search.toLowerCase())
+  const filtered = campeonatos.filter(
+    (c) => c.nome.toLowerCase().includes(search.toLowerCase()) || c.pais?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const totalFormatos = (tipo: string) =>
@@ -140,22 +162,23 @@ export default function CampeonatosPage() {
     ? Math.round(campeonatos.reduce((acc, c) => acc + (c.amarelosParaSuspensao || 3), 0) / campeonatos.length)
     : 3;
 
-  if (loading) return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="h-8 w-44 rounded-lg animate-shimmer" />
-          <div className="h-4 w-64 rounded-lg animate-shimmer" />
+  if (loading)
+    return (
+      <div className="space-y-6">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <div className="h-8 w-44 rounded-lg animate-shimmer" />
+            <div className="h-4 w-64 rounded-lg animate-shimmer" />
+          </div>
         </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <SkeletonTable rows={4} />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-      </div>
-      <SkeletonTable rows={4} />
-    </div>
-  );
+    );
 
   const { tipo: fmtTipo, count: fmtCount } = formatoMaisUsado();
 
@@ -173,21 +196,13 @@ export default function CampeonatosPage() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard
-          label="Total"
-          value={campeonatos.length}
-          sublabel="campeonatos"
-        />
+        <StatCard label="Total" value={campeonatos.length} sublabel="campeonatos" />
         <StatCard
           label="Formato mais usado"
           value={formatarTipo(fmtTipo)}
           sublabel={fmtCount > 0 ? `${fmtCount} campeonato(s)` : undefined}
         />
-        <StatCard
-          label="Suspensão média"
-          value={`${mediaAmarelos}`}
-          sublabel="cartões"
-        />
+        <StatCard label="Suspensão média" value={`${mediaAmarelos}`} sublabel="cartões" />
       </div>
 
       <Card className="overflow-hidden">
@@ -216,10 +231,18 @@ export default function CampeonatosPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-white/[0.02]">
-                <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Campeonato</th>
-                <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Formato</th>
-                <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Suspensão</th>
-                <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Ações</th>
+                <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                  Campeonato
+                </th>
+                <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                  Formato
+                </th>
+                <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                  Suspensão
+                </th>
+                <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.03]">
@@ -232,7 +255,11 @@ export default function CampeonatosPage() {
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       {c.logoUrl ? (
-                        <img src={c.logoUrl} alt={c.nome} className="w-9 h-9 rounded-xl object-contain bg-white/5 ring-1 ring-white/[0.06]" />
+                        <img
+                          src={c.logoUrl}
+                          alt={c.nome}
+                          className="w-9 h-9 rounded-xl object-contain bg-white/5 ring-1 ring-white/[0.06]"
+                        />
                       ) : (
                         <div className="w-9 h-9 rounded-xl bg-accent/10 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0 ring-1 ring-accent/20">
                           {initials(c.nome)}
@@ -242,14 +269,17 @@ export default function CampeonatosPage() {
                         <p className="text-sm font-medium text-slate-200">{c.nome}</p>
                         {c.pais && (
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {c.pais}{c.temporada ? ` · ${c.temporada}` : ''}
+                            {c.pais}
+                            {c.temporada ? ` · ${c.temporada}` : ''}
                           </p>
                         )}
                       </div>
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${badgeClasses(c.tipoFormato)}`}>
+                    <span
+                      className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${badgeClasses(c.tipoFormato)}`}
+                    >
                       {formatarTipo(c.tipoFormato)}
                     </span>
                   </td>
@@ -261,21 +291,30 @@ export default function CampeonatosPage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={(e) => { e.stopPropagation(); openManageTimes(c); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openManageTimes(c);
+                        }}
                       >
                         Times
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={(e) => { e.stopPropagation(); openEdit(c); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(c);
+                        }}
                       >
                         Editar
                       </Button>
                       <Button
                         variant="danger"
                         size="sm"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(c.id, c.nome); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(c.id, c.nome);
+                        }}
                       >
                         Excluir
                       </Button>
@@ -288,13 +327,7 @@ export default function CampeonatosPage() {
         )}
       </Card>
 
-      {showForm && (
-        <CampeonatoForm
-          campeonato={editData}
-          onClose={handleFormClose}
-          onSaved={handleSaved}
-        />
-      )}
+      {showForm && <CampeonatoForm campeonato={editData} onClose={handleFormClose} onSaved={handleSaved} />}
 
       {deleteTarget && (
         <ConfirmModal
@@ -322,7 +355,9 @@ export default function CampeonatosPage() {
           ) : (
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Times no campeonato</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  Times no campeonato
+                </p>
                 {campeonatoTimes.length === 0 ? (
                   <p className="text-sm text-slate-500 py-2">Nenhum time adicionado</p>
                 ) : (
@@ -354,7 +389,9 @@ export default function CampeonatosPage() {
                     {allTimes
                       .filter((t) => !campeonatoTimes.some((ct) => ct.id === t.id))
                       .map((t) => (
-                        <option key={t.id} value={t.id}>{t.nome} ({t.sigla})</option>
+                        <option key={t.id} value={t.id}>
+                          {t.nome} ({t.sigla})
+                        </option>
                       ))}
                   </select>
                   <Button size="sm" onClick={handleAddTime} disabled={!selectedAddTimeId}>

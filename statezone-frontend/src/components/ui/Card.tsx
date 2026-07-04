@@ -5,12 +5,7 @@ interface CardProps {
   onClick?: () => void;
 }
 
-export default function Card({
-  children,
-  className = '',
-  hover = false,
-  onClick,
-}: CardProps) {
+export default function Card({ children, className = '', hover = false, onClick }: CardProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (onClick && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();

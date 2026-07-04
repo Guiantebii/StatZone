@@ -8,8 +8,12 @@ interface PaginationBarProps {
 }
 
 export default function PaginationBar({ page, hasMore, onPrev, onNext }: PaginationBarProps) {
-  const safePrev = () => { if (page > 0) onPrev(); };
-  const safeNext = () => { if (hasMore) onNext(); };
+  const safePrev = () => {
+    if (page > 0) onPrev();
+  };
+  const safeNext = () => {
+    if (hasMore) onNext();
+  };
   return (
     <div className="flex items-center justify-between px-5 py-3 border-t border-white/[0.04]">
       <button

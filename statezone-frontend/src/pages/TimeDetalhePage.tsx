@@ -38,48 +38,58 @@ export default function TimeDetalhePage() {
       api.get(`/times/${id}/forma`),
       api.get(`/times/${id}/estatisticas`),
       api.get(`/times/${id}/partidas`),
-    ]).then(([t, j, f, e, p]) => {
-      if (isCancelled) return;
-      setTime(t.data);
-      setJogadores(j.data);
-      setForma(f.data);
-      setEstatisticas(e.data);
-      setPartidas(p.data);
-    }).catch(() => {
-      if (!isCancelled) toast.error('Erro ao carregar time');
-    }).finally(() => {
-      if (!isCancelled) setLoading(false);
-    });
-    return () => { isCancelled = true; };
+    ])
+      .then(([t, j, f, e, p]) => {
+        if (isCancelled) return;
+        setTime(t.data);
+        setJogadores(j.data);
+        setForma(f.data);
+        setEstatisticas(e.data);
+        setPartidas(p.data);
+      })
+      .catch(() => {
+        if (!isCancelled) toast.error('Erro ao carregar time');
+      })
+      .finally(() => {
+        if (!isCancelled) setLoading(false);
+      });
+    return () => {
+      isCancelled = true;
+    };
   }, [id]);
 
-  if (loading) return (
-    <div className="space-y-6">
-      <div className="h-6 w-32 rounded-lg animate-shimmer" />
-      <div className="glass rounded-2xl p-6">
-        <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full animate-shimmer" />
-          <div className="space-y-2">
-            <div className="h-6 w-40 rounded animate-shimmer" />
-            <div className="h-4 w-24 rounded animate-shimmer" />
+  if (loading)
+    return (
+      <div className="space-y-6">
+        <div className="h-6 w-32 rounded-lg animate-shimmer" />
+        <div className="glass rounded-2xl p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-full animate-shimmer" />
+            <div className="space-y-2">
+              <div className="h-6 w-40 rounded animate-shimmer" />
+              <div className="h-4 w-24 rounded animate-shimmer" />
+            </div>
           </div>
         </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
-      </div>
-    </div>
-  );
+    );
 
   if (!time) return null;
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <button onClick={() => navigate(isAdminContext ? '/dashboard/times' : '/times')} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-200 transition-colors">
+      <button
+        onClick={() => navigate(isAdminContext ? '/dashboard/times' : '/times')}
+        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-200 transition-colors"
+      >
         <ArrowLeft size={15} />
         Voltar para times
       </button>
-
 
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
@@ -93,24 +103,41 @@ export default function TimeDetalhePage() {
               <h1 className="text-2xl font-bold text-slate-100">{time.nome}</h1>
               <span className="text-xs text-accent font-bold bg-accent/10 px-2 py-0.5 rounded">{time.sigla}</span>
               {time.tipo && (
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${time.tipo === 'SELECAO' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${time.tipo === 'SELECAO' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'}`}
+                >
                   {time.tipo === 'SELECAO' ? 'SELEÇÃO' : 'CLUBE'}
                 </span>
               )}
             </div>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 mt-3 text-xs text-slate-500">
-              <span className="flex items-center gap-1"><Globe size={12} /> {time.pais}</span>
-              {time.cidade && <span className="flex items-center gap-1"><MapPin size={12} /> {time.cidade}</span>}
-              {time.estadio && <span className="flex items-center gap-1"><Building2 size={12} /> {time.estadio}</span>}
-              {time.tecnico && <span className="flex items-center gap-1"><UserRound size={12} /> {time.tecnico}</span>}
+              <span className="flex items-center gap-1">
+                <Globe size={12} /> {time.pais}
+              </span>
+              {time.cidade && (
+                <span className="flex items-center gap-1">
+                  <MapPin size={12} /> {time.cidade}
+                </span>
+              )}
+              {time.estadio && (
+                <span className="flex items-center gap-1">
+                  <Building2 size={12} /> {time.estadio}
+                </span>
+              )}
+              {time.tecnico && (
+                <span className="flex items-center gap-1">
+                  <UserRound size={12} /> {time.tecnico}
+                </span>
+              )}
               {time.fundadoEm && (
-                <span className="flex items-center gap-1"><Cake size={12} /> Fundado em {new Date(time.fundadoEm).getFullYear()}</span>
+                <span className="flex items-center gap-1">
+                  <Cake size={12} /> Fundado em {new Date(time.fundadoEm).getFullYear()}
+                </span>
               )}
             </div>
           </div>
         </div>
       </Card>
-
 
       {forma && forma.forma.length > 0 && (
         <Card className="p-4">
@@ -123,9 +150,11 @@ export default function TimeDetalhePage() {
               <div
                 key={i}
                 className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-extrabold font-mono ${
-                  r === 'V' ? 'bg-success-bg text-success' :
-                  r === 'E' ? 'bg-warning-bg text-warning' :
-                  'bg-danger-bg text-danger'
+                  r === 'V'
+                    ? 'bg-success-bg text-success'
+                    : r === 'E'
+                      ? 'bg-warning-bg text-warning'
+                      : 'bg-danger-bg text-danger'
                 }`}
               >
                 {r}
@@ -135,14 +164,12 @@ export default function TimeDetalhePage() {
         </Card>
       )}
 
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatBox label="Jogadores" value={jogadores.length} />
         <StatBox label="Partidas" value={estatisticas?.partidas ?? '-'} />
         <StatBox label="Vitórias" value={estatisticas?.vitorias ?? '-'} />
         <StatBox label="Gols marcados" value={estatisticas?.golsMarcados ?? '-'} />
       </div>
-
 
       {partidas && (partidas.ultimasPartidas.length > 0 || partidas.proximasPartidas.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -175,7 +202,6 @@ export default function TimeDetalhePage() {
         </div>
       )}
 
-
       <Card className="overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.04]">
           <Users size={14} className="text-slate-500" />
@@ -186,7 +212,11 @@ export default function TimeDetalhePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-4">
             {jogadores.map((j) => (
-              <Link key={j.id} to={`/jogadores/${j.id}`} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-colors">
+              <Link
+                key={j.id}
+                to={`/jogadores/${j.id}`}
+                className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-colors"
+              >
                 <img
                   src={j.fotoUrl || getJogadorAvatarUrl(j.nome, 40)}
                   alt={j.nome}
@@ -195,7 +225,9 @@ export default function TimeDetalhePage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-200 truncate">{j.nome}</p>
                   <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                    <span className="flex items-center gap-1"><Shirt size={10} /> {j.numeroCamisa || '-'}</span>
+                    <span className="flex items-center gap-1">
+                      <Shirt size={10} /> {j.numeroCamisa || '-'}
+                    </span>
                     <span>·</span>
                     <span>{posicaoLabel(j.posicao)}</span>
                   </div>
@@ -223,13 +255,21 @@ function PartidaRow({ partida, timeId }: { partida: Partida; timeId: number }) {
       className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
     >
       <span className="text-[10px] text-slate-600 w-5 font-mono text-right">{partida.campeonatoNome?.charAt(0)}</span>
-      <img src={getLogoUrl(mandante ? partida.timeVisitanteNome : partida.timeMandanteNome, 24)} alt={mandante ? partida.timeVisitanteNome : partida.timeMandanteNome} className="w-5 h-5 rounded-full bg-white/5 shrink-0" />
+      <img
+        src={getLogoUrl(mandante ? partida.timeVisitanteNome : partida.timeMandanteNome, 24)}
+        alt={mandante ? partida.timeVisitanteNome : partida.timeMandanteNome}
+        className="w-5 h-5 rounded-full bg-white/5 shrink-0"
+      />
       <span className="text-xs text-slate-400 flex-1 truncate">
         {mandante ? partida.timeVisitanteNome : partida.timeMandanteNome}
       </span>
       {isFinished ? (
-        <span className={`text-xs font-bold font-mono ${mandante ? (partida.golsMandante > partida.golsVisitante ? 'text-success' : partida.golsMandante < partida.golsVisitante ? 'text-danger' : 'text-slate-400') : (partida.golsVisitante > partida.golsMandante ? 'text-success' : partida.golsVisitante < partida.golsMandante ? 'text-danger' : 'text-slate-400')}`}>
-          {mandante ? `${partida.golsMandante}-${partida.golsVisitante}` : `${partida.golsVisitante}-${partida.golsMandante}`}
+        <span
+          className={`text-xs font-bold font-mono ${mandante ? (partida.golsMandante > partida.golsVisitante ? 'text-success' : partida.golsMandante < partida.golsVisitante ? 'text-danger' : 'text-slate-400') : partida.golsVisitante > partida.golsMandante ? 'text-success' : partida.golsVisitante < partida.golsMandante ? 'text-danger' : 'text-slate-400'}`}
+        >
+          {mandante
+            ? `${partida.golsMandante}-${partida.golsVisitante}`
+            : `${partida.golsVisitante}-${partida.golsMandante}`}
         </span>
       ) : (
         <span className="text-[10px] text-slate-600 whitespace-nowrap">{formatDate(partida.dataPartida)}</span>

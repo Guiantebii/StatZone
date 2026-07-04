@@ -12,10 +12,7 @@ interface CampeonatoFormProps {
 }
 
 const Label = ({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) => (
-  <label
-    htmlFor={htmlFor}
-    className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
-  >
+  <label htmlFor={htmlFor} className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
     {children}
   </label>
 );
@@ -70,7 +67,6 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-[#0d1f3c] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
-
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07]">
           <div>
             <h3 className="text-base font-semibold text-slate-100">
@@ -91,18 +87,26 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
           </button>
         </div>
 
-
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
             {error && (
               <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2.5">
-                <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <svg
+                  className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                  />
                 </svg>
                 <p className="text-xs text-red-400">{error}</p>
               </div>
             )}
-
 
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -129,7 +133,6 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
               </div>
             </div>
 
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="temporada">Temporada *</Label>
@@ -149,11 +152,13 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
                   className={inputClass}
                   placeholder={CAMPEONATO_LOGO(nome || 'Campeonato')}
                   value={logoUrl}
-                  onChange={(e) => { setLogoUrl(e.target.value); setLogoManual(true); }}
+                  onChange={(e) => {
+                    setLogoUrl(e.target.value);
+                    setLogoManual(true);
+                  }}
                 />
               </div>
             </div>
-
 
             <div>
               <Label htmlFor="tipoFormato">Formato</Label>
@@ -164,12 +169,17 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
                 onChange={(e) => setTipoFormato(e.target.value)}
                 required
               >
-                <option value="PONTOS_CORRIDOS" className="bg-[#0d1f3c] text-slate-200">Pontos Corridos</option>
-                <option value="MATA_MATA" className="bg-[#0d1f3c] text-slate-200">Mata‑Mata</option>
-                <option value="GRUPOS_E_MATA_MATA" className="bg-[#0d1f3c] text-slate-200">Grupos e Mata‑Mata</option>
+                <option value="PONTOS_CORRIDOS" className="bg-[#0d1f3c] text-slate-200">
+                  Pontos Corridos
+                </option>
+                <option value="MATA_MATA" className="bg-[#0d1f3c] text-slate-200">
+                  Mata‑Mata
+                </option>
+                <option value="GRUPOS_E_MATA_MATA" className="bg-[#0d1f3c] text-slate-200">
+                  Grupos e Mata‑Mata
+                </option>
               </select>
             </div>
-
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
@@ -193,7 +203,6 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
               </div>
             </div>
           </div>
-
 
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-white/[0.07]">
             <button

@@ -12,29 +12,40 @@ export default function ConfrontoCard({ confronto, getLogoUrl }: ConfrontoCardPr
 
   const statusBadge = () => {
     switch (confronto.statusConfronto) {
-      case 'ENCERRADO': return <span className="text-[10px] text-success font-semibold">Encerrado</span>;
-      case 'EM_ANDAMENTO': return <span className="text-[10px] text-accent font-semibold animate-pulse">Ao vivo</span>;
-      case 'PENDENTE': return <span className="text-[10px] text-slate-500">Pendente</span>;
-      case 'PENALTIS': return <span className="text-[10px] text-warning font-semibold animate-pulse">Pênaltis</span>;
-      default: return null;
+      case 'ENCERRADO':
+        return <span className="text-[10px] text-success font-semibold">Encerrado</span>;
+      case 'EM_ANDAMENTO':
+        return <span className="text-[10px] text-accent font-semibold animate-pulse">Ao vivo</span>;
+      case 'PENDENTE':
+        return <span className="text-[10px] text-slate-500">Pendente</span>;
+      case 'PENALTIS':
+        return <span className="text-[10px] text-warning font-semibold animate-pulse">Pênaltis</span>;
+      default:
+        return null;
     }
   };
 
   return (
     <Card className="p-3 w-56">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] text-slate-600 uppercase tracking-wider">
-          {confronto.id}
-        </span>
+        <span className="text-[10px] text-slate-600 uppercase tracking-wider">{confronto.id}</span>
         {statusBadge()}
       </div>
 
       <div className="space-y-1">
-        <div className={`flex items-center gap-2 py-1.5 px-2 rounded-lg ${isFinished && confronto.timeClassificado?.id === confronto.timeA?.id ? 'bg-success/5 ring-1 ring-success/20' : 'bg-white/[0.02]'}`}>
+        <div
+          className={`flex items-center gap-2 py-1.5 px-2 rounded-lg ${isFinished && confronto.timeClassificado?.id === confronto.timeA?.id ? 'bg-success/5 ring-1 ring-success/20' : 'bg-white/[0.02]'}`}
+        >
           {confronto.timeA ? (
             <>
-              <img src={getLogoUrl(confronto.timeA.nome)} alt={confronto.timeA.nome} className="w-5 h-5 rounded-full bg-white/5" />
-              <span className={`text-xs flex-1 truncate ${isFinished && confronto.timeClassificado?.id === confronto.timeA?.id ? 'text-accent font-bold' : 'text-slate-300'}`}>
+              <img
+                src={getLogoUrl(confronto.timeA.nome)}
+                alt={confronto.timeA.nome}
+                className="w-5 h-5 rounded-full bg-white/5"
+              />
+              <span
+                className={`text-xs flex-1 truncate ${isFinished && confronto.timeClassificado?.id === confronto.timeA?.id ? 'text-accent font-bold' : 'text-slate-300'}`}
+              >
                 {confronto.timeA.nome}
               </span>
             </>
@@ -46,11 +57,19 @@ export default function ConfrontoCard({ confronto, getLogoUrl }: ConfrontoCardPr
           )}
         </div>
 
-        <div className={`flex items-center gap-2 py-1.5 px-2 rounded-lg ${isFinished && confronto.timeClassificado?.id === confronto.timeB?.id ? 'bg-success/5 ring-1 ring-success/20' : 'bg-white/[0.02]'}`}>
+        <div
+          className={`flex items-center gap-2 py-1.5 px-2 rounded-lg ${isFinished && confronto.timeClassificado?.id === confronto.timeB?.id ? 'bg-success/5 ring-1 ring-success/20' : 'bg-white/[0.02]'}`}
+        >
           {confronto.timeB ? (
             <>
-              <img src={getLogoUrl(confronto.timeB.nome)} alt={confronto.timeB.nome} className="w-5 h-5 rounded-full bg-white/5" />
-              <span className={`text-xs flex-1 truncate ${isFinished && confronto.timeClassificado?.id === confronto.timeB?.id ? 'text-accent font-bold' : 'text-slate-300'}`}>
+              <img
+                src={getLogoUrl(confronto.timeB.nome)}
+                alt={confronto.timeB.nome}
+                className="w-5 h-5 rounded-full bg-white/5"
+              />
+              <span
+                className={`text-xs flex-1 truncate ${isFinished && confronto.timeClassificado?.id === confronto.timeB?.id ? 'text-accent font-bold' : 'text-slate-300'}`}
+              >
                 {confronto.timeB.nome}
               </span>
             </>

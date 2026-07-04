@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Cake, Shirt, Ruler, Weight, DollarSign, Flag,
-  Dumbbell, Swords, Trophy, Medal, AlertTriangle, Shield,
+  ArrowLeft,
+  Cake,
+  Shirt,
+  Ruler,
+  Weight,
+  DollarSign,
+  Flag,
+  Dumbbell,
+  Swords,
+  Trophy,
+  Medal,
+  AlertTriangle,
+  Shield,
 } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
@@ -14,7 +25,9 @@ import { SkeletonCard } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
 
 const peLabel: Record<string, string> = {
-  DIREITO: 'Destro', ESQUERDO: 'Canhoto', AMBIDESTRO: 'Ambidestro',
+  DIREITO: 'Destro',
+  ESQUERDO: 'Canhoto',
+  AMBIDESTRO: 'Ambidestro',
 };
 
 export default function JogadorDetalhePage() {
@@ -46,7 +59,9 @@ export default function JogadorDetalhePage() {
       }
     };
     load();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const idade = (dataNasc: string) => {
@@ -71,7 +86,9 @@ export default function JogadorDetalhePage() {
         <div className="h-8 w-48 rounded-lg animate-shimmer" />
         <div className="h-48 rounded-2xl animate-shimmer" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       </div>
     );
@@ -85,7 +102,7 @@ export default function JogadorDetalhePage() {
     { icon: Ruler, label: 'Altura', value: jogador.altura ? `${jogador.altura}m` : '—' },
     { icon: Weight, label: 'Peso', value: jogador.peso ? `${jogador.peso}kg` : '—' },
     { icon: Flag, label: 'Nacionalidade', value: jogador.nacionalidade || '—' },
-    { icon: Dumbbell, label: 'Pé Forte', value: jogador.peForte ? (peLabel[jogador.peForte] || jogador.peForte) : '—' },
+    { icon: Dumbbell, label: 'Pé Forte', value: jogador.peForte ? peLabel[jogador.peForte] || jogador.peForte : '—' },
   ];
 
   const statCards = stats
@@ -100,12 +117,13 @@ export default function JogadorDetalhePage() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-200 transition-colors">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-200 transition-colors"
+      >
         <ArrowLeft size={15} />
         Voltar
       </button>
-
 
       <Card className="overflow-hidden">
         <div className="flex items-center gap-5 p-6">
@@ -135,7 +153,6 @@ export default function JogadorDetalhePage() {
         </div>
       </Card>
 
-
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {infoItems.map((item) => (
           <Card key={item.label} className="p-4 text-center">
@@ -151,7 +168,6 @@ export default function JogadorDetalhePage() {
           <p className="text-sm font-semibold text-emerald-400 mt-0.5">{formatValor(jogador.valorMercado)}</p>
         </Card>
       </div>
-
 
       {stats && (
         <Card className="overflow-hidden">

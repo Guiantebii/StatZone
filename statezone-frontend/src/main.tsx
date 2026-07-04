@@ -17,5 +17,5 @@ createRoot(rootEl).render(
       </ErrorBoundary>
       <Toaster richColors position="top-right" />
     </AuthProvider>
-  </StrictMode>
+  </StrictMode>,
 );

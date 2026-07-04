@@ -38,10 +38,7 @@ describe('FormationView', () => {
   });
 
   it('renders player names and numbers', () => {
-    const titulares = [
-      makePlayer(1, 'Alisson', 'GOLEIRO', 1),
-      makePlayer(2, 'Neymar', 'CENTROAVANTE', 10),
-    ];
+    const titulares = [makePlayer(1, 'Alisson', 'GOLEIRO', 1), makePlayer(2, 'Neymar', 'CENTROAVANTE', 10)];
     render(<FormationView titulares={titulares} />);
     expect(screen.getByText('Alisson')).toBeInTheDocument();
     expect(screen.getByText('Neymar')).toBeInTheDocument();
@@ -56,9 +53,7 @@ describe('FormationView', () => {
   });
 
   it('renders formation badge with known template', () => {
-    const titulares = Array.from({ length: 11 }, (_, i) =>
-      makePlayer(i + 1, `Jogador ${i + 1}`, 'ZAGUEIRO', i + 1),
-    );
+    const titulares = Array.from({ length: 11 }, (_, i) => makePlayer(i + 1, `Jogador ${i + 1}`, 'ZAGUEIRO', i + 1));
     render(<FormationView titulares={titulares} formacao="_4_4_2" />);
     expect(screen.getByText('4-4-2')).toBeInTheDocument();
     expect(screen.getByText('4-4-2')).toHaveClass('text-accent');
