@@ -35,11 +35,14 @@ jobs:
         run: |
           set -o pipefail
           mvn test -e 2>&1 | tee test-output.log
-      - name: Show last 200 lines of test output
+      - name: Show test failure details
         if: failure()
+        shell: bash
         run: |
-          echo "=== Last 200 lines of test output ==="
-          tail -200 test-output.log
+          echo "=== Tests Summary ==="
+          grep -E "Tests run:|BUILD|FAILURE|ERROR|Caused by|Exception|assert" test-output.log || true
+          echo "=== Last 100 lines ==="
+          tail -100 test-output.log
 
   frontend:
     runs-on: ubuntu-latest
