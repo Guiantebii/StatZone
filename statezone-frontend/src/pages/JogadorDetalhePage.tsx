@@ -1,33 +1,38 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Cake, Shirt, Ruler, Weight, DollarSign, Flag,
-  Dumbbell, Swords, Trophy, Medal, AlertTriangle, Shield,
+  ArrowLeft,
+  Cake,
+  Shirt,
+  Ruler,
+  Weight,
+  DollarSign,
+  Flag,
+  Dumbbell,
+  Swords,
+  Trophy,
+  Medal,
+  AlertTriangle,
+  Shield,
 } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
+import { posicaoLabel, getLogoUrl } from '../constants/helpers';
 import type { Jogador } from '../types/jogador';
 import type { EstatisticasJogador } from '../types/estatisticasJogador';
 import Card from '../components/ui/Card';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
 
-const posicaoLabel: Record<string, string> = {
-  GOLEIRO: 'Goleiro', ZAGUEIRO: 'Zagueiro', LATERAL_DIREITO: 'Lateral Direito',
-  LATERAL_ESQUERDO: 'Lateral Esquerdo', VOLANTE: 'Volante', MEIO_CAMPO: 'Meio-Campo',
-  PONTA_DIREITA: 'Ponta Direita', PONTA_ESQUERDA: 'Ponta Esquerda',
-  MEIA_ATACANTE: 'Meia-Atacante', CENTROAVANTE: 'Centroavante',
-};
-
 const peLabel: Record<string, string> = {
-  DIREITO: 'Destro', ESQUERDO: 'Canhoto', AMBIDESTRO: 'Ambidestro',
+  DIREITO: 'Destro',
+  ESQUERDO: 'Canhoto',
+  AMBIDESTRO: 'Ambidestro',
 };
 
 export default function JogadorDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
-  const isAdminContext = location.pathname.startsWith('/dashboard');
   const [jogador, setJogador] = useState<Jogador | null>(null);
   const [stats, setStats] = useState<EstatisticasJogador | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,8 +59,10 @@ export default function JogadorDetalhePage() {
       }
     };
     load();
-    return () => { isMounted = false; };
-  }, [id]);
+    return () => {
+      isMounted = false;
+    };
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const idade = (dataNasc: string) => {
     const nasc = new Date(dataNasc);
@@ -66,8 +73,8 @@ export default function JogadorDetalhePage() {
     return idade;
   };
 
-  const formatValor = (v: number) => {
-    if (!v) return 'N/D';
+  const formatValor = (v: number | null | undefined) => {
+    if (v == null) return 'N/D';
     if (v >= 1_000_000) return `€${(v / 1_000_000).toFixed(1)}M`;
     if (v >= 1_000) return `€${(v / 1_000).toFixed(0)}K`;
     return `€${v}`;
@@ -79,7 +86,9 @@ export default function JogadorDetalhePage() {
         <div className="h-8 w-48 rounded-lg animate-shimmer" />
         <div className="h-48 rounded-2xl animate-shimmer" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       </div>
     );
@@ -88,12 +97,12 @@ export default function JogadorDetalhePage() {
   if (!jogador) return null;
 
   const infoItems = [
-    { icon: Cake, label: 'Idade', value: `${idade(jogador.dataNascimento)} anos` },
-    { icon: Shirt, label: 'Camisa', value: `#${jogador.numeroCamisa}` },
-    { icon: Ruler, label: 'Altura', value: `${jogador.altura}m` },
-    { icon: Weight, label: 'Peso', value: `${jogador.peso}kg` },
-    { icon: Flag, label: 'Nacionalidade', value: jogador.nacionalidade },
-    { icon: Dumbbell, label: 'Pé Forte', value: peLabel[jogador.peForte] || jogador.peForte },
+    { icon: Cake, label: 'Idade', value: jogador.dataNascimento ? `${idade(jogador.dataNascimento)} anos` : '—' },
+    { icon: Shirt, label: 'Camisa', value: jogador.numeroCamisa ? `#${jogador.numeroCamisa}` : '—' },
+    { icon: Ruler, label: 'Altura', value: jogador.altura ? `${jogador.altura}m` : '—' },
+    { icon: Weight, label: 'Peso', value: jogador.peso ? `${jogador.peso}kg` : '—' },
+    { icon: Flag, label: 'Nacionalidade', value: jogador.nacionalidade || '—' },
+    { icon: Dumbbell, label: 'Pé Forte', value: jogador.peForte ? peLabel[jogador.peForte] || jogador.peForte : '—' },
   ];
 
   const statCards = stats
@@ -108,18 +117,19 @@ export default function JogadorDetalhePage() {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-200 transition-colors">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-200 transition-colors"
+      >
         <ArrowLeft size={15} />
         Voltar
       </button>
-
 
       <Card className="overflow-hidden">
         <div className="flex items-center gap-5 p-6">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center shrink-0">
             <img
-              src={jogador.fotoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(jogador.nome)}&background=1a3460&color=FFD700&size=80&bold=true`}
+              src={jogador.fotoUrl || getLogoUrl(jogador.nome, 80)}
               alt={jogador.nome}
               className="w-16 h-16 rounded-xl object-cover"
             />
@@ -127,7 +137,7 @@ export default function JogadorDetalhePage() {
           <div className="min-w-0">
             <h1 className="text-2xl font-bold text-slate-100 tracking-tight">{jogador.nome}</h1>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-              <span className="text-sm font-medium text-accent">{posicaoLabel[jogador.posicao] || jogador.posicao}</span>
+              <span className="text-sm font-medium text-accent">{posicaoLabel(jogador.posicao)}</span>
               <Link
                 to={`/times/${jogador.timeId}`}
                 className="text-sm text-slate-400 hover:text-slate-200 transition-colors"
@@ -142,7 +152,6 @@ export default function JogadorDetalhePage() {
           </div>
         </div>
       </Card>
-
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {infoItems.map((item) => (
@@ -159,7 +168,6 @@ export default function JogadorDetalhePage() {
           <p className="text-sm font-semibold text-emerald-400 mt-0.5">{formatValor(jogador.valorMercado)}</p>
         </Card>
       </div>
-
 
       {stats && (
         <Card className="overflow-hidden">

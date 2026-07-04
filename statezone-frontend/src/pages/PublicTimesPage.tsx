@@ -5,25 +5,29 @@ import api from '../api/client';
 import type { Time } from '../types/time';
 import Card from '../components/ui/Card';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { getLogoUrl } from '../constants/helpers';
+import { toast } from 'sonner';
 
 export default function PublicTimesPage() {
   const [times, setTimes] = useState<Time[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/times')
+    api
+      .get('/times')
       .then((r) => setTimes(r.data))
-      .catch(() => { console.error('Erro ao carregar times'); })
+      .catch(() => {
+        toast.error('Erro ao carregar times');
+      })
       .finally(() => setLoading(false));
   }, []);
-
-  const getLogo = (nome: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=48&bold=true`;
 
   if (loading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
     );
   }
@@ -45,11 +49,13 @@ export default function PublicTimesPage() {
           <Link key={t.id} to={`/times/${t.id}`}>
             <Card className="p-5 hover:bg-white/[0.04] transition-colors h-full text-center">
               <img
-                  src={t.escudoUrl || getLogo(t.nome)}
-                  alt={t.nome}
-                  className="w-14 h-14 rounded-xl mx-auto mb-3 bg-white/5"
-                  onError={(e) => { (e.target as HTMLImageElement).src = getLogo(t.nome); }}
-                />
+                src={t.escudoUrl || getLogoUrl(t.nome)}
+                alt={t.nome}
+                className="w-14 h-14 rounded-xl mx-auto mb-3 bg-white/5"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = getLogoUrl(t.nome);
+                }}
+              />
               <p className="text-sm font-semibold text-slate-200 truncate">{t.nome}</p>
               <p className="text-xs text-slate-500 mt-0.5">{t.sigla || t.pais}</p>
             </Card>

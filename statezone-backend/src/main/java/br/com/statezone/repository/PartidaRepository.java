@@ -66,6 +66,7 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
     @Query("""
     SELECT MAX(p.rodada) FROM Partida p
     WHERE p.campeonato.id = :campeonatoId
+      AND p.status = 'ENCERRADA'
     """)
     Integer findMaxRodada(@Param("campeonatoId") Long campeonatoId);
 

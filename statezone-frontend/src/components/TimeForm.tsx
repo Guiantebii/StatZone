@@ -11,9 +11,12 @@ interface TimeFormProps {
   onSaved: () => void;
 }
 
-const inputClass = 'w-full bg-white/5 border border-white/10 text-slate-200 placeholder-slate-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition-colors';
+const inputClass =
+  'w-full bg-white/5 border border-white/10 text-slate-200 placeholder-slate-600 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition-colors';
 const Label = ({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) => (
-  <label htmlFor={htmlFor} className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">{children}</label>
+  <label htmlFor={htmlFor} className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+    {children}
+  </label>
 );
 
 export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
@@ -29,20 +32,27 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
   const [fundadoEm, setFundadoEm] = useState(time?.fundadoEm || '');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
+  const escudoUrlFinal = escudoManual ? escudoUrl : TEAM_LOGO(nome || time?.nome || '');
 
   useEffect(() => {
-    if (!escudoManual && nome) setEscudoUrl(TEAM_LOGO(nome));
-  }, [nome, escudoManual]);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload: Record<string, unknown> = { nome, sigla, tipo, pais, escudoUrl, fundadoEm: fundadoEm || null };
+      const payload: Record<string, unknown> = {
+        nome,
+        sigla,
+        tipo,
+        pais,
+        escudoUrl: escudoUrlFinal,
+        fundadoEm: fundadoEm || null,
+      };
       if (tipo === 'CLUBE') {
         payload.cidade = cidade;
         payload.tecnico = tecnico;
@@ -69,10 +79,18 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.07]">
           <div>
             <h3 className="text-base font-semibold text-slate-100">{time ? 'Editar time' : 'Novo time'}</h3>
-            <p className="text-xs text-slate-500 mt-0.5">{time ? `Editando "${time.nome}"` : 'Preencha os dados do time'}</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {time ? `Editando "${time.nome}"` : 'Preencha os dados do time'}
+            </p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5" aria-label="Fechar">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5"
+            aria-label="Fechar"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
@@ -81,11 +99,24 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="nome">Nome *</Label>
-                <input id="nome" className={inputClass} value={nome} onChange={e => setNome(e.target.value)} required />
+                <input
+                  id="nome"
+                  className={inputClass}
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="sigla">Sigla *</Label>
-                <input id="sigla" className={inputClass} value={sigla} onChange={e => setSigla(e.target.value)} required maxLength={5} />
+                <input
+                  id="sigla"
+                  className={inputClass}
+                  value={sigla}
+                  onChange={(e) => setSigla(e.target.value)}
+                  required
+                  maxLength={5}
+                />
               </div>
             </div>
 
@@ -96,7 +127,9 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
                   type="button"
                   onClick={() => setTipo('CLUBE')}
                   className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    tipo === 'CLUBE' ? 'bg-accent text-primary-dark' : 'bg-white/[0.04] text-slate-400 hover:text-slate-300'
+                    tipo === 'CLUBE'
+                      ? 'bg-accent text-primary-dark'
+                      : 'bg-white/[0.04] text-slate-400 hover:text-slate-300'
                   }`}
                 >
                   Clube
@@ -105,7 +138,9 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
                   type="button"
                   onClick={() => setTipo('SELECAO')}
                   className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                    tipo === 'SELECAO' ? 'bg-accent text-primary-dark' : 'bg-white/[0.04] text-slate-400 hover:text-slate-300'
+                    tipo === 'SELECAO'
+                      ? 'bg-accent text-primary-dark'
+                      : 'bg-white/[0.04] text-slate-400 hover:text-slate-300'
                   }`}
                 >
                   Seleção
@@ -117,12 +152,23 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
               {tipo === 'CLUBE' && (
                 <div>
                   <Label htmlFor="cidade">Cidade</Label>
-                  <input id="cidade" className={inputClass} value={cidade} onChange={e => setCidade(e.target.value)} />
+                  <input
+                    id="cidade"
+                    className={inputClass}
+                    value={cidade}
+                    onChange={(e) => setCidade(e.target.value)}
+                  />
                 </div>
               )}
               <div>
                 <Label htmlFor="pais">País *</Label>
-                <input id="pais" className={inputClass} value={pais} onChange={e => setPais(e.target.value)} required />
+                <input
+                  id="pais"
+                  className={inputClass}
+                  value={pais}
+                  onChange={(e) => setPais(e.target.value)}
+                  required
+                />
               </div>
             </div>
 
@@ -133,7 +179,10 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
                 className={inputClass}
                 placeholder={TEAM_LOGO(nome || 'Time')}
                 value={escudoUrl}
-                onChange={e => { setEscudoUrl(e.target.value); setEscudoManual(true); }}
+                onChange={(e) => {
+                  setEscudoUrl(e.target.value);
+                  setEscudoManual(true);
+                }}
               />
             </div>
 
@@ -141,24 +190,50 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="tecnico">Técnico</Label>
-                  <input id="tecnico" className={inputClass} value={tecnico} onChange={e => setTecnico(e.target.value)} />
+                  <input
+                    id="tecnico"
+                    className={inputClass}
+                    value={tecnico}
+                    onChange={(e) => setTecnico(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="estadio">Estádio</Label>
-                  <input id="estadio" className={inputClass} value={estadio} onChange={e => setEstadio(e.target.value)} />
+                  <input
+                    id="estadio"
+                    className={inputClass}
+                    value={estadio}
+                    onChange={(e) => setEstadio(e.target.value)}
+                  />
                 </div>
               </div>
             )}
 
             <div>
               <Label htmlFor="fundadoEm">Fundação</Label>
-              <input id="fundadoEm" type="date" className={inputClass} value={fundadoEm} onChange={e => setFundadoEm(e.target.value)} />
+              <input
+                id="fundadoEm"
+                type="date"
+                className={inputClass}
+                value={fundadoEm}
+                onChange={(e) => setFundadoEm(e.target.value)}
+              />
             </div>
           </div>
 
           <div className="flex justify-end gap-2 px-6 py-4 border-t border-white/[0.07]">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-lg transition-colors">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2 bg-accent text-primary-dark text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 hover:bg-white/5 rounded-lg transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-2 px-5 py-2 bg-accent text-primary-dark text-sm font-semibold rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               {saving && (
                 <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

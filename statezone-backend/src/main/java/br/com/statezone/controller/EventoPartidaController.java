@@ -7,6 +7,7 @@ import br.com.statezone.service.EventoPartidaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -19,6 +20,7 @@ public class EventoPartidaController {
     private final EventoPartidaService eventoPartidaService;
 
     @PostMapping("/{partidaId}/eventos")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('OPERADOR')")
     public ResponseEntity<EventoPartidaResponseDto> registrarEvento(@Valid @RequestBody EventoPartidaRequestDto dto, @PathVariable Long partidaId){
         EventoPartidaResponseDto response =
                 eventoPartidaService

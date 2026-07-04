@@ -1,45 +1,81 @@
 import { createBrowserRouter } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
-import CampeonatosPage from './pages/CampeonatosPage';
-import TimesPage from './pages/TimesPage';
-import TimeDetalhePage from './pages/TimeDetalhePage';
-import JogadoresPage from './pages/JogadoresPage';
-import PartidasPage from './pages/PartidasPage';
-import PartidaDetalhePage from './pages/PartidaDetalhePage';
-import EstatisticasPage from './pages/EstatisticasPage';
-import FasesPage from './pages/FasesPage';
-import ImportacaoPage from './pages/ImportacaoPage';
-import PublicHomePage from './pages/PublicHomePage';
-import PublicCampeonatosPage from './pages/PublicCampeonatosPage';
-import PublicTimesPage from './pages/PublicTimesPage';
-import CampeonatoDetalhePage from './pages/CampeonatoDetalhePage';
-import JogadorDetalhePage from './pages/JogadorDetalhePage';
+import React, { lazy, Suspense, type ComponentType } from 'react';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import ProtectedRoute from './components/ProtectedRoute';
-import NotFoundPage from './pages/NotFoundPage';
+import ErrorBoundary from './components/ErrorBoundary';
+
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const CampeonatosPage = lazy(() => import('./pages/CampeonatosPage'));
+const TimesPage = lazy(() => import('./pages/TimesPage'));
+const TimeDetalhePage = lazy(() => import('./pages/TimeDetalhePage'));
+const JogadoresPage = lazy(() => import('./pages/JogadoresPage'));
+const PartidasPage = lazy(() => import('./pages/PartidasPage'));
+const PartidaDetalhePage = lazy(() => import('./pages/PartidaDetalhePage'));
+const EstatisticasPage = lazy(() => import('./pages/EstatisticasPage'));
+const FasesPage = lazy(() => import('./pages/FasesPage'));
+const ImportacaoPage = lazy(() => import('./pages/ImportacaoPage'));
+const PublicHomePage = lazy(() => import('./pages/PublicHomePage'));
+const PublicCampeonatosPage = lazy(() => import('./pages/PublicCampeonatosPage'));
+const PublicTimesPage = lazy(() => import('./pages/PublicTimesPage'));
+const CampeonatoDetalhePage = lazy(() => import('./pages/CampeonatoDetalhePage'));
+const JogadorDetalhePage = lazy(() => import('./pages/JogadorDetalhePage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+
+function LazyPage({ Component }: { Component: React.LazyExoticComponent<ComponentType> }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+            <span className="text-xs text-slate-500">Carregando...</span>
+          </div>
+        </div>
+      }
+    >
+      <ErrorBoundary
+        fallback={
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-6">
+            <h2 className="text-lg font-bold text-slate-100 mb-2">Erro ao carregar página</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Não foi possível carregar este módulo. Tente recarregar a página.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-5 py-2 bg-accent text-primary-dark rounded-lg text-sm font-semibold"
+            >
+              Recarregar
+            </button>
+          </div>
+        }
+      >
+        <Component />
+      </ErrorBoundary>
+    </Suspense>
+  );
+}
 
 export const router = createBrowserRouter([
-
   {
     element: <PublicLayout />,
     children: [
-      { path: '/', element: <PublicHomePage /> },
-      { path: '/partidas', element: <PartidasPage /> },
-      { path: '/partidas/:id', element: <PartidaDetalhePage /> },
-      { path: '/campeonatos', element: <PublicCampeonatosPage /> },
-      { path: '/campeonatos/:id', element: <CampeonatoDetalhePage /> },
-      { path: '/times', element: <PublicTimesPage /> },
-      { path: '/times/:id', element: <TimeDetalhePage /> },
-      { path: '/jogadores/:id', element: <JogadorDetalhePage /> },
-      { path: '/estatisticas', element: <EstatisticasPage /> },
+      { path: '/', element: <LazyPage Component={PublicHomePage} /> },
+      { path: '/partidas', element: <LazyPage Component={PartidasPage} /> },
+      { path: '/partidas/:id', element: <LazyPage Component={PartidaDetalhePage} /> },
+      { path: '/campeonatos', element: <LazyPage Component={PublicCampeonatosPage} /> },
+      { path: '/campeonatos/:id', element: <LazyPage Component={CampeonatoDetalhePage} /> },
+      { path: '/times', element: <LazyPage Component={PublicTimesPage} /> },
+      { path: '/times/:id', element: <LazyPage Component={TimeDetalhePage} /> },
+      { path: '/jogadores/:id', element: <LazyPage Component={JogadorDetalhePage} /> },
+      { path: '/estatisticas', element: <LazyPage Component={EstatisticasPage} /> },
     ],
   },
 
-  { path: '/login', element: <LoginPage /> },
-  { path: '/registro', element: <RegisterPage /> },
+  { path: '/login', element: <LazyPage Component={LoginPage} /> },
+  { path: '/registro', element: <LazyPage Component={RegisterPage} /> },
 
   {
     path: '/dashboard',
@@ -48,21 +84,21 @@ export const router = createBrowserRouter([
       {
         element: <Layout />,
         children: [
-          { index: true, element: <DashboardPage /> },
-          { path: 'campeonatos', element: <CampeonatosPage /> },
-          { path: 'campeonatos/:id', element: <CampeonatoDetalhePage /> },
-          { path: 'times', element: <TimesPage /> },
-          { path: 'times/:id', element: <TimeDetalhePage /> },
-          { path: 'jogadores', element: <JogadoresPage /> },
-          { path: 'jogadores/:id', element: <JogadorDetalhePage /> },
-          { path: 'partidas', element: <PartidasPage /> },
-          { path: 'partidas/:id', element: <PartidaDetalhePage /> },
-          { path: 'estatisticas', element: <EstatisticasPage /> },
-          { path: 'fases', element: <FasesPage /> },
-          { path: 'importacao', element: <ImportacaoPage /> },
+          { index: true, element: <LazyPage Component={DashboardPage} /> },
+          { path: 'campeonatos', element: <LazyPage Component={CampeonatosPage} /> },
+          { path: 'campeonatos/:id', element: <LazyPage Component={CampeonatoDetalhePage} /> },
+          { path: 'times', element: <LazyPage Component={TimesPage} /> },
+          { path: 'times/:id', element: <LazyPage Component={TimeDetalhePage} /> },
+          { path: 'jogadores', element: <LazyPage Component={JogadoresPage} /> },
+          { path: 'jogadores/:id', element: <LazyPage Component={JogadorDetalhePage} /> },
+          { path: 'partidas', element: <LazyPage Component={PartidasPage} /> },
+          { path: 'partidas/:id', element: <LazyPage Component={PartidaDetalhePage} /> },
+          { path: 'estatisticas', element: <LazyPage Component={EstatisticasPage} /> },
+          { path: 'fases', element: <LazyPage Component={FasesPage} /> },
+          { path: 'importacao', element: <LazyPage Component={ImportacaoPage} /> },
         ],
       },
     ],
   },
-  { path: '*', element: <NotFoundPage /> },
+  { path: '*', element: <LazyPage Component={NotFoundPage} /> },
 ]);

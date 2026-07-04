@@ -4,6 +4,7 @@ import br.com.statezone.dto.campeonato.CampeonatoRequestDto;
 import br.com.statezone.dto.campeonato.CampeonatoResponseDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.dto.time.TimeResponseDto;
+import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;
 import br.com.statezone.exception.ResourceNotFoundException;
@@ -11,9 +12,14 @@ import br.com.statezone.mapper.CampeonatoMapper;
 import br.com.statezone.mapper.PartidaMapper;
 import br.com.statezone.mapper.TimeMapper;
 import br.com.statezone.model.Campeonato;
+import br.com.statezone.model.Jogador;
+import br.com.statezone.model.Partida;
 import br.com.statezone.model.Time;
 import br.com.statezone.repository.CampeonatoRepository;
+import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
+import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.GrupoRepository;
+import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.TimeRepository;
 import jakarta.transaction.Transactional;
@@ -35,6 +41,10 @@ public class CampeonatoService {
     private final PartidaRepository partidaRepository;
     private final PartidaMapper partidaMapper;
     private final GrupoRepository grupoRepository;
+    private final MatchEngine matchEngine;
+    private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
+    private final EstatisticasJogadorRepository estatisticasJogadorRepository;
+    private final JogadorRepository jogadorRepository;
 
     public CampeonatoResponseDto criarCampeonato(CampeonatoRequestDto dto){
         Campeonato entity = campeonatoMapper.toEntity(dto);
@@ -127,6 +137,31 @@ public class CampeonatoService {
                 .toList();
     }
 
+    public void reprocessarEstatisticas(Long campeonatoId) {
+        campeonatoRepository.findById(campeonatoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
+
+        List<Partida> partidas = partidaRepository.findByCampeonatoIdAndStatusWithTimes(
+                campeonatoId, StatusPartida.ENCERRADA
+        );
+
+        List<Long> jogadorIds = partidas.stream()
+                .flatMap(p -> jogadorRepository.findByTimeIdIn(
+                        List.of(p.getTimeMandante().getId(), p.getTimeVisitante().getId())
+                ).stream())
+                .map(Jogador::getId)
+                .distinct()
+                .toList();
+
+        estatisticasJogadorCampeonatoRepository.deleteByCampeonatoId(campeonatoId);
+        if (!jogadorIds.isEmpty()) {
+            estatisticasJogadorRepository.deleteByJogadorIdIn(jogadorIds);
+        }
+
+        for (Partida partida : partidas) {
+            matchEngine.process(partida);
+        }
+    }
 
 }
 

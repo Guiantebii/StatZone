@@ -11,11 +11,14 @@ import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.TimeRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ApiFootballJogadorImportService {
@@ -35,6 +38,7 @@ public class ApiFootballJogadorImportService {
     }
 
     @Transactional
+    @Scheduled(fixedDelay = 8000, initialDelay = 5000)
     public void importarJogadoresTodosTimes() {
 
         List<Time> times = timeRepository.findAll();
@@ -46,10 +50,8 @@ public class ApiFootballJogadorImportService {
 
             if (quantidadeJogadores > 0) {
 
-                System.out.println(
-                        "Pulando " + time.getNome()
-                                + " (" + quantidadeJogadores + " jogadores)"
-                );
+                log.info("Pulando {} - {} jogadores já importados",
+                        time.getNome(), quantidadeJogadores);
 
                 continue;
             }
@@ -58,17 +60,11 @@ public class ApiFootballJogadorImportService {
 
                 importarJogadoresDoTime(time);
 
-                System.out.println(
-                        "Importado: " + time.getNome()
-                );
-
-                Thread.sleep(8000);
+                log.info("Jogadores importados com sucesso para: {}", time.getNome());
 
             } catch (Exception e) {
 
-                System.err.println(
-                        "Erro ao importar: " + time.getNome()
-                );
+                log.error("Erro ao importar jogadores do time: {}", time.getNome(), e);
             }
         }
     }

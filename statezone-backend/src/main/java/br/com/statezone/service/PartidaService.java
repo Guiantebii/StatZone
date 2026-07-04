@@ -1,5 +1,6 @@
 package br.com.statezone.service;
 
+import br.com.statezone.dto.partida.FormacaoUpdateRequest;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
@@ -89,7 +90,7 @@ public class PartidaService {
     public PartidaResponseDto iniciar(Long id) {
 
         Partida partida = buscarPartida(id);
-        if (!Set.of(AGENDADA, ADIADA, CANCELADA).contains(partida.getStatus())) {
+        if (!Set.of(AGENDADA, ADIADA).contains(partida.getStatus())) {
             throw new BusinessException("Partida não pode ser iniciada a partir do status " + partida.getStatus());
         }
 
@@ -146,8 +147,8 @@ public class PartidaService {
 
         Partida partida = buscarPartida(id);
 
-        if (partida.getStatus() != StatusPartida.AO_VIVO) {
-            throw new BusinessException("Só partidas ao vivo podem ser encerradas");
+        if (partida.getStatus() != StatusPartida.AO_VIVO && partida.getStatus() != StatusPartida.PENALTIS) {
+            throw new BusinessException("Apenas partidas ao vivo ou em pênaltis podem ser encerradas");
         }
 
         partida.setStatus(StatusPartida.ENCERRADA);
@@ -184,6 +185,14 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 90);
+        processamentoConfrontoPendenteRepository.save(
+                ProcessamentoConfrontoPendente.builder()
+                        .partidaId(salva.getId())
+                        .criadoEm(LocalDateTime.now())
+                        .tentativas(0)
+                        .resolvido(false)
+                        .build()
+        );
         publisher.publishEvent(new PartidaEncerradaEvent(salva));
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
         return partidaMapper.toDto(salva);
@@ -201,6 +210,14 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 90);
+        processamentoConfrontoPendenteRepository.save(
+                ProcessamentoConfrontoPendente.builder()
+                        .partidaId(salva.getId())
+                        .criadoEm(LocalDateTime.now())
+                        .tentativas(0)
+                        .resolvido(false)
+                        .build()
+        );
         publisher.publishEvent(new PartidaEncerradaEvent(salva));
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
         return partidaMapper.toDto(salva);
@@ -225,6 +242,20 @@ public class PartidaService {
         partidaRepository.delete(partida);
     }
 
+    public PartidaResponseDto atualizarFormacao(Long id, FormacaoUpdateRequest dto) {
+        Partida partida = buscarPartida(id);
+
+        if (partida.getTimeMandante().getId().equals(dto.timeId())) {
+            partida.setFormacaoMandante(dto.formacao());
+        } else if (partida.getTimeVisitante().getId().equals(dto.timeId())) {
+            partida.setFormacaoVisitante(dto.formacao());
+        } else {
+            throw new br.com.statezone.exception.ResourceNotFoundException("Time não pertence a esta partida");
+        }
+
+        return partidaMapper.toDto(partidaRepository.save(partida));
+    }
+
     public PartidaResponseDto adiar(Long id) {
         return alterarStatusAdministrativo(id, ADIADA);
     }
@@ -233,6 +264,43 @@ public class PartidaService {
         return alterarStatusAdministrativo(id, CANCELADA);
     }
 
+    public PartidaResponseDto iniciarProrrogacao(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() != StatusPartida.AO_VIVO) {
+            throw new BusinessException("Partida não está ao vivo para iniciar prorrogação");
+        }
+
+        Partida salva = partidaRepository.save(partida);
+
+        criarEventoSistema(salva, TipoEvento.INICIO_PRORROGACAO, 90);
+
+        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
+
+        return partidaMapper.toDto(salva);
+    }
+
+    public PartidaResponseDto encerrarProrrogacao(Long id) {
+
+        Partida partida = buscarPartida(id);
+
+        if (partida.getStatus() != StatusPartida.AO_VIVO) {
+            throw new BusinessException("Partida não está ao vivo para encerrar prorrogação");
+        }
+
+        partida.setStatus(StatusPartida.PENALTIS);
+        partida.setGolsPenaltisMandante(partida.getGolsPenaltisMandante() != null ? partida.getGolsPenaltisMandante() : 0);
+        partida.setGolsPenaltisVisitante(partida.getGolsPenaltisVisitante() != null ? partida.getGolsPenaltisVisitante() : 0);
+
+        Partida salva = partidaRepository.save(partida);
+
+        criarEventoSistema(salva, TipoEvento.FIM_PRORROGACAO, 120);
+
+        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
+
+        return partidaMapper.toDto(salva);
+    }
 
     public PartidaResponseDto iniciarPenaltis(Long id) {
 
@@ -243,8 +311,8 @@ public class PartidaService {
         }
 
         partida.setStatus(StatusPartida.PENALTIS);
-        partida.setGolsPenaltisMandante(0);
-        partida.setGolsPenaltisVisitante(0);
+        partida.setGolsPenaltisMandante(partida.getGolsPenaltisMandante() != null ? partida.getGolsPenaltisMandante() : 0);
+        partida.setGolsPenaltisVisitante(partida.getGolsPenaltisVisitante() != null ? partida.getGolsPenaltisVisitante() : 0);
 
         return partidaMapper.toDto(partidaRepository.save(partida));
     }

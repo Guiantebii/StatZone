@@ -29,7 +29,11 @@ export default function BracketView({ fases, getLogoUrl }: BracketViewProps) {
               <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{faseLabel[fase.fase]}</span>
             </div>
             {fase.confrontos.map((conf, confIdx) => (
-              <div key={conf.id} className="relative" style={{ marginTop: confIdx > 0 ? `${(2 ** (sorted.length - faseIdx - 1)) * 0.5 - 0.75}rem` : '0' }}>
+              <div
+                key={conf.id}
+                className="relative"
+                style={{ marginTop: confIdx > 0 ? `${2 ** (sorted.length - faseIdx - 1) * 0.5 - 0.75}rem` : '0' }}
+              >
                 {faseIdx > 0 && confIdx % 2 === 0 && confIdx + 1 < sorted[faseIdx - 1]?.confrontos.length && (
                   <div className="absolute -left-6 top-1/2 w-6 h-[200%] pointer-events-none">
                     <div className="absolute right-0 top-0 w-3 h-1/2 border-r border-b border-white/[0.08] rounded-br" />

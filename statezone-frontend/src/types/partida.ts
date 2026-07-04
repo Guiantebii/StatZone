@@ -24,6 +24,8 @@ export interface Partida {
   timeMandanteNome: string;
   timeVisitanteId: number;
   timeVisitanteNome: string;
+  formacaoMandante?: Formacao | null;
+  formacaoVisitante?: Formacao | null;
   criadoEm?: string;
   atualizadoEm?: string;
 }
@@ -93,6 +95,8 @@ export interface EventoTimeline {
   jogadorSecundario?: string;
 }
 
+export type Formacao = '_4_4_2' | '_4_3_3' | '_4_2_3_1' | '_3_5_2' | '_3_4_3' | '_4_1_4_1' | '_5_3_2' | '_4_4_1_1';
+
 export type FuncaoEscalacao = 'TITULAR' | 'RESERVA';
 
 export type Posicao =
@@ -102,6 +106,8 @@ export type Posicao =
   | 'LATERAL_ESQUERDO'
   | 'VOLANTE'
   | 'MEIO_CAMPO'
+  | 'MEIO_ESQUERDO'
+  | 'MEIO_DIREITO'
   | 'PONTA_DIREITA'
   | 'PONTA_ESQUERDA'
   | 'MEIA_ATACANTE'

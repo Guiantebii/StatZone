@@ -16,11 +16,7 @@ interface SearchBarProps {
   navigatePrefix?: string;
 }
 
-export default function SearchBar({
-  placeholder = 'Buscar...',
-  className = '',
-  navigatePrefix = '',
-}: SearchBarProps) {
+export default function SearchBar({ placeholder = 'Buscar...', className = '', navigatePrefix = '' }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult>({ times: [], jogadores: [] });
   const [open, setOpen] = useState(false);
@@ -28,35 +24,38 @@ export default function SearchBar({
   const navigate = useNavigate();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (!query.trim()) {
-      setResults({ times: [], jogadores: [] });
-      setOpen(false);
       return;
     }
 
-    setLoading(true);
+    let isCancelled = false;
     clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(async () => {
+      setLoading(true);
+      setOpen(true);
       try {
         const [timesRes, jogadoresRes] = await Promise.all([
           api.get<Time[]>('/times', { params: { nome: query } }),
           api.get<Jogador[]>('/jogadores', { params: { nome: query } }),
         ]);
         const data = { times: timesRes.data, jogadores: jogadoresRes.data };
+        if (isCancelled) return;
         setResults(data);
-        setOpen(data.times.length > 0 || data.jogadores.length > 0);
       } catch {
-        setResults({ times: [], jogadores: [] });
+        if (!isCancelled) setResults({ times: [], jogadores: [] });
       } finally {
-        setLoading(false);
+        if (!isCancelled) setLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(timerRef.current);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timerRef.current);
+    };
   }, [query]);
 
   useEffect(() => {
@@ -89,9 +88,12 @@ export default function SearchBar({
           ref={inputRef}
           type="text"
           placeholder={placeholder}
+          aria-label={placeholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => { if (results.times.length > 0 || results.jogadores.length > 0) setOpen(true); }}
+          onFocus={() => {
+            if (results.times.length > 0 || results.jogadores.length > 0) setOpen(true);
+          }}
           onKeyDown={handleKeyDown}
           className={`bg-white/[0.04] border border-white/[0.06] rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-accent/30 transition-all ${className}`}
         />
@@ -100,9 +102,7 @@ export default function SearchBar({
 
       {open && (
         <div className="absolute top-full mt-1 left-0 right-0 z-50 bg-primary border border-white/[0.08] rounded-lg shadow-xl max-h-80 overflow-y-auto">
-          {loading && (
-            <div className="px-3 py-2 text-xs text-slate-500 text-center">Buscando...</div>
-          )}
+          {loading && <div className="px-3 py-2 text-xs text-slate-500 text-center">Buscando...</div>}
 
           {!loading && results.times.length > 0 && (
             <div>
@@ -148,9 +148,7 @@ export default function SearchBar({
                     </div>
                   )}
                   <span>{j.nome}</span>
-                  {j.nomeTime && (
-                    <span className="ml-auto text-[10px] text-slate-600">{j.nomeTime}</span>
-                  )}
+                  {j.nomeTime && <span className="ml-auto text-[10px] text-slate-600">{j.nomeTime}</span>}
                 </button>
               ))}
             </div>

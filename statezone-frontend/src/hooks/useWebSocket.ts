@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { getToken } from '../api/tokenManager';
+import logger from '../utils/logger';
 
 const SOCKET_URL = import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'http://localhost:8080/ws' : null);
 
@@ -15,10 +15,8 @@ interface UseWebSocketOptions {
 }
 
 function createClient(): Client {
-  const token = getToken();
   return new Client({
-    webSocketFactory: () => new SockJS(token ? `${SOCKET_URL}?token=${token}` : SOCKET_URL),
-    connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+    webSocketFactory: () => new SockJS(SOCKET_URL),
     reconnectDelay: 5000,
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,
@@ -42,10 +40,30 @@ export function useWebSocket(options?: UseWebSocketOptions) {
     client.activate();
     clientRef.current = client;
 
-    return () => {
-      client.deactivate();
+    const onTokenChange = () => {
+      const oldClient = clientRef.current;
+      if (oldClient) {
+        try {
+          oldClient.deactivate();
+        } catch {}
+      }
+      const newClient = createClient();
+      newClient.onConnect = client.onConnect;
+      newClient.onDisconnect = client.onDisconnect;
+      newClient.activate();
+      clientRef.current = newClient;
+      logger.info('WebSocket client reconnected after token change');
     };
-  }, []);
+
+    window.addEventListener('auth:token-changed', onTokenChange);
+
+    return () => {
+      try {
+        client.deactivate();
+      } catch {}
+      window.removeEventListener('auth:token-changed', onTokenChange);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const subscribe = useCallback((topic: string, callback: (body: string) => void) => {
     const client = clientRef.current;
@@ -69,9 +87,13 @@ export function usePartidaWebSocket(
   onEvent?: (data: unknown) => void,
 ) {
   const updateRef = useRef(onUpdate);
-  updateRef.current = onUpdate;
   const eventRef = useRef(onEvent);
-  eventRef.current = onEvent;
+  const clientRef = useRef<Client | null>(null);
+
+  useEffect(() => {
+    updateRef.current = onUpdate;
+    eventRef.current = onEvent;
+  });
 
   useEffect(() => {
     if (!partidaId) return;
@@ -83,7 +105,8 @@ export function usePartidaWebSocket(
         try {
           const data = JSON.parse(message.body);
           updateRef.current(data);
-        } catch {
+        } catch (err) {
+          logger.warn('WebSocket: erro ao parsear atualização da partida', err);
         }
       });
 
@@ -91,15 +114,36 @@ export function usePartidaWebSocket(
         try {
           const data = JSON.parse(message.body);
           eventRef.current?.(data);
-        } catch {
+        } catch (err) {
+          logger.warn('WebSocket: erro ao parsear evento da partida', err);
         }
       });
     };
 
     client.activate();
+    clientRef.current = client;
+
+    const onTokenChange = () => {
+      const oldClient = clientRef.current;
+      if (oldClient) {
+        try {
+          oldClient.deactivate();
+        } catch {}
+      }
+      const newClient = createClient();
+      newClient.onConnect = client.onConnect;
+      newClient.activate();
+      clientRef.current = newClient;
+      logger.info('Partida WebSocket reconnected after token change');
+    };
+
+    window.addEventListener('auth:token-changed', onTokenChange);
 
     return () => {
-      client.deactivate();
+      window.removeEventListener('auth:token-changed', onTokenChange);
+      try {
+        client.deactivate();
+      } catch {}
     };
   }, [partidaId]);
 }

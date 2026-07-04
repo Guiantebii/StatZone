@@ -24,11 +24,21 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
   const [timeMandanteId, setTimeMandanteId] = useState<number>(0);
   const [timeVisitanteId, setTimeVisitanteId] = useState<number>(0);
   const [saving, setSaving] = useState(false);
-  const [loadingTimes, setLoadingTimes] = useState(false);
 
   useEffect(() => {
-    setLoadingTimes(true);
-    api.get('/times').then((res) => setTimes(res.data)).catch(() => console.error('Erro ao carregar times')).finally(() => setLoadingTimes(false));
+    let isCancelled = false;
+    api
+      .get('/times')
+      .then((res) => {
+        if (!isCancelled) setTimes(res.data);
+      })
+      .catch((err) => {
+        import('../utils/logger').then((m) => m.default.error('Erro ao carregar times', err));
+        toast.error('Erro ao carregar times');
+      });
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,7 +53,7 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
         estadio,
         arbitro,
         rodada,
-        dataPartida: new Date(dataPartida).toISOString(),
+        dataPartida: dataPartida + ':00',
         status: 'AGENDADA' as StatusPartida,
         campeonatoId,
         timeMandanteId,
@@ -72,7 +82,12 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="campeonatoId" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Campeonato</label>
+              <label
+                htmlFor="campeonatoId"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
+                Campeonato
+              </label>
               <select
                 id="campeonatoId"
                 value={campeonatoId}
@@ -81,12 +96,19 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
                 required
               >
                 {campeonatos.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="rodada" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Rodada</label>
+              <label
+                htmlFor="rodada"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
+                Rodada
+              </label>
               <input
                 id="rodada"
                 type="number"
@@ -101,7 +123,12 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
           </div>
 
           <div>
-            <label htmlFor="dataPartida" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Data e horário</label>
+            <label
+              htmlFor="dataPartida"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+            >
+              Data e horário
+            </label>
             <input
               id="dataPartida"
               type="datetime-local"
@@ -114,7 +141,12 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="estadio" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Estádio</label>
+              <label
+                htmlFor="estadio"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
+                Estádio
+              </label>
               <input
                 id="estadio"
                 type="text"
@@ -126,7 +158,12 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
               />
             </div>
             <div>
-              <label htmlFor="arbitro" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Árbitro</label>
+              <label
+                htmlFor="arbitro"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
+                Árbitro
+              </label>
               <input
                 id="arbitro"
                 type="text"
@@ -141,7 +178,12 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="timeMandante" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Time mandante</label>
+              <label
+                htmlFor="timeMandante"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
+                Time mandante
+              </label>
               <select
                 id="timeMandante"
                 value={timeMandanteId}
@@ -151,12 +193,19 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
               >
                 <option value={0}>Selecione...</option>
                 {times.map((t) => (
-                  <option key={t.id} value={t.id}>{t.nome} ({t.sigla})</option>
+                  <option key={t.id} value={t.id}>
+                    {t.nome} ({t.sigla})
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="timeVisitante" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Time visitante</label>
+              <label
+                htmlFor="timeVisitante"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
+                Time visitante
+              </label>
               <select
                 id="timeVisitante"
                 value={timeVisitanteId}
@@ -166,14 +215,18 @@ export default function PartidaForm({ onClose, onSaved, campeonatos }: PartidaFo
               >
                 <option value={0}>Selecione...</option>
                 {times.map((t) => (
-                  <option key={t.id} value={t.id}>{t.nome} ({t.sigla})</option>
+                  <option key={t.id} value={t.id}>
+                    {t.nome} ({t.sigla})
+                  </option>
                 ))}
               </select>
             </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Cancelar
+            </Button>
             <Button type="submit" disabled={saving}>
               {saving ? 'Salvando...' : 'Criar partida'}
             </Button>

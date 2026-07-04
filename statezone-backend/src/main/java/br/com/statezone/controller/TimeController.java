@@ -11,6 +11,7 @@ import br.com.statezone.service.TimeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -24,6 +25,7 @@ public class TimeController {
     private final ApiFootballImportService apiFootballImportService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TimeResponseDto> criarTime(
             @RequestBody @Valid TimeRequestDto dto
     ) {
@@ -51,6 +53,7 @@ public class TimeController {
         return ResponseEntity.ok(timeService.obterTimePorId(id));
     }
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TimeResponseDto> atualizarTime(
             @RequestBody @Valid TimeRequestDto dto,
             @PathVariable Long id
@@ -61,6 +64,7 @@ public class TimeController {
         );
     }
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletarTime(
             @PathVariable Long id
     ) {

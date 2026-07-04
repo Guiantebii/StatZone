@@ -12,6 +12,7 @@ import { VAGAS_PADRAO } from '../constants/pagination';
 import Modal from '../components/ui/Modal';
 import BracketView from '../components/BracketView';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { getLogoUrl } from '../constants/helpers';
 import { toast } from 'sonner';
 
 type SubTab = 'grupos' | 'matamata';
@@ -36,7 +37,7 @@ export default function FasesPage() {
   const [grupos, setGrupos] = useState<Grupo[]>([]);
   const [times, setTimes] = useState<Time[]>([]);
   const [grupoClassificacoes, setGrupoClassificacoes] = useState<Record<number, ClassificacaoTime[]>>({});
-  const [dataLoading, setDataLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   const [showCreatePhase, setShowCreatePhase] = useState(false);
   const [selectedFase, setSelectedFase] = useState<FaseEnum>('QUARTAS');
@@ -54,7 +55,8 @@ export default function FasesPage() {
   const [generatingFixtures, setGeneratingFixtures] = useState<number | null>(null);
 
   useEffect(() => {
-    api.get('/campeonatos')
+    api
+      .get('/campeonatos')
       .then((res) => {
         setCampeonatos(res.data);
         if (res.data.length > 0) setCampeonatoId(res.data[0].id);
@@ -66,27 +68,52 @@ export default function FasesPage() {
   useEffect(() => {
     if (!campeonatoId) return;
     let isMounted = true;
-    setDataLoading(true);
     Promise.all([
-      api.get(`/campeonatos/${campeonatoId}/fases`).then((r) => { if (isMounted) setFases(r.data); }).catch(() => { if (isMounted) { setFases([]); console.error('Erro ao carregar fases'); } }),
-      api.get(`/campeonatos/${campeonatoId}/grupos`).then((r) => { if (isMounted) setGrupos(r.data); }).catch(() => { if (isMounted) { setGrupos([]); console.error('Erro ao carregar grupos'); } }),
-      api.get(`/campeonatos/${campeonatoId}/times`).then((r) => { if (isMounted) setTimes(r.data); }).catch(() => { if (isMounted) { setTimes([]); console.error('Erro ao carregar times'); } }),
-    ]).then(() => {
-      if (!isMounted) return;
-      api.get(`/campeonatos/${campeonatoId}/grupos`).then(async (res) => {
-        const grupos = res.data as Grupo[];
-        if (!isMounted) return;
-        const classMap: Record<number, ClassificacaoTime[]> = {};
-        await Promise.all(grupos.map(async (g) => {
-          try {
-            const r = await api.get(`/campeonatos/${campeonatoId}/grupos/${g.id}/classificacao`);
-            classMap[g.id] = r.data;
-          } catch {}
-        }));
-        if (isMounted) setGrupoClassificacoes(classMap);
-      });
-    }).finally(() => { if (isMounted) setDataLoading(false); });
-    return () => { isMounted = false; };
+      api
+        .get(`/campeonatos/${campeonatoId}/fases`)
+        .then((r) => {
+          if (isMounted) setFases(r.data);
+        })
+        .catch(() => {
+          if (isMounted) setFases([]);
+        }),
+      api
+        .get(`/campeonatos/${campeonatoId}/grupos`)
+        .then(async (r) => {
+          const grupos = r.data as Grupo[];
+          if (isMounted) setGrupos(grupos);
+          const classMap: Record<number, ClassificacaoTime[]> = {};
+          await Promise.all(
+            grupos.map(async (g) => {
+              try {
+                const cr = await api.get(`/campeonatos/${campeonatoId}/grupos/${g.id}/classificacao`);
+                classMap[g.id] = cr.data;
+              } catch {
+                // grupo sem classificação ainda
+              }
+            }),
+          );
+          if (isMounted) setGrupoClassificacoes(classMap);
+        })
+        .catch(() => {
+          if (isMounted) {
+            setGrupos([]);
+          }
+        }),
+      api
+        .get(`/campeonatos/${campeonatoId}/times`)
+        .then((r) => {
+          if (isMounted) setTimes(r.data);
+        })
+        .catch(() => {
+          if (isMounted) setTimes([]);
+        }),
+    ]).finally(() => {
+      if (isMounted) setDataLoading(false);
+    });
+    return () => {
+      isMounted = false;
+    };
   }, [campeonatoId]);
 
   const handleCreatePhase = async () => {
@@ -153,7 +180,9 @@ export default function FasesPage() {
     try {
       const r = await api.get(`/campeonatos/${campeonatoId}/grupos/${grupoId}/classificacao`);
       setGrupoClassificacoes((prev) => ({ ...prev, [grupoId]: r.data }));
-    } catch {}
+    } catch {
+      // classificacao not available yet
+    }
   };
 
   const handleGenerateFixtures = async (grupoId: number) => {
@@ -169,17 +198,17 @@ export default function FasesPage() {
     }
   };
 
-  const getLogoUrl = (nome: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=24&bold=true`;
-
-  if (loading) return (
-    <div className="space-y-6">
-      <div className="h-8 w-48 rounded-lg animate-shimmer" />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+  if (loading)
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-48 rounded-lg animate-shimmer" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -195,7 +224,9 @@ export default function FasesPage() {
             className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-accent/40"
           >
             {campeonatos.map((c) => (
-              <option key={c.id} value={c.id}>{c.nome}</option>
+              <option key={c.id} value={c.id}>
+                {c.nome}
+              </option>
             ))}
           </select>
         )}
@@ -222,11 +253,12 @@ export default function FasesPage() {
 
       {dataLoading ? (
         <div className="grid grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       ) : (
         <>
-
           {subTab === 'grupos' && (
             <div className="space-y-4">
               <div className="flex justify-end">
@@ -294,24 +326,39 @@ export default function FasesPage() {
                                   }))
                               ).map((c) => (
                                 <tr key={c.timeId} className="border-t border-white/[0.03]">
-                                  <td className={`pr-1 py-1.5 font-mono font-bold ${c.posicao <= 4 ? 'text-accent' : 'text-slate-500'}`}>
+                                  <td
+                                    className={`pr-1 py-1.5 font-mono font-bold ${c.posicao <= 4 ? 'text-accent' : 'text-slate-500'}`}
+                                  >
                                     {c.posicao}
                                   </td>
                                   <td className="px-1 py-1.5">
                                     <div className="flex items-center gap-1.5">
-                                      <img src={getLogoUrl(c.nomeTime)} alt={c.nomeTime} className="w-4 h-4 rounded-full bg-white/5" />
-                                      <span className="text-slate-200 font-medium truncate max-w-[80px]">{c.nomeTime}</span>
+                                      <img
+                                        src={getLogoUrl(c.nomeTime)}
+                                        alt={c.nomeTime}
+                                        className="w-4 h-4 rounded-full bg-white/5"
+                                      />
+                                      <span className="text-slate-200 font-medium truncate max-w-[80px]">
+                                        {c.nomeTime}
+                                      </span>
                                     </div>
                                   </td>
-                                  <td className="px-1.5 py-1.5 text-center font-bold text-accent font-mono">{c.pontos}</td>
+                                  <td className="px-1.5 py-1.5 text-center font-bold text-accent font-mono">
+                                    {c.pontos}
+                                  </td>
                                   <td className="px-1.5 py-1.5 text-center text-slate-400 font-mono">{c.partidas}</td>
                                   <td className="px-1.5 py-1.5 text-center text-green-400 font-mono">{c.vitorias}</td>
                                   <td className="px-1.5 py-1.5 text-center text-slate-400 font-mono">{c.empates}</td>
                                   <td className="px-1.5 py-1.5 text-center text-red-400 font-mono">{c.derrotas}</td>
                                   <td className="px-1.5 py-1.5 text-center text-slate-300 font-mono">{c.golsFeitos}</td>
-                                  <td className="px-1.5 py-1.5 text-center text-slate-300 font-mono">{c.golsSofridos}</td>
-                                  <td className={`pl-1.5 py-1.5 text-center font-mono ${c.saldoGols > 0 ? 'text-green-400' : c.saldoGols < 0 ? 'text-red-400' : 'text-slate-400'}`}>
-                                    {c.saldoGols > 0 ? '+' : ''}{c.saldoGols}
+                                  <td className="px-1.5 py-1.5 text-center text-slate-300 font-mono">
+                                    {c.golsSofridos}
+                                  </td>
+                                  <td
+                                    className={`pl-1.5 py-1.5 text-center font-mono ${c.saldoGols > 0 ? 'text-green-400' : c.saldoGols < 0 ? 'text-red-400' : 'text-slate-400'}`}
+                                  >
+                                    {c.saldoGols > 0 ? '+' : ''}
+                                    {c.saldoGols}
                                   </td>
                                 </tr>
                               ))}
@@ -336,12 +383,16 @@ export default function FasesPage() {
                 </div>
               )}
 
-
               {showCreateGroup && (
                 <Modal title="Novo grupo" onClose={() => setShowCreateGroup(false)}>
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="grupoNome" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Nome do grupo</label>
+                      <label
+                        htmlFor="grupoNome"
+                        className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+                      >
+                        Nome do grupo
+                      </label>
                       <input
                         id="grupoNome"
                         value={grupoNome}
@@ -351,7 +402,9 @@ export default function FasesPage() {
                       />
                     </div>
                     <div className="flex justify-end gap-3">
-                      <Button variant="ghost" onClick={() => setShowCreateGroup(false)}>Cancelar</Button>
+                      <Button variant="ghost" onClick={() => setShowCreateGroup(false)}>
+                        Cancelar
+                      </Button>
                       <Button onClick={handleCreateGroup} disabled={!grupoNome || createGroupLoading}>
                         {createGroupLoading ? 'Criando...' : 'Criar'}
                       </Button>
@@ -360,12 +413,16 @@ export default function FasesPage() {
                 </Modal>
               )}
 
-
               {showAddTeam && (
                 <Modal title="Adicionar time" onClose={() => setShowAddTeam(null)}>
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="selectedTimeId" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Time</label>
+                      <label
+                        htmlFor="selectedTimeId"
+                        className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+                      >
+                        Time
+                      </label>
                       <select
                         id="selectedTimeId"
                         value={selectedTimeId}
@@ -373,13 +430,19 @@ export default function FasesPage() {
                         className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-accent/40"
                       >
                         <option value={0}>Selecione...</option>
-                        {times.filter((t) => !grupos.find((g) => g.id === showAddTeam)?.times.some((gt) => gt.id === t.id)).map((t) => (
-                          <option key={t.id} value={t.id}>{t.nome} ({t.sigla})</option>
-                        ))}
+                        {times
+                          .filter((t) => !grupos.find((g) => g.id === showAddTeam)?.times.some((gt) => gt.id === t.id))
+                          .map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.nome} ({t.sigla})
+                            </option>
+                          ))}
                       </select>
                     </div>
                     <div className="flex justify-end gap-3">
-                      <Button variant="ghost" onClick={() => setShowAddTeam(null)}>Cancelar</Button>
+                      <Button variant="ghost" onClick={() => setShowAddTeam(null)}>
+                        Cancelar
+                      </Button>
                       <Button onClick={() => handleAddTeam(showAddTeam)} disabled={!selectedTimeId || addingTeam}>
                         {addingTeam ? 'Adicionando...' : 'Adicionar'}
                       </Button>
@@ -389,7 +452,6 @@ export default function FasesPage() {
               )}
             </div>
           )}
-
 
           {subTab === 'matamata' && (
             <div className="space-y-6">
@@ -406,42 +468,52 @@ export default function FasesPage() {
                   <p className="text-xs text-slate-600 mt-1">Crie fases para montar o chaveamento</p>
                 </div>
               ) : (
-                fases.sort((a, b) => faseOrder.indexOf(a.fase) - faseOrder.indexOf(b.fase)).map((fase) => (
-                  <div key={fase.id}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Trophy size={15} className="text-accent" />
-                        <h3 className="text-sm font-bold text-slate-200">{faseLabel[fase.fase]}</h3>
-                        {fase.jogoUnico && <span className="text-[10px] text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded">Jogo único</span>}
+                fases
+                  .sort((a, b) => faseOrder.indexOf(a.fase) - faseOrder.indexOf(b.fase))
+                  .map((fase) => (
+                    <div key={fase.id}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Trophy size={15} className="text-accent" />
+                          <h3 className="text-sm font-bold text-slate-200">{faseLabel[fase.fase]}</h3>
+                          {fase.jogoUnico && (
+                            <span className="text-[10px] text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded">
+                              Jogo único
+                            </span>
+                          )}
+                        </div>
+                        {fase.confrontos.length === 0 && (
+                          <Button size="sm" variant="secondary" onClick={() => handleGenerate(fase.id)}>
+                            Gerar confrontos
+                          </Button>
+                        )}
                       </div>
-                      {fase.confrontos.length === 0 && (
-                        <Button size="sm" variant="secondary" onClick={() => handleGenerate(fase.id)}>
-                          Gerar confrontos
-                        </Button>
+
+                      {fase.confrontos.length === 0 ? (
+                        <Card className="p-4">
+                          <p className="text-xs text-slate-500 text-center py-3">
+                            {fase.fase === 'QUARTAS' || fase.fase === 'SEMIFINAL' || fase.fase === 'FINAL'
+                              ? 'Os confrontos serão gerados automaticamente quando a fase anterior for concluída'
+                              : 'Clique em "Gerar confrontos" para distribuir os times'}
+                          </p>
+                        </Card>
+                      ) : (
+                        <BracketView fases={fases} getLogoUrl={getLogoUrl} />
                       )}
                     </div>
-
-                    {fase.confrontos.length === 0 ? (
-                      <Card className="p-4">
-                        <p className="text-xs text-slate-500 text-center py-3">
-                          {fase.fase === 'QUARTAS' || fase.fase === 'SEMIFINAL' || fase.fase === 'FINAL'
-                            ? 'Os confrontos serão gerados automaticamente quando a fase anterior for concluída'
-                            : 'Clique em "Gerar confrontos" para distribuir os times'}
-                        </p>
-                      </Card>
-                    ) : (
-                      <BracketView fases={fases} getLogoUrl={getLogoUrl} />
-                    )}
-                  </div>
-                ))
+                  ))
               )}
-
 
               {showCreatePhase && (
                 <Modal title="Nova fase" onClose={() => setShowCreatePhase(false)}>
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="selectedFase" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Fase</label>
+                      <label
+                        htmlFor="selectedFase"
+                        className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+                      >
+                        Fase
+                      </label>
                       <select
                         id="selectedFase"
                         value={selectedFase}
@@ -449,7 +521,9 @@ export default function FasesPage() {
                         className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-accent/40"
                       >
                         {faseOrder.map((f) => (
-                          <option key={f} value={f}>{faseLabel[f]}</option>
+                          <option key={f} value={f}>
+                            {faseLabel[f]}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -463,7 +537,9 @@ export default function FasesPage() {
                       Jogo único (sem ida e volta)
                     </label>
                     <div className="flex justify-end gap-3">
-                      <Button variant="ghost" onClick={() => setShowCreatePhase(false)}>Cancelar</Button>
+                      <Button variant="ghost" onClick={() => setShowCreatePhase(false)}>
+                        Cancelar
+                      </Button>
                       <Button onClick={handleCreatePhase} disabled={createPhaseLoading}>
                         {createPhaseLoading ? 'Criando...' : 'Criar'}
                       </Button>
@@ -478,5 +554,3 @@ export default function FasesPage() {
     </div>
   );
 }
-
-

@@ -19,15 +19,12 @@ export default function PublicLayout() {
 
   return (
     <div className="min-h-screen bg-primary-dark">
-
       <header className="sticky top-0 z-50 bg-primary/90 backdrop-blur-xl border-b border-white/[0.04]">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between h-14 md:h-16">
-
-            <Link to="/" className="shrink-0">
+            <div className="shrink-0">
               <Logo />
-            </Link>
-
+            </div>
 
             <nav className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => (
@@ -49,29 +46,17 @@ export default function PublicLayout() {
               ))}
             </nav>
 
-
             <div className="flex items-center gap-3">
-
               <div className="hidden md:block">
-                <SearchBar
-                  placeholder="Buscar times, jogadores..."
-                  className="w-48 lg:w-64"
-                />
+                <SearchBar placeholder="Buscar times, jogadores..." className="w-48 lg:w-64" />
               </div>
-
 
               {isAdmin ? (
                 <div className="hidden md:flex items-center gap-3">
-                  <Link
-                    to="/dashboard"
-                    className="text-xs text-accent hover:text-accent-hover font-medium"
-                  >
+                  <Link to="/dashboard" className="text-xs text-accent hover:text-accent-hover font-medium">
                     Painel Admin
                   </Link>
-                  <button
-                    onClick={logout}
-                    className="text-xs text-slate-500 hover:text-slate-300"
-                  >
+                  <button onClick={logout} className="text-xs text-slate-500 hover:text-slate-300">
                     Sair
                   </button>
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-xs font-bold text-primary-dark">
@@ -104,7 +89,6 @@ export default function PublicLayout() {
                 </div>
               )}
 
-
               <button
                 onClick={() => setMobileOpen(true)}
                 className="md:hidden p-2 text-slate-400 hover:text-white"
@@ -117,18 +101,20 @@ export default function PublicLayout() {
         </div>
       </header>
 
-
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="relative w-72 max-w-[85vw] glass-strong p-5 animate-slide-in">
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/[0.06]">
               <Logo />
-              <button onClick={() => setMobileOpen(false)} className="text-slate-400 hover:text-white p-1" aria-label="Fechar menu">
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="text-slate-400 hover:text-white p-1"
+                aria-label="Fechar menu"
+              >
                 <X size={20} />
               </button>
             </div>
-
 
             <div className="mb-6">
               <SearchBar placeholder="Buscar times, jogadores..." />
@@ -167,7 +153,10 @@ export default function PublicLayout() {
                     Painel Admin
                   </Link>
                   <button
-                    onClick={() => { logout(); setMobileOpen(false); }}
+                    onClick={() => {
+                      logout();
+                      setMobileOpen(false);
+                    }}
                     className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:text-slate-300"
                   >
                     Sair
@@ -176,7 +165,10 @@ export default function PublicLayout() {
               ) : isAuthenticated ? (
                 <div className="space-y-2">
                   <button
-                    onClick={() => { logout(); setMobileOpen(false); }}
+                    onClick={() => {
+                      logout();
+                      setMobileOpen(false);
+                    }}
                     className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-slate-500 hover:text-slate-300"
                   >
                     Sair
@@ -204,7 +196,6 @@ export default function PublicLayout() {
           </div>
         </div>
       )}
-
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
         <Outlet />

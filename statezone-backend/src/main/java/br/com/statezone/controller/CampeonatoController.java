@@ -13,6 +13,7 @@ import br.com.statezone.service.FixtureGeneratorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -28,6 +29,7 @@ public class CampeonatoController {
     private final EstatisticasJogadorService estatisticasJogadorService;
 
         @PostMapping
+        @PreAuthorize("hasRole('ADMIN')")
         public ResponseEntity<CampeonatoResponseDto> criarCampeonato(@RequestBody @Valid CampeonatoRequestDto dto){
             CampeonatoResponseDto response = campeonatoService.criarCampeonato(dto);
 
@@ -46,16 +48,19 @@ public class CampeonatoController {
         return ResponseEntity.ok(campeonatoService.obterCampeonatoPorId(id));
     }
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CampeonatoResponseDto> atualizarCampeonato(@RequestBody @Valid CampeonatoRequestDto dto,@PathVariable Long id) {
         return ResponseEntity.ok(campeonatoService.atualizarCampeonato(dto,id));
     }
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletarCampeonato(@PathVariable Long id) {
         campeonatoService.deletarCampeonato(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{campeonatoId}/times/{timeId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> adicionarTime(
             @PathVariable Long campeonatoId,
             @PathVariable Long timeId
@@ -83,6 +88,7 @@ public class CampeonatoController {
     }
 
     @PostMapping("/{id}/fixtures")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<PartidaResponseDto>> gerarFixtures(@PathVariable Long id) {
 
         List<PartidaResponseDto> response =
@@ -143,7 +149,8 @@ public class CampeonatoController {
 
     @GetMapping("/{campeonatoId}/mvp")
     public ResponseEntity<CraqueCampeonatoResponseDto> mvpCampeonato(@PathVariable Long campeonatoId) {
-        return ResponseEntity.ok(estatisticasJogadorService.mvpCampeonato(campeonatoId));
+        var mvp = estatisticasJogadorService.mvpCampeonato(campeonatoId);
+        return mvp != null ? ResponseEntity.ok(mvp) : ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/ranking/goleiros")
@@ -153,6 +160,13 @@ public class CampeonatoController {
             @RequestParam(defaultValue = "10") int tamanho
     ) {
         return ResponseEntity.ok(estatisticasJogadorService.rankingGoleiros(id, pagina, tamanho));
+    }
+
+    @PostMapping("/{id}/reprocessar-estatisticas")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> reprocessarEstatisticas(@PathVariable Long id) {
+        campeonatoService.reprocessarEstatisticas(id);
+        return ResponseEntity.ok().build();
     }
 
 }

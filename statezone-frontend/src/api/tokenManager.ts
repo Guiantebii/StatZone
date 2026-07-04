@@ -1,9 +1,12 @@
-let currentToken: string | null = null;
+// Auth is handled via httpOnly cookies.
+// This module provides an event bus so WebSocket can react to auth changes.
 
-export function setToken(token: string | null) {
-  currentToken = token;
+export function notifyTokenChanged(token: string | null) {
+  try {
+    window.dispatchEvent(new CustomEvent('auth:token-changed', { detail: token }));
+  } catch {}
 }
 
-export function getToken(): string | null {
-  return currentToken;
+export function clearToken() {
+  notifyTokenChanged(null);
 }

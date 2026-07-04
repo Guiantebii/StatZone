@@ -2,6 +2,7 @@ import { Component, type ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface State {
@@ -17,11 +18,13 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return (
+      return this.props.fallback ?? (
         <div className="min-h-screen bg-primary-dark flex items-center justify-center">
           <div className="text-center max-w-md px-6">
             <div className="w-16 h-16 rounded-2xl bg-danger/10 flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">⚠️</span>
+              <span className="text-2xl" role="img" aria-label="Alerta de erro">
+                ⚠️
+              </span>
             </div>
             <h1 className="text-xl font-bold text-slate-100 mb-2">Algo deu errado</h1>
             <p className="text-sm text-slate-500 mb-6">Ocorreu um erro inesperado. Tente recarregar a página.</p>

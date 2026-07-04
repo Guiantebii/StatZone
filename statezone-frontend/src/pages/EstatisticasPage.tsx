@@ -1,28 +1,49 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Trophy, Medal, Shield, Eye, User, Star, Swords } from 'lucide-react';
+import { Trophy, Medal, Shield, Eye, User, Star, Swords, GitBranch } from 'lucide-react';
 import api from '../api/client';
 import { PAGE_SIZE } from '../constants/pagination';
 import type { Campeonato } from '../types/campeonato';
+import type { Grupo, FaseEliminatoria } from '../types/fases';
 import type {
-  ClassificacaoTime, Artilharia, AssistenciaRanking,
-  RankingCartao, RankingGoleiro, SelecaoCampeonato, CraqueCampeonato,
+  ClassificacaoTime,
+  Artilharia,
+  AssistenciaRanking,
+  RankingCartao,
+  RankingGoleiro,
+  SelecaoCampeonato,
+  CraqueCampeonato,
 } from '../types/estatisticas';
 import Card from '../components/ui/Card';
 import { SkeletonCard, SkeletonTable } from '../components/ui/Skeleton';
+import PaginationBar from '../components/ui/PaginationBar';
+import BracketView from '../components/BracketView';
+import { getLogoUrl, getAvatarUrl } from '../constants/helpers';
 import { toast } from 'sonner';
 
-type Tab = 'classificacao' | 'artilharia' | 'assistencias' | 'cartoes' | 'goleiros' | 'selecao' | 'mvp';
+type Tab = 'classificacao' | 'artilharia' | 'assistencias' | 'cartoes' | 'goleiros' | 'selecao' | 'mvp' | 'chaveamento';
 
-const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  { key: 'classificacao', label: 'Classificação', icon: <Trophy size={13} /> },
-  { key: 'artilharia', label: 'Artilharia', icon: <Medal size={13} /> },
-  { key: 'assistencias', label: 'Assistências', icon: <Eye size={13} /> },
-  { key: 'cartoes', label: 'Cartões', icon: <Shield size={13} /> },
-  { key: 'goleiros', label: 'Goleiros', icon: <User size={13} /> },
-  { key: 'selecao', label: 'Seleção', icon: <Star size={13} /> },
-  { key: 'mvp', label: 'MVP', icon: <Swords size={13} /> },
-];
+function buildTabs(tipoFormato: string | null): { key: Tab; label: string; icon: React.ReactNode }[] {
+  const base = [
+    { key: 'artilharia' as Tab, label: 'Artilharia', icon: <Medal size={13} /> },
+    { key: 'assistencias' as Tab, label: 'Assistências', icon: <Eye size={13} /> },
+    { key: 'cartoes' as Tab, label: 'Cartões', icon: <Shield size={13} /> },
+    { key: 'goleiros' as Tab, label: 'Goleiros', icon: <User size={13} /> },
+    { key: 'selecao' as Tab, label: 'Seleção', icon: <Star size={13} /> },
+    { key: 'mvp' as Tab, label: 'MVP', icon: <Swords size={13} /> },
+  ];
+  if (tipoFormato === 'MATA_MATA') {
+    return [{ key: 'chaveamento' as Tab, label: 'Chaveamento', icon: <GitBranch size={13} /> }, ...base];
+  }
+  if (tipoFormato === 'GRUPOS_E_MATA_MATA') {
+    return [
+      { key: 'classificacao' as Tab, label: 'Classificação', icon: <Trophy size={13} /> },
+      { key: 'chaveamento' as Tab, label: 'Chaveamento', icon: <GitBranch size={13} /> },
+      ...base,
+    ];
+  }
+  return [{ key: 'classificacao' as Tab, label: 'Classificação', icon: <Trophy size={13} /> }, ...base];
+}
 
 export default function EstatisticasPage() {
   const navigate = useNavigate();
@@ -30,10 +51,13 @@ export default function EstatisticasPage() {
   const isAdminContext = location.pathname.startsWith('/dashboard');
   const [campeonatos, setCampeonatos] = useState<Campeonato[]>([]);
   const [campeonatoId, setCampeonatoId] = useState<number | null>(null);
+  const [tipoFormato, setTipoFormato] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('classificacao');
   const [loading, setLoading] = useState(true);
 
   const [classificacao, setClassificacao] = useState<ClassificacaoTime[]>([]);
+  const [grupos, setGrupos] = useState<Grupo[]>([]);
+  const [grupoClassificacoes, setGrupoClassificacoes] = useState<Record<number, ClassificacaoTime[]>>({});
   const [artilharia, setArtilharia] = useState<Artilharia[]>([]);
   const [assistencias, setAssistencias] = useState<AssistenciaRanking[]>([]);
   const [cartoesAmarelos, setCartoesAmarelos] = useState<RankingCartao[]>([]);
@@ -41,13 +65,21 @@ export default function EstatisticasPage() {
   const [goleiros, setGoleiros] = useState<RankingGoleiro[]>([]);
   const [selecao, setSelecao] = useState<SelecaoCampeonato[]>([]);
   const [mvp, setMvp] = useState<CraqueCampeonato | null>(null);
-  const [dataLoading, setDataLoading] = useState(false);
+  const [fases, setFases] = useState<FaseEliminatoria[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/campeonatos')
+    api
+      .get('/campeonatos')
       .then((res) => {
-        setCampeonatos(res.data);
-        if (res.data.length > 0) setCampeonatoId(res.data[0].id);
+        const data = res.data as Campeonato[];
+        setCampeonatos(data);
+        if (data.length > 0) {
+          setCampeonatoId(data[0].id);
+          setTipoFormato(data[0].tipoFormato || null);
+        }
       })
       .catch(() => toast.error('Erro ao carregar campeonatos'))
       .finally(() => setLoading(false));
@@ -55,76 +87,177 @@ export default function EstatisticasPage() {
 
   useEffect(() => {
     if (!campeonatoId) return;
+    let isCancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDataLoading(true);
     const promises: Promise<void>[] = [];
 
     if (tab === 'classificacao') {
-      promises.push(
-        api.get(`/campeonatos/${campeonatoId}/classificacao`)
-          .then((r) => setClassificacao(r.data))
-          .catch(() => setClassificacao([]))
-      );
+      if (tipoFormato === 'GRUPOS_E_MATA_MATA') {
+        promises.push(
+          api
+            .get(`/campeonatos/${campeonatoId}/grupos`)
+            .then(async (r) => {
+              if (isCancelled) return;
+              const gs = r.data as Grupo[];
+              setGrupos(gs);
+              const classMap: Record<number, ClassificacaoTime[]> = {};
+              await Promise.all(
+                gs.map(async (g) => {
+                  try {
+                    const cr = await api.get(`/campeonatos/${campeonatoId}/grupos/${g.id}/classificacao`);
+                    if (!isCancelled) classMap[g.id] = cr.data;
+                  } catch {
+                    if (!isCancelled) classMap[g.id] = [];
+                  }
+                }),
+              );
+              if (!isCancelled) setGrupoClassificacoes(classMap);
+            })
+            .catch(() => {
+              if (!isCancelled) {
+                setGrupos([]);
+                setGrupoClassificacoes({});
+              }
+            }),
+        );
+      } else {
+        promises.push(
+          api
+            .get(`/campeonatos/${campeonatoId}/classificacao`)
+            .then((r) => {
+              if (!isCancelled) setClassificacao(r.data);
+            })
+            .catch(() => {
+              if (!isCancelled) setClassificacao([]);
+            }),
+        );
+      }
     }
     if (tab === 'artilharia') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/artilharia?pagina=0&tamanho=${PAGE_SIZE}`)
-          .then((r) => setArtilharia(r.data))
-          .catch(() => setArtilharia([]))
+        api
+          .get(`/campeonatos/${campeonatoId}/artilharia?pagina=${page}&tamanho=${PAGE_SIZE}`)
+          .then((r) => {
+            if (!isCancelled) {
+              setArtilharia(r.data);
+              setHasMore(r.data.length >= PAGE_SIZE);
+            }
+          })
+          .catch(() => {
+            if (!isCancelled) setArtilharia([]);
+          }),
       );
     }
     if (tab === 'assistencias') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/assistencias?pagina=0&tamanho=${PAGE_SIZE}`)
-          .then((r) => setAssistencias(r.data))
-          .catch(() => setAssistencias([]))
+        api
+          .get(`/campeonatos/${campeonatoId}/assistencias?pagina=${page}&tamanho=${PAGE_SIZE}`)
+          .then((r) => {
+            if (!isCancelled) {
+              setAssistencias(r.data);
+              setHasMore(r.data.length >= PAGE_SIZE);
+            }
+          })
+          .catch(() => {
+            if (!isCancelled) setAssistencias([]);
+          }),
       );
     }
     if (tab === 'cartoes') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/ranking/cartoes-amarelos?pagina=0&tamanho=${PAGE_SIZE}`)
-          .then((r) => setCartoesAmarelos(r.data))
-          .catch(() => setCartoesAmarelos([])),
-        api.get(`/campeonatos/${campeonatoId}/ranking/cartoes-vermelhos?pagina=0&tamanho=${PAGE_SIZE}`)
-          .then((r) => setCartoesVermelhos(r.data))
-          .catch(() => setCartoesVermelhos([]))
+        api
+          .get(`/campeonatos/${campeonatoId}/ranking/cartoes-amarelos?pagina=${page}&tamanho=${PAGE_SIZE}`)
+          .then((r) => {
+            if (!isCancelled) {
+              setCartoesAmarelos(r.data);
+              setHasMore(r.data.length >= PAGE_SIZE);
+            }
+          })
+          .catch(() => {
+            if (!isCancelled) setCartoesAmarelos([]);
+          }),
+        api
+          .get(`/campeonatos/${campeonatoId}/ranking/cartoes-vermelhos?pagina=${page}&tamanho=${PAGE_SIZE}`)
+          .then((r) => {
+            if (!isCancelled) setCartoesVermelhos(r.data);
+          })
+          .catch(() => {
+            if (!isCancelled) setCartoesVermelhos([]);
+          }),
       );
     }
     if (tab === 'goleiros') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/ranking/goleiros?pagina=0&tamanho=${PAGE_SIZE}`)
-          .then((r) => setGoleiros(r.data))
-          .catch(() => setGoleiros([]))
+        api
+          .get(`/campeonatos/${campeonatoId}/ranking/goleiros?pagina=${page}&tamanho=${PAGE_SIZE}`)
+          .then((r) => {
+            if (!isCancelled) {
+              setGoleiros(r.data);
+              setHasMore(r.data.length >= PAGE_SIZE);
+            }
+          })
+          .catch(() => {
+            if (!isCancelled) setGoleiros([]);
+          }),
       );
     }
     if (tab === 'selecao') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/selecao-do-campeonato`)
-          .then((r) => setSelecao(r.data))
-          .catch(() => setSelecao([]))
+        api
+          .get(`/campeonatos/${campeonatoId}/selecao-do-campeonato`)
+          .then((r) => {
+            if (!isCancelled) setSelecao(r.data);
+          })
+          .catch(() => {
+            if (!isCancelled) setSelecao([]);
+          }),
       );
     }
     if (tab === 'mvp') {
       promises.push(
-        api.get(`/campeonatos/${campeonatoId}/mvp`)
-          .then((r) => setMvp(r.data))
-          .catch(() => setMvp(null))
+        api
+          .get(`/campeonatos/${campeonatoId}/mvp`)
+          .then((r) => {
+            if (!isCancelled) setMvp(r.data);
+          })
+          .catch(() => {
+            if (!isCancelled) setMvp(null);
+          }),
+      );
+    }
+    if (tab === 'chaveamento') {
+      promises.push(
+        api
+          .get(`/campeonatos/${campeonatoId}/fases`)
+          .then((r) => {
+            if (!isCancelled) setFases(r.data);
+          })
+          .catch(() => {
+            if (!isCancelled) setFases([]);
+          }),
       );
     }
 
-    Promise.all(promises).finally(() => setDataLoading(false));
-  }, [campeonatoId, tab]);
+    Promise.all(promises).finally(() => {
+      if (!isCancelled) setDataLoading(false);
+    });
+    return () => {
+      isCancelled = true;
+    };
+  }, [campeonatoId, tab, page, tipoFormato]);
 
-  if (loading) return (
-    <div className="space-y-6">
-      <div className="h-8 w-48 rounded-lg animate-shimmer" />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+  if (loading)
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-48 rounded-lg animate-shimmer" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       </div>
-    </div>
-  );
-
-  const getLogoUrl = (nome: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=1a3460&color=FFD700&size=24&bold=true`;
+    );
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -136,22 +269,31 @@ export default function EstatisticasPage() {
         {campeonatos.length > 0 && (
           <select
             value={campeonatoId ?? ''}
-            onChange={(e) => setCampeonatoId(Number(e.target.value))}
+            onChange={(e) => {
+              const id = Number(e.target.value);
+              setCampeonatoId(id);
+              const camp = campeonatos.find((c) => c.id === id);
+              setTipoFormato(camp?.tipoFormato || null);
+            }}
             className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-accent/40"
           >
             {campeonatos.map((c) => (
-              <option key={c.id} value={c.id}>{c.nome}</option>
+              <option key={c.id} value={c.id}>
+                {c.nome}
+              </option>
             ))}
           </select>
         )}
       </div>
 
-
       <div className="flex gap-1 bg-white/[0.03] rounded-xl p-1 overflow-x-auto">
-        {tabs.map((t) => (
+        {buildTabs(tipoFormato).map((t) => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => {
+              setTab(t.key);
+              setPage(0);
+            }}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
               tab === t.key ? 'bg-accent/10 text-accent shadow-sm' : 'text-slate-500 hover:text-slate-300'
             }`}
@@ -166,64 +308,233 @@ export default function EstatisticasPage() {
         <SkeletonTable rows={8} />
       ) : (
         <>
-
-          {tab === 'classificacao' && (
-            <Card className="overflow-hidden">
-              <div className="px-5 py-3.5 border-b border-white/[0.04]">
-                <span className="text-sm font-semibold text-slate-200">Tabela de classificação</span>
-              </div>
-              {classificacao.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-10">Nenhum dado disponível</p>
-              ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-white/[0.02]">
-                      <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold w-8">#</th>
-                      <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Time</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">P</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">J</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">V</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">E</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">D</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">GP</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">GC</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">SG</th>
-                      <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">AP%</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/[0.03]">
-                    {classificacao.map((c) => (
-                      <tr key={c.timeId} className={`hover:bg-white/[0.02] transition-colors cursor-pointer ${c.posicao <= 4 ? 'bg-success/5' : ''}`} onClick={() => navigate(`${isAdminContext ? '/dashboard' : ''}/times/${c.timeId}`)}>
-                        <td className="px-5 py-3">
-                          <span className={`text-sm font-bold font-mono ${c.posicao <= 4 ? 'text-accent' : 'text-slate-400'}`}>
-                            {c.posicao}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-2">
-                            <img src={getLogoUrl(c.nomeTime)} alt={c.nomeTime} className="w-6 h-6 rounded-full bg-white/5" />
-                            <span className="text-sm font-medium text-slate-200">{c.nomeTime}</span>
+          {tab === 'classificacao' &&
+            (tipoFormato === 'GRUPOS_E_MATA_MATA' ? (
+              <div className="space-y-6">
+                {grupos.length === 0 ? (
+                  <Card className="overflow-hidden">
+                    <p className="text-sm text-slate-500 text-center py-10">Nenhum dado disponível</p>
+                  </Card>
+                ) : (
+                  grupos.map((g) => {
+                    const dados = grupoClassificacoes[g.id];
+                    return (
+                      <Card key={g.id} className="overflow-hidden">
+                        <div className="px-5 py-3.5 border-b border-white/[0.04]">
+                          <span className="text-sm font-semibold text-slate-200">Grupo {g.nome}</span>
+                        </div>
+                        {!dados || dados.length === 0 ? (
+                          <p className="text-sm text-slate-500 text-center py-10">Nenhum dado disponível</p>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full">
+                              <thead>
+                                <tr className="bg-white/[0.02]">
+                                  <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold w-8">
+                                    #
+                                  </th>
+                                  <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    Time
+                                  </th>
+                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    P
+                                  </th>
+                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    J
+                                  </th>
+                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    V
+                                  </th>
+                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    E
+                                  </th>
+                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    D
+                                  </th>
+                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    GP
+                                  </th>
+                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    GC
+                                  </th>
+                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    SG
+                                  </th>
+                                  <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    AP%
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-white/[0.03]">
+                                {dados.map((c) => (
+                                  <tr
+                                    key={c.timeId}
+                                    className={`hover:bg-white/[0.02] transition-colors cursor-pointer ${c.posicao <= 4 ? 'bg-success/5' : ''}`}
+                                    onClick={() => navigate(`${isAdminContext ? '/dashboard' : ''}/times/${c.timeId}`)}
+                                  >
+                                    <td className="px-5 py-3">
+                                      <span
+                                        className={`text-sm font-bold font-mono ${c.posicao <= 4 ? 'text-accent' : 'text-slate-400'}`}
+                                      >
+                                        {c.posicao}
+                                      </span>
+                                    </td>
+                                    <td className="px-5 py-3">
+                                      <div className="flex items-center gap-2">
+                                        <img
+                                          src={getLogoUrl(c.nomeTime)}
+                                          alt={c.nomeTime}
+                                          className="w-6 h-6 rounded-full bg-white/5"
+                                        />
+                                        <span className="text-sm font-medium text-slate-200">{c.nomeTime}</span>
+                                      </div>
+                                    </td>
+                                    <td className="px-3 py-3 text-center text-sm font-bold text-accent font-mono">
+                                      {c.pontos}
+                                    </td>
+                                    <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">
+                                      {c.partidas}
+                                    </td>
+                                    <td className="px-3 py-3 text-center text-sm text-success font-mono">
+                                      {c.vitorias}
+                                    </td>
+                                    <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">
+                                      {c.empates}
+                                    </td>
+                                    <td className="px-3 py-3 text-center text-sm text-danger font-mono">
+                                      {c.derrotas}
+                                    </td>
+                                    <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">
+                                      {c.golsFeitos}
+                                    </td>
+                                    <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">
+                                      {c.golsSofridos}
+                                    </td>
+                                    <td
+                                      className={`px-3 py-3 text-center text-sm font-mono ${c.saldoGols > 0 ? 'text-success' : c.saldoGols < 0 ? 'text-danger' : 'text-slate-400'}`}
+                                    >
+                                      {c.saldoGols > 0 ? '+' : ''}
+                                      {c.saldoGols}
+                                    </td>
+                                    <td className="px-5 py-3 text-right text-sm text-slate-400 font-mono">
+                                      {c.aproveitamento.toFixed(1)}%
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
-                        </td>
-                        <td className="px-3 py-3 text-center text-sm font-bold text-accent font-mono">{c.pontos}</td>
-                        <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">{c.partidas}</td>
-                        <td className="px-3 py-3 text-center text-sm text-success font-mono">{c.vitorias}</td>
-                        <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">{c.empates}</td>
-                        <td className="px-3 py-3 text-center text-sm text-danger font-mono">{c.derrotas}</td>
-                        <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">{c.golsFeitos}</td>
-                        <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">{c.golsSofridos}</td>
-                        <td className={`px-3 py-3 text-center text-sm font-mono ${c.saldoGols > 0 ? 'text-success' : c.saldoGols < 0 ? 'text-danger' : 'text-slate-400'}`}>
-                          {c.saldoGols > 0 ? '+' : ''}{c.saldoGols}
-                        </td>
-                        <td className="px-5 py-3 text-right text-sm text-slate-400 font-mono">{c.aproveitamento.toFixed(1)}%</td>
+                        )}
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+            ) : (
+              <Card className="overflow-hidden">
+                <div className="px-5 py-3.5 border-b border-white/[0.04]">
+                  <span className="text-sm font-semibold text-slate-200">Tabela de classificação</span>
+                </div>
+                {classificacao.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-10">Nenhum dado disponível</p>
+                ) : (
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-white/[0.02]">
+                        <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold w-8">
+                          #
+                        </th>
+                        <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          Time
+                        </th>
+                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          P
+                        </th>
+                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          J
+                        </th>
+                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          V
+                        </th>
+                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          E
+                        </th>
+                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          D
+                        </th>
+                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          GP
+                        </th>
+                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          GC
+                        </th>
+                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          SG
+                        </th>
+                        <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                          AP%
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </Card>
-          )}
-
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.03]">
+                      {classificacao.map((c) => (
+                        <tr
+                          key={c.timeId}
+                          className={`hover:bg-white/[0.02] transition-colors cursor-pointer ${
+                            classificacao.length >= 4 && c.posicao >= classificacao.length - 3
+                              ? 'bg-danger/5'
+                              : c.posicao <= 4
+                                ? 'bg-success/5'
+                                : ''
+                          }`}
+                          onClick={() => navigate(`${isAdminContext ? '/dashboard' : ''}/times/${c.timeId}`)}
+                        >
+                          <td className="px-5 py-3">
+                            <span
+                              className={`text-sm font-bold font-mono ${
+                                classificacao.length >= 4 && c.posicao >= classificacao.length - 3
+                                  ? 'text-danger'
+                                  : c.posicao <= 4
+                                    ? 'text-accent'
+                                    : 'text-slate-400'
+                              }`}
+                            >
+                              {c.posicao}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={getLogoUrl(c.nomeTime)}
+                                alt={c.nomeTime}
+                                className="w-6 h-6 rounded-full bg-white/5"
+                              />
+                              <span className="text-sm font-medium text-slate-200">{c.nomeTime}</span>
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 text-center text-sm font-bold text-accent font-mono">{c.pontos}</td>
+                          <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">{c.partidas}</td>
+                          <td className="px-3 py-3 text-center text-sm text-success font-mono">{c.vitorias}</td>
+                          <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">{c.empates}</td>
+                          <td className="px-3 py-3 text-center text-sm text-danger font-mono">{c.derrotas}</td>
+                          <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">{c.golsFeitos}</td>
+                          <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">{c.golsSofridos}</td>
+                          <td
+                            className={`px-3 py-3 text-center text-sm font-mono ${c.saldoGols > 0 ? 'text-success' : c.saldoGols < 0 ? 'text-danger' : 'text-slate-400'}`}
+                          >
+                            {c.saldoGols > 0 ? '+' : ''}
+                            {c.saldoGols}
+                          </td>
+                          <td className="px-5 py-3 text-right text-sm text-slate-400 font-mono">
+                            {c.aproveitamento.toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </Card>
+            ))}
 
           {tab === 'artilharia' && (
             <RankingTable
@@ -235,9 +546,9 @@ export default function EstatisticasPage() {
               )}
               getJogador={(a) => ({ nome: (a as Artilharia).nomeJogador, time: (a as Artilharia).nomeTime })}
               emptyText="Nenhum gol registrado"
+              pagination={{ page, hasMore, onPrev: () => setPage((p) => p - 1), onNext: () => setPage((p) => p + 1) }}
             />
           )}
-
 
           {tab === 'assistencias' && (
             <RankingTable
@@ -245,13 +556,18 @@ export default function EstatisticasPage() {
               headers={['Assists']}
               data={assistencias}
               renderValue={(a) => (
-                <span className="text-sm font-bold text-accent font-mono">{(a as AssistenciaRanking).assistencias}</span>
+                <span className="text-sm font-bold text-accent font-mono">
+                  {(a as AssistenciaRanking).assistencias}
+                </span>
               )}
-              getJogador={(a) => ({ nome: (a as AssistenciaRanking).nomeJogador, time: (a as AssistenciaRanking).nomeTime })}
+              getJogador={(a) => ({
+                nome: (a as AssistenciaRanking).nomeJogador,
+                time: (a as AssistenciaRanking).nomeTime,
+              })}
               emptyText="Nenhuma assistência registrada"
+              pagination={{ page, hasMore, onPrev: () => setPage((p) => p - 1), onNext: () => setPage((p) => p + 1) }}
             />
           )}
-
 
           {tab === 'cartoes' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -260,7 +576,9 @@ export default function EstatisticasPage() {
                 headers={['Amarelos']}
                 data={cartoesAmarelos}
                 renderValue={(a) => (
-                  <span className="text-sm font-bold text-warning font-mono">{(a as RankingCartao).cartoesAmarelos}</span>
+                  <span className="text-sm font-bold text-warning font-mono">
+                    {(a as RankingCartao).cartoesAmarelos}
+                  </span>
                 )}
                 getJogador={(a) => ({ nome: (a as RankingCartao).nomeJogador, time: (a as RankingCartao).nomeTime })}
                 emptyText="Nenhum cartão amarelo"
@@ -270,14 +588,15 @@ export default function EstatisticasPage() {
                 headers={['Vermelhos']}
                 data={cartoesVermelhos}
                 renderValue={(a) => (
-                  <span className="text-sm font-bold text-danger font-mono">{(a as RankingCartao).cartoesVermelhos}</span>
+                  <span className="text-sm font-bold text-danger font-mono">
+                    {(a as RankingCartao).cartoesVermelhos}
+                  </span>
                 )}
                 getJogador={(a) => ({ nome: (a as RankingCartao).nomeJogador, time: (a as RankingCartao).nomeTime })}
                 emptyText="Nenhum cartão vermelho"
               />
             </div>
           )}
-
 
           {tab === 'goleiros' && (
             <Card className="overflow-hidden">
@@ -290,12 +609,24 @@ export default function EstatisticasPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-white/[0.02]">
-                      <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold w-8">#</th>
-                      <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Goleiro</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Jogos</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Defesas</th>
-                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Clean Sheets</th>
-                      <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Pênaltis</th>
+                      <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold w-8">
+                        #
+                      </th>
+                      <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                        Goleiro
+                      </th>
+                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                        Jogos
+                      </th>
+                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                        Defesas
+                      </th>
+                      <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                        Clean Sheets
+                      </th>
+                      <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                        Pênaltis
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.03]">
@@ -307,7 +638,7 @@ export default function EstatisticasPage() {
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-2">
                             <img
-                              src={g.fotoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(g.nomeJogador)}&background=1a3460&color=fff&size=24`}
+                              src={g.fotoUrl || getAvatarUrl(g.nomeJogador, 24)}
                               alt={g.nomeJogador}
                               className="w-7 h-7 rounded-full bg-white/5"
                             />
@@ -322,15 +653,24 @@ export default function EstatisticasPage() {
                         <td className="px-3 py-3 text-center text-sm font-mono">
                           <span className="text-success font-bold">{g.cleanSheets}</span>
                         </td>
-                        <td className="px-5 py-3 text-right text-sm text-slate-300 font-mono">{g.penaltisDefendidos}</td>
+                        <td className="px-5 py-3 text-right text-sm text-slate-300 font-mono">
+                          {g.penaltisDefendidos}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
+              {goleiros.length > 0 && (
+                <PaginationBar
+                  page={page}
+                  hasMore={hasMore}
+                  onPrev={() => setPage((p) => p - 1)}
+                  onNext={() => setPage((p) => p + 1)}
+                />
+              )}
             </Card>
           )}
-
 
           {tab === 'selecao' && (
             <Card className="p-5">
@@ -340,7 +680,10 @@ export default function EstatisticasPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {selecao.map((j) => (
-                    <div key={`${j.posicao}-${j.nomeJogador}`} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <div
+                      key={`${j.posicao}-${j.nomeJogador}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+                    >
                       <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0">
                         {j.posicao.substring(0, 2)}
                       </div>
@@ -357,7 +700,6 @@ export default function EstatisticasPage() {
               )}
             </Card>
           )}
-
 
           {tab === 'mvp' && (
             <Card className="p-6">
@@ -392,6 +734,17 @@ export default function EstatisticasPage() {
               )}
             </Card>
           )}
+
+          {tab === 'chaveamento' && (
+            <Card className="overflow-hidden p-5">
+              <h3 className="text-sm font-semibold text-slate-200 mb-4">Chaveamento</h3>
+              {fases.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-10">Nenhuma fase eliminatória disponível</p>
+              ) : (
+                <BracketView fases={fases} getLogoUrl={getLogoUrl} />
+              )}
+            </Card>
+          )}
         </>
       )}
     </div>
@@ -407,16 +760,30 @@ function StatItem({ label, value, color }: { label: string; value: number; color
   );
 }
 
-interface RankingTableProps<T> {
+interface RankingTableProps<T extends { posicao: number }> {
   title: string;
   headers: string[];
   data: T[];
   renderValue: (item: T) => React.ReactNode;
   getJogador: (item: T) => { nome: string; time?: string };
   emptyText: string;
+  pagination?: {
+    page: number;
+    hasMore: boolean;
+    onPrev: () => void;
+    onNext: () => void;
+  };
 }
 
-function RankingTable<T>({ title, headers, data, renderValue, getJogador, emptyText }: RankingTableProps<T>) {
+function RankingTable<T extends { posicao: number }>({
+  title,
+  headers,
+  data,
+  renderValue,
+  getJogador,
+  emptyText,
+  pagination,
+}: RankingTableProps<T>) {
   return (
     <Card className="overflow-hidden">
       <div className="px-5 py-3.5 border-b border-white/[0.04]">
@@ -428,27 +795,38 @@ function RankingTable<T>({ title, headers, data, renderValue, getJogador, emptyT
         <table className="w-full">
           <thead>
             <tr className="bg-white/[0.02]">
-              <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold w-8">#</th>
-              <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">Jogador</th>
+              <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold w-8">
+                #
+              </th>
+              <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                Jogador
+              </th>
               {headers.map((h) => (
-                <th key={h} className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">{h}</th>
+                <th
+                  key={h}
+                  className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold"
+                >
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.03]">
-            {(data as Array<{ posicao: number }>).map((item: T & { posicao: number }, idx) => {
+            {data.map((item) => {
               const jog = getJogador(item);
               return (
-                <tr key={'pos-' + item.posicao} className="hover:bg-white/[0.02] transition-colors">
+                <tr key={`${title}-${item.posicao}-${jog.nome}`} className="hover:bg-white/[0.02] transition-colors">
                   <td className="px-5 py-3">
-                    <span className={`text-sm font-bold font-mono ${item.posicao <= 3 ? 'text-accent' : 'text-slate-400'}`}>
+                    <span
+                      className={`text-sm font-bold font-mono ${item.posicao <= 3 ? 'text-accent' : 'text-slate-400'}`}
+                    >
                       {item.posicao}
                     </span>
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
                       <img
-                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(jog.nome)}&background=1a3460&color=fff&size=24`}
+                        src={getAvatarUrl(jog.nome, 24)}
                         alt={jog.nome}
                         className="w-7 h-7 rounded-full bg-white/5"
                       />
@@ -458,14 +836,20 @@ function RankingTable<T>({ title, headers, data, renderValue, getJogador, emptyT
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-right">
-                    {renderValue(item)}
-                  </td>
+                  <td className="px-5 py-3 text-right">{renderValue(item)}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+      )}
+      {pagination && data.length > 0 && (
+        <PaginationBar
+          page={pagination.page}
+          hasMore={pagination.hasMore}
+          onPrev={pagination.onPrev}
+          onNext={pagination.onNext}
+        />
       )}
     </Card>
   );

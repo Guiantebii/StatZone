@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { ChevronRight, Menu, X } from 'lucide-react';
 import Logo from './Logo';
 import NavItems from './navigation/NavItems';
@@ -19,7 +19,6 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-primary-dark flex">
-
       <aside
         className={`hidden md:flex flex-col bg-primary border-r border-white/[0.04] transition-all duration-300 ${
           sidebarCollapse ? 'w-20' : 'w-64'
@@ -47,14 +46,17 @@ export default function Layout() {
         </div>
       </aside>
 
-
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
           <aside className="relative w-72 glass-strong p-4 animate-slide-in">
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/[0.06]">
               <Logo to="/dashboard" />
-              <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white p-1" aria-label="Fechar menu">
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="text-slate-400 hover:text-white p-1"
+                aria-label="Fechar menu"
+              >
                 <X size={20} />
               </button>
             </div>
@@ -63,23 +65,26 @@ export default function Layout() {
         </div>
       )}
 
-
       <div className="flex-1 flex flex-col min-h-screen">
-
         <header className="md:hidden glass border-b border-white/[0.04] text-white px-4 h-14 flex items-center gap-3 sticky top-0 z-40">
-          <button onClick={() => setSidebarOpen(true)} className="text-slate-300 hover:text-white p-1" aria-label="Abrir menu">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="text-slate-300 hover:text-white p-1"
+            aria-label="Abrir menu"
+          >
             <Menu size={20} />
           </button>
           <Logo to="/dashboard" />
         </header>
-
 
         <header className="hidden md:flex items-center justify-between px-6 h-16 border-b border-white/[0.04] glass-strong sticky top-0 z-40">
           <div className="flex items-center gap-3">
             {breadcrumbs.map((crumb, i) => (
               <span key={crumb} className="flex items-center gap-3">
                 {i > 0 && <ChevronRight size={12} className="text-slate-600" />}
-                <span className={`text-sm ${i === breadcrumbs.length - 1 ? 'text-slate-200 font-medium' : 'text-slate-500'}`}>
+                <span
+                  className={`text-sm ${i === breadcrumbs.length - 1 ? 'text-slate-200 font-medium' : 'text-slate-500'}`}
+                >
                   {crumb}
                 </span>
               </span>
@@ -94,7 +99,6 @@ export default function Layout() {
             </div>
           </div>
         </header>
-
 
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto animate-fade-in-up">

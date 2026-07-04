@@ -4,23 +4,54 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Order(1)
+@ConditionalOnProperty(name = "rate-limiting.enabled", havingValue = "true", matchIfMissing = true)
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final int MAX_ATTEMPTS = 5;
     private static final int WINDOW_SECONDS = 60;
 
     private final Map<String, SlidingWindow> attempts = new ConcurrentHashMap<>();
+    private ScheduledExecutorService scheduler;
+
+    @PostConstruct
+    void startCleanup() {
+        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "rate-limiter-cleanup");
+            t.setDaemon(true);
+            return t;
+        });
+        scheduler.scheduleAtFixedRate(() -> {
+            long now = Instant.now().getEpochSecond();
+            attempts.entrySet().removeIf(entry -> {
+                SlidingWindow w = entry.getValue();
+                return w.count > 0 && !w.isBlocked();
+            });
+        }, 1, 1, TimeUnit.MINUTES);
+    }
+
+    @PreDestroy
+    void shutdownCleanup() {
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+        }
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -28,7 +59,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
 
-        if (request.getMethod().equals("POST") && path.equals("/api/auth/login")) {
+        if (request.getMethod().equals("POST") &&
+                (path.equals("/api/auth/login") || path.equals("/api/auth/registro"))) {
             String ip = request.getRemoteAddr();
             SlidingWindow window = attempts.computeIfAbsent(ip, k -> new SlidingWindow());
 

@@ -21,6 +21,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +38,8 @@ public class EventoPartidaService {
                 EventoPartidaRequestDto dto,
                 Long partidaId
         ) {
+
+                validarInputs(dto);
 
                 Partida partida = partidaRepository.findById(partidaId)
                         .orElseThrow(() ->
@@ -173,9 +176,9 @@ public class EventoPartidaService {
 
                 if (evento.getTipoEvento() == TipoEvento.VAR_GOL_ANULADO) {
                         EventoPartida original = evento.getEventoRelacionado();
-                        if (original == null || original.getTime() == null) return;
+                        if (original == null || original.getTime() == null || partida.getTimeMandante() == null || partida.getTimeVisitante() == null) return;
 
-                        boolean mandanteOriginal = original.getTime().getId().equals(partida.getTimeMandante().getId());
+                        boolean mandanteOriginal = Objects.equals(original.getTime().getId(), partida.getTimeMandante().getId());
 
                         if (original.getTipoEvento() == TipoEvento.GOL_CONTRA) {
                                 if (mandanteOriginal) partida.setGolsVisitante(Math.max(0, golsVisitante - 1));
@@ -187,8 +190,8 @@ public class EventoPartidaService {
                         return;
                 }
 
-                if (evento.getTime() == null) return;
-                boolean mandante = evento.getTime().getId().equals(partida.getTimeMandante().getId());
+                if (evento.getTime() == null || partida.getTimeMandante() == null || partida.getTimeVisitante() == null) return;
+                boolean mandante = Objects.equals(evento.getTime().getId(), partida.getTimeMandante().getId());
 
                 switch (evento.getTipoEvento()) {
                         case GOL, PENALTI_GOL -> {
@@ -204,10 +207,21 @@ public class EventoPartidaService {
         }
 
         private void validarJogadorNaPartida(Partida partida, Jogador jogador) {
+                if (jogador == null) {
+                        throw new BusinessException("Jogador não informado");
+                }
+
+                if (jogador.getTime() == null) {
+                        throw new BusinessException("Jogador não possui time vinculado");
+                }
+
+                if (partida.getTimeMandante() == null || partida.getTimeVisitante() == null) {
+                        throw new BusinessException("Partida não tem times definidos");
+                }
 
                 boolean ok =
-                        jogador.getTime().getId().equals(partida.getTimeMandante().getId()) ||
-                                jogador.getTime().getId().equals(partida.getTimeVisitante().getId());
+                        Objects.equals(jogador.getTime().getId(), partida.getTimeMandante().getId()) ||
+                                Objects.equals(jogador.getTime().getId(), partida.getTimeVisitante().getId());
 
                 if (!ok) {
                         throw new BusinessException(
@@ -216,10 +230,31 @@ public class EventoPartidaService {
         }
 
         private void validarStatusPartida(Partida partida) {
-                if (partida.getStatus() != StatusPartida.AO_VIVO) {
+                if (partida.getStatus() == null) {
+                        throw new BusinessException("Status da partida não está definido");
+                }
+
+                if (partida.getStatus() != StatusPartida.AO_VIVO
+                        && partida.getStatus() != StatusPartida.PENALTIS) {
                         throw new BusinessException(
-                                "Só é possível registrar eventos em partidas ao vivo. " +
+                                "Só é possível registrar eventos em partidas ao vivo ou em pênaltis. " +
                                         "Status atual: " + partida.getStatus());
+                }
+        }
+
+        private void validarInputs(EventoPartidaRequestDto dto) {
+                if (dto.tipoEvento() == null) {
+                        throw new BusinessException("Tipo de evento é obrigatório");
+                }
+
+                if (dto.minuto() != null && (dto.minuto() < 0 || dto.minuto() > 150)) {
+                        throw new BusinessException(
+                                "Minuto deve estar entre 0 e 150. Valor fornecido: " + dto.minuto());
+                }
+
+                if (dto.minutoExtra() != null && (dto.minutoExtra() < 0 || dto.minutoExtra() > 50)) {
+                        throw new BusinessException(
+                                "Minuto extra deve estar entre 0 e 50. Valor fornecido: " + dto.minutoExtra());
                 }
         }
 
@@ -252,6 +287,8 @@ public class EventoPartidaService {
                              INICIO_PRIMEIRO_TEMPO,
                              FIM_PRIMEIRO_TEMPO,
                              INICIO_SEGUNDO_TEMPO,
+                             INICIO_PRORROGACAO,
+                             FIM_PRORROGACAO,
                              FIM_PARTIDA -> false;
                 };
         }
