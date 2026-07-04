@@ -33,16 +33,20 @@ jobs:
       - name: Test
         shell: bash
         run: |
-          set -o pipefail
           mvn test -e 2>&1 | tee test-output.log
-      - name: Show test failure details
-        if: failure()
+          exit ${PIPESTATUS[0]}
+      - name: Show test output
+        if: always()
         shell: bash
         run: |
-          echo "=== Tests Summary ==="
-          grep -E "Tests run:|BUILD|FAILURE|ERROR|Caused by|Exception|assert" test-output.log || true
-          echo "=== Last 100 lines ==="
-          tail -100 test-output.log
+          echo "=== Test Summary Lines ==="
+          grep -n -E "Tests run:|BUILD|FAILURE|FAIL" test-output.log || echo "(none found)"
+          echo "=== Errors (if any) ==="
+          grep -n -B2 -A2 "Tests run.*Failures: [1-9]\|Tests run.*Errors: [1-9]\|COMPILATION ERROR\|BUILD FAILURE" test-output.log || echo "(no failures detected in summary)"
+          # Use GitHub Actions annotations
+          grep "BUILD FAILURE" test-output.log && echo "::error::BUILD FAILURE detected" || true
+          grep "COMPILATION ERROR" test-output.log && echo "::error::COMPILATION ERROR detected" || true
+          grep -E "Tests run:.*Failures: [1-9]" test-output.log && echo "::error::Test failures detected" || true
 
   frontend:
     runs-on: ubuntu-latest
