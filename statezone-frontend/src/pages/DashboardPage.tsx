@@ -75,12 +75,8 @@ export default function DashboardPage() {
             .slice(0, 5),
         );
       } catch (err) {
-        // Use centralized logger and show a non-blocking notification
-        // to the user if needed. Avoid leaking internals via console.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const anyErr = err as any;
-        // fallback to toast error
-        import('../utils/logger').then((m) => m.default.error('Erro ao atualizar partidas ao vivo', anyErr));
+        const logger = await import('../utils/logger');
+        logger.default.error('Erro ao atualizar partidas ao vivo', err);
       }
     }, 15000);
     return () => clearInterval(interval);

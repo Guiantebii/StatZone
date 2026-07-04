@@ -1,24 +1,5 @@
-import React, { lazy, Suspense, type ComponentType } from 'react';
+import React, { Suspense, type ComponentType } from 'react';
 import ErrorBoundary from './ErrorBoundary';
-
-export const LoginPage = lazy(() => import('../pages/LoginPage'));
-export const RegisterPage = lazy(() => import('../pages/RegisterPage'));
-export const DashboardPage = lazy(() => import('../pages/DashboardPage'));
-export const CampeonatosPage = lazy(() => import('../pages/CampeonatosPage'));
-export const TimesPage = lazy(() => import('../pages/TimesPage'));
-export const TimeDetalhePage = lazy(() => import('../pages/TimeDetalhePage'));
-export const JogadoresPage = lazy(() => import('../pages/JogadoresPage'));
-export const PartidasPage = lazy(() => import('../pages/PartidasPage'));
-export const PartidaDetalhePage = lazy(() => import('../pages/PartidaDetalhePage'));
-export const EstatisticasPage = lazy(() => import('../pages/EstatisticasPage'));
-export const FasesPage = lazy(() => import('../pages/FasesPage'));
-export const ImportacaoPage = lazy(() => import('../pages/ImportacaoPage'));
-export const PublicHomePage = lazy(() => import('../pages/PublicHomePage'));
-export const PublicCampeonatosPage = lazy(() => import('../pages/PublicCampeonatosPage'));
-export const PublicTimesPage = lazy(() => import('../pages/PublicTimesPage'));
-export const CampeonatoDetalhePage = lazy(() => import('../pages/CampeonatoDetalhePage'));
-export const JogadorDetalhePage = lazy(() => import('../pages/JogadorDetalhePage'));
-export const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
 
 export function LazyPage({ Component }: { Component: React.LazyExoticComponent<ComponentType> }) {
   return (

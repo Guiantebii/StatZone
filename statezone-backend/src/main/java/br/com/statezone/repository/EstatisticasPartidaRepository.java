@@ -1,7 +1,6 @@
 package br.com.statezone.repository;
 
 import br.com.statezone.model.EstatisticasPartida;
-import br.com.statezone.model.EventoPartida;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

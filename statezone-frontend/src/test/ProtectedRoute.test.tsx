@@ -22,10 +22,10 @@ function renderProtected() {
 }
 
 describe('ProtectedRoute', () => {
-  it('renders null while loading', () => {
+  it('renders spinner while loading', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: false, isAdmin: false, loading: true });
-    const { container } = renderProtected();
-    expect(container.innerHTML).toBe('');
+    renderProtected();
+    expect(screen.getByText('Carregando...')).toBeInTheDocument();
   });
 
   it('redirects to /login when not authenticated', () => {

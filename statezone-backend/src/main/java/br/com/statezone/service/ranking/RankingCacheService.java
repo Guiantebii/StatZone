@@ -11,24 +11,35 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class RankingCacheService {
 
+    private static final int MAX_CACHE_SIZE = 200;
+
     private final RankingEngine rankingEngine;
 
     private final ConcurrentHashMap<String, List<ClassificacaoStats>> cache =
             new ConcurrentHashMap<>();
 
     public List<ClassificacaoStats> getRanking(Long campeonatoId) {
+        evictIfNeeded();
         String key = campeonatoId + "_geral";
         return cache.computeIfAbsent(key, k -> rankingEngine.gerar(campeonatoId));
     }
 
     public List<ClassificacaoStats> getRankingPorTurno(Long campeonatoId, Integer turno) {
+        evictIfNeeded();
         String key = campeonatoId + "_turno_" + turno;
         return cache.computeIfAbsent(key, k -> rankingEngine.gerarPorTurno(campeonatoId, turno));
     }
 
     public List<ClassificacaoStats> getRankingPorGrupo(Long grupoId) {
+        evictIfNeeded();
         String key = grupoId + "_grupo";
         return cache.computeIfAbsent(key, k -> rankingEngine.gerarPorGrupo(grupoId));
+    }
+
+    private void evictIfNeeded() {
+        if (cache.size() >= MAX_CACHE_SIZE) {
+            cache.clear();
+        }
     }
 
     public void recalcular(Long campeonatoId) {

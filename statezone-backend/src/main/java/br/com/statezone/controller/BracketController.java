@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
 @RestController
@@ -18,6 +19,7 @@ public class BracketController {
     private final BracketService bracketService;
 
     @PostMapping("/fases")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FaseEliminatoriaResponseDto> criarFase(
             @PathVariable Long campeonatoId,
             @RequestBody @Valid FaseEliminatoriaRequestDto dto
@@ -34,6 +36,7 @@ public class BracketController {
     }
 
     @PostMapping("/fases/{faseId}/gerar")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> gerarPrimeiraFase(
             @PathVariable Long campeonatoId,
             @PathVariable Long faseId,
@@ -51,6 +54,7 @@ public class BracketController {
     }
 
     @PostMapping("/confrontos/{confrontoId}/encerrar")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FaseEliminatoriaResponseDto> encerrarConfronto(
             @PathVariable Long campeonatoId,
             @PathVariable Long confrontoId

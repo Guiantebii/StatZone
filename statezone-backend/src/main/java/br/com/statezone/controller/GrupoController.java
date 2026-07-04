@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class GrupoController {
     private final ClassificacaoService classificacaoService;
 
     @PostMapping("/{campeonatoId}/grupos")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<GrupoResponseDto> criarGrupo(
             @PathVariable Long campeonatoId,
             @RequestBody @Valid GrupoRequestDto dto
@@ -47,6 +49,7 @@ public class GrupoController {
     }
 
     @PostMapping("/{campeonatoId}/grupos/{grupoId}/times/{timeId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<GrupoResponseDto> adicionarTime(
             @PathVariable Long campeonatoId,
             @PathVariable Long grupoId,
@@ -56,6 +59,7 @@ public class GrupoController {
     }
 
     @PostMapping("/{campeonatoId}/grupos/{grupoId}/fixtures")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> gerarFixtures(
             @PathVariable Long campeonatoId,
             @PathVariable Long grupoId
