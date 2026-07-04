@@ -39,18 +39,17 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          # Overall summary (after "Results:")
-          awk '/Results:/{found=1} found{print}' test-output.log | grep -E "Tests run:" | while IFS= read -r line; do
-            echo "::error::$line"
-          done
-          # Build result
-          grep "BUILD" test-output.log | while IFS= read -r line; do
-            echo "::error::$line"
-          done
-          # Errors/exceptions near the end
-          grep -E "^\[ERROR\]|Caused by|Exception|FAILURE" test-output.log | tail -20 | while IFS= read -r line; do
-            echo "::error::$line"
-          done
+          echo "::group::Test Results"
+          grep -E "Tests run:" test-output.log | tail -1 | while IFS= read -r line; do echo "::error::$line"; done
+          echo "::endgroup::"
+          echo "::group::AuthFlowIntegrationTest full context"
+          # Find the AuthFlowIntegrationTest error and show 20 lines around it
+          lineno=$(grep -n "AuthFlowIntegrationTest" test-output.log | head -1 | cut -d: -f1)
+          if [ -n "$lineno" ]; then
+            start=$((lineno > 20 ? lineno - 20 : 1))
+            sed -n "${start},$((lineno + 30))p" test-output.log | while IFS= read -r line; do echo "::error::$line"; done
+          fi
+          echo "::endgroup::"
 
   frontend:
     runs-on: ubuntu-latest
