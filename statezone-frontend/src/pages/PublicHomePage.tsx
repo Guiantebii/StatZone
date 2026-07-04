@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trophy, Clock, ArrowRight, Users, ChevronRight, Medal, Calendar } from 'lucide-react';
 import api from '../api/client';
@@ -11,6 +11,7 @@ import { SkeletonCard } from '../components/ui/Skeleton';
 import { ARTILHARIA_TOP } from '../constants/pagination';
 import { STATUS_PARTIDA, isLiveStatus, isFinishedStatus } from '../constants/status';
 import { toast } from 'sonner';
+import { usePolling } from '../hooks/usePolling';
 
 export default function PublicHomePage() {
   const navigate = useNavigate();
@@ -59,20 +60,16 @@ export default function PublicHomePage() {
     load();
   }, []);
 
-  useEffect(() => {
-    if (aoVivo.length === 0) return;
-    const interval = setInterval(async () => {
-      try {
-        const res = await api.get('/partidas');
-        const todas: Partida[] = res.data;
-        const live = todas.filter((p) => isLiveStatus(p.status));
-        setAoVivo(live);
-      } catch {
-        toast.error('Erro ao atualizar partidas ao vivo');
-      }
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [aoVivo.length]);
+  const pollAoVivo = useCallback(() => {
+    api.get('/partidas').then((res) => {
+      const todas: Partida[] = res.data;
+      setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
+    }).catch(() => {
+      toast.error('Erro ao atualizar partidas ao vivo');
+    });
+  }, []);
+
+  usePolling(pollAoVivo, 15000, aoVivo.length > 0);
 
   if (loading) {
     return (

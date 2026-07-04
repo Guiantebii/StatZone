@@ -498,7 +498,7 @@ export default function FasesPage() {
                           </p>
                         </Card>
                       ) : (
-                        <BracketView fases={fases} getLogoUrl={getLogoUrl} />
+                        <BracketView fases={fases} />
                       )}
                     </div>
                   ))

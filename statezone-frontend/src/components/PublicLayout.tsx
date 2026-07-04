@@ -103,7 +103,12 @@ export default function PublicLayout() {
 
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            role="presentation"
+            onClick={() => setMobileOpen(false)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setMobileOpen(false); }}
+          />
           <div className="relative w-72 max-w-[85vw] glass-strong p-5 animate-slide-in">
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/[0.06]">
               <Logo />

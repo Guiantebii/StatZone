@@ -18,7 +18,8 @@ import Card from '../components/ui/Card';
 import { SkeletonCard, SkeletonTable } from '../components/ui/Skeleton';
 import PaginationBar from '../components/ui/PaginationBar';
 import BracketView from '../components/BracketView';
-import { getLogoUrl, getAvatarUrl } from '../constants/helpers';
+import { getAvatarUrl } from '../constants/helpers';
+import ClassificacaoTable from '../components/ui/ClassificacaoTable';
 import { toast } from 'sonner';
 
 type Tab = 'classificacao' | 'artilharia' | 'assistencias' | 'cartoes' | 'goleiros' | 'selecao' | 'mvp' | 'chaveamento';
@@ -326,104 +327,11 @@ export default function EstatisticasPage() {
                         {!dados || dados.length === 0 ? (
                           <p className="text-sm text-slate-500 text-center py-10">Nenhum dado disponível</p>
                         ) : (
-                          <div className="overflow-x-auto">
-                            <table className="w-full">
-                              <thead>
-                                <tr className="bg-white/[0.02]">
-                                  <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold w-8">
-                                    #
-                                  </th>
-                                  <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    Time
-                                  </th>
-                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    P
-                                  </th>
-                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    J
-                                  </th>
-                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    V
-                                  </th>
-                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    E
-                                  </th>
-                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    D
-                                  </th>
-                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    GP
-                                  </th>
-                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    GC
-                                  </th>
-                                  <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    SG
-                                  </th>
-                                  <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                                    AP%
-                                  </th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-white/[0.03]">
-                                {dados.map((c) => (
-                                  <tr
-                                    key={c.timeId}
-                                    className={`hover:bg-white/[0.02] transition-colors cursor-pointer ${c.posicao <= 4 ? 'bg-success/5' : ''}`}
-                                    onClick={() => navigate(`${isAdminContext ? '/dashboard' : ''}/times/${c.timeId}`)}
-                                  >
-                                    <td className="px-5 py-3">
-                                      <span
-                                        className={`text-sm font-bold font-mono ${c.posicao <= 4 ? 'text-accent' : 'text-slate-400'}`}
-                                      >
-                                        {c.posicao}
-                                      </span>
-                                    </td>
-                                    <td className="px-5 py-3">
-                                      <div className="flex items-center gap-2">
-                                        <img
-                                          src={getLogoUrl(c.nomeTime)}
-                                          alt={c.nomeTime}
-                                          className="w-6 h-6 rounded-full bg-white/5"
-                                        />
-                                        <span className="text-sm font-medium text-slate-200">{c.nomeTime}</span>
-                                      </div>
-                                    </td>
-                                    <td className="px-3 py-3 text-center text-sm font-bold text-accent font-mono">
-                                      {c.pontos}
-                                    </td>
-                                    <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">
-                                      {c.partidas}
-                                    </td>
-                                    <td className="px-3 py-3 text-center text-sm text-success font-mono">
-                                      {c.vitorias}
-                                    </td>
-                                    <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">
-                                      {c.empates}
-                                    </td>
-                                    <td className="px-3 py-3 text-center text-sm text-danger font-mono">
-                                      {c.derrotas}
-                                    </td>
-                                    <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">
-                                      {c.golsFeitos}
-                                    </td>
-                                    <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">
-                                      {c.golsSofridos}
-                                    </td>
-                                    <td
-                                      className={`px-3 py-3 text-center text-sm font-mono ${c.saldoGols > 0 ? 'text-success' : c.saldoGols < 0 ? 'text-danger' : 'text-slate-400'}`}
-                                    >
-                                      {c.saldoGols > 0 ? '+' : ''}
-                                      {c.saldoGols}
-                                    </td>
-                                    <td className="px-5 py-3 text-right text-sm text-slate-400 font-mono">
-                                      {c.aproveitamento.toFixed(1)}%
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
+                          <ClassificacaoTable
+                            dados={dados}
+                            onTimeClick={(timeId) => navigate(`${isAdminContext ? '/dashboard' : ''}/times/${timeId}`)}
+                            isGroup
+                          />
                         )}
                       </Card>
                     );
@@ -438,100 +346,10 @@ export default function EstatisticasPage() {
                 {classificacao.length === 0 ? (
                   <p className="text-sm text-slate-500 text-center py-10">Nenhum dado disponível</p>
                 ) : (
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-white/[0.02]">
-                        <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold w-8">
-                          #
-                        </th>
-                        <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          Time
-                        </th>
-                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          P
-                        </th>
-                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          J
-                        </th>
-                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          V
-                        </th>
-                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          E
-                        </th>
-                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          D
-                        </th>
-                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          GP
-                        </th>
-                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          GC
-                        </th>
-                        <th className="text-center px-3 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          SG
-                        </th>
-                        <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                          AP%
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/[0.03]">
-                      {classificacao.map((c) => (
-                        <tr
-                          key={c.timeId}
-                          className={`hover:bg-white/[0.02] transition-colors cursor-pointer ${
-                            classificacao.length >= 4 && c.posicao >= classificacao.length - 3
-                              ? 'bg-danger/5'
-                              : c.posicao <= 4
-                                ? 'bg-success/5'
-                                : ''
-                          }`}
-                          onClick={() => navigate(`${isAdminContext ? '/dashboard' : ''}/times/${c.timeId}`)}
-                        >
-                          <td className="px-5 py-3">
-                            <span
-                              className={`text-sm font-bold font-mono ${
-                                classificacao.length >= 4 && c.posicao >= classificacao.length - 3
-                                  ? 'text-danger'
-                                  : c.posicao <= 4
-                                    ? 'text-accent'
-                                    : 'text-slate-400'
-                              }`}
-                            >
-                              {c.posicao}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={getLogoUrl(c.nomeTime)}
-                                alt={c.nomeTime}
-                                className="w-6 h-6 rounded-full bg-white/5"
-                              />
-                              <span className="text-sm font-medium text-slate-200">{c.nomeTime}</span>
-                            </div>
-                          </td>
-                          <td className="px-3 py-3 text-center text-sm font-bold text-accent font-mono">{c.pontos}</td>
-                          <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">{c.partidas}</td>
-                          <td className="px-3 py-3 text-center text-sm text-success font-mono">{c.vitorias}</td>
-                          <td className="px-3 py-3 text-center text-sm text-slate-400 font-mono">{c.empates}</td>
-                          <td className="px-3 py-3 text-center text-sm text-danger font-mono">{c.derrotas}</td>
-                          <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">{c.golsFeitos}</td>
-                          <td className="px-3 py-3 text-center text-sm text-slate-300 font-mono">{c.golsSofridos}</td>
-                          <td
-                            className={`px-3 py-3 text-center text-sm font-mono ${c.saldoGols > 0 ? 'text-success' : c.saldoGols < 0 ? 'text-danger' : 'text-slate-400'}`}
-                          >
-                            {c.saldoGols > 0 ? '+' : ''}
-                            {c.saldoGols}
-                          </td>
-                          <td className="px-5 py-3 text-right text-sm text-slate-400 font-mono">
-                            {c.aproveitamento.toFixed(1)}%
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <ClassificacaoTable
+                    dados={classificacao}
+                    onTimeClick={(timeId) => navigate(`${isAdminContext ? '/dashboard' : ''}/times/${timeId}`)}
+                  />
                 )}
               </Card>
             ))}
@@ -741,7 +559,7 @@ export default function EstatisticasPage() {
               {fases.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center py-10">Nenhuma fase eliminatória disponível</p>
               ) : (
-                <BracketView fases={fases} getLogoUrl={getLogoUrl} />
+                <BracketView fases={fases} />
               )}
             </Card>
           )}

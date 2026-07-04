@@ -1,0 +1,1 @@
+npx --prefix statezone-frontend lint-staged --config .lintstagedrc.json

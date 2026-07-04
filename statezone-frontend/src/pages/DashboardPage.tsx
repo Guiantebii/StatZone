@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Trophy, Shield, Users, Calendar, Plus, ArrowRight, Medal } from 'lucide-react';
 import api from '../api/client';
@@ -12,6 +12,7 @@ import { ARTILHARIA_TOP } from '../constants/pagination';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
 import { isLiveStatus, isFinishedStatus } from '../constants/status';
+import { usePolling } from '../hooks/usePolling';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -62,25 +63,22 @@ export default function DashboardPage() {
     load();
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const res = await api.get('/partidas');
-        const todas: Partida[] = res.data;
-        setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
-        setRecentes(
-          todas
-            .filter((p) => isFinishedStatus(p.status))
-            .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
-            .slice(0, 5),
-        );
-      } catch (err) {
-        const logger = await import('../utils/logger');
-        logger.default.error('Erro ao atualizar partidas ao vivo', err);
-      }
-    }, 15000);
-    return () => clearInterval(interval);
+  const pollPartidas = useCallback(() => {
+    api.get('/partidas').then((res) => {
+      const todas: Partida[] = res.data;
+      setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
+      setRecentes(
+        todas
+          .filter((p) => isFinishedStatus(p.status))
+          .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
+          .slice(0, 5),
+      );
+    }).catch((err) => {
+      import('../utils/logger').then((m) => m.default.error('Erro ao atualizar partidas ao vivo', err));
+    });
   }, []);
+
+  usePolling(pollPartidas, 15000);
 
   if (loading)
     return (
@@ -147,7 +145,6 @@ export default function DashboardPage() {
                     key={p.id}
                     partida={p}
                     onClick={() => navigate(`/dashboard/partidas/${p.id}`)}
-                    getLogoUrl={getLogoUrl}
                   />
                 ))}
               </div>
@@ -175,7 +172,6 @@ export default function DashboardPage() {
                     key={p.id}
                     partida={p}
                     onClick={() => navigate(`/dashboard/partidas/${p.id}`)}
-                    getLogoUrl={getLogoUrl}
                   />
                 ))}
               </div>
@@ -280,11 +276,9 @@ function StatCard({
 function LiveMatchCard({
   partida,
   onClick,
-  getLogoUrl,
 }: {
   partida: Partida;
   onClick: () => void;
-  getLogoUrl: (n: string) => string;
 }) {
   return (
     <button onClick={onClick} className="w-full text-left">
@@ -323,11 +317,9 @@ function LiveMatchCard({
 function RecentMatchRow({
   partida,
   onClick,
-  getLogoUrl,
 }: {
   partida: Partida;
   onClick: () => void;
-  getLogoUrl: (n: string) => string;
 }) {
   const winner =
     partida.golsMandante > partida.golsVisitante

@@ -48,7 +48,12 @@ export default function Layout() {
 
       {sidebarOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            role="presentation"
+            onClick={() => setSidebarOpen(false)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setSidebarOpen(false); }}
+          />
           <aside className="relative w-72 glass-strong p-4 animate-slide-in">
             <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/[0.06]">
               <Logo to="/dashboard" />

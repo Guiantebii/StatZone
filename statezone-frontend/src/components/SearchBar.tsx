@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import api from '../api/client';
@@ -16,15 +16,29 @@ interface SearchBarProps {
   navigatePrefix?: string;
 }
 
+function buildItems(results: SearchResult): Array<{ label: string; path: string }> {
+  const items: Array<{ label: string; path: string }> = [];
+  for (const t of results.times) {
+    items.push({ label: `Time: ${t.nome}`, path: `/times/${t.id}` });
+  }
+  for (const j of results.jogadores) {
+    items.push({ label: `Jogador: ${j.nome}`, path: `/jogadores/${j.id}` });
+  }
+  return items;
+}
+
 export default function SearchBar({ placeholder = 'Buscar...', className = '', navigatePrefix = '' }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult>({ times: [], jogadores: [] });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const navigate = useNavigate();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  const items = buildItems(results);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -45,6 +59,7 @@ export default function SearchBar({ placeholder = 'Buscar...', className = '', n
         const data = { times: timesRes.data, jogadores: jogadoresRes.data };
         if (isCancelled) return;
         setResults(data);
+        setActiveIndex(-1);
       } catch {
         if (!isCancelled) setResults({ times: [], jogadores: [] });
       } finally {
@@ -68,27 +83,52 @@ export default function SearchBar({ placeholder = 'Buscar...', className = '', n
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  function handleSelect(path: string) {
+  const handleSelect = useCallback((path: string) => {
     setQuery('');
     setOpen(false);
+    setActiveIndex(-1);
     navigate(navigatePrefix + path);
-  }
+  }, [navigate, navigatePrefix]);
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') {
       setOpen(false);
+      setActiveIndex(-1);
       inputRef.current?.blur();
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev < items.length - 1 ? prev + 1 : 0));
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev > 0 ? prev - 1 : items.length - 1));
+      return;
+    }
+
+    if (e.key === 'Enter' && activeIndex >= 0 && activeIndex < items.length) {
+      e.preventDefault();
+      handleSelect(items[activeIndex].path);
+      return;
     }
   }
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} className="relative" role="combobox" aria-expanded={open} aria-haspopup="listbox" aria-controls="search-results">
       <div className="relative">
         <input
           ref={inputRef}
           type="text"
+          role="searchbox"
           placeholder={placeholder}
           aria-label={placeholder}
+          aria-autocomplete="list"
+          aria-controls="search-results"
+          aria-activedescendant={activeIndex >= 0 ? `search-item-${activeIndex}` : undefined}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => {
@@ -101,7 +141,11 @@ export default function SearchBar({ placeholder = 'Buscar...', className = '', n
       </div>
 
       {open && (
-        <div className="absolute top-full mt-1 left-0 right-0 z-50 bg-primary border border-white/[0.08] rounded-lg shadow-xl max-h-80 overflow-y-auto">
+        <div
+          id="search-results"
+          role="listbox"
+          className="absolute top-full mt-1 left-0 right-0 z-50 bg-primary border border-white/[0.08] rounded-lg shadow-xl max-h-80 overflow-y-auto"
+        >
           {loading && <div className="px-3 py-2 text-xs text-slate-500 text-center">Buscando...</div>}
 
           {!loading && results.times.length > 0 && (
@@ -109,23 +153,33 @@ export default function SearchBar({ placeholder = 'Buscar...', className = '', n
               <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider bg-white/[0.02]">
                 Times
               </div>
-              {results.times.map((t) => (
-                <button
-                  key={`time-${t.id}`}
-                  onClick={() => handleSelect(`/times/${t.id}`)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-300 hover:bg-white/[0.04] hover:text-white transition-colors text-left"
-                >
-                  {t.escudoUrl ? (
-                    <img src={t.escudoUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[9px] font-bold text-accent">
-                      {t.sigla?.[0] || t.nome[0]}
-                    </div>
-                  )}
-                  <span>{t.nome}</span>
-                  <span className="ml-auto text-[10px] text-slate-600">{t.sigla}</span>
-                </button>
-              ))}
+              {results.times.map((t) => {
+                const itemIndex = items.findIndex((i) => i.path === `/times/${t.id}`);
+                return (
+                  <button
+                    key={`time-${t.id}`}
+                    id={`search-item-${itemIndex}`}
+                    role="option"
+                    aria-selected={activeIndex === itemIndex}
+                    onClick={() => handleSelect(`/times/${t.id}`)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs text-left transition-colors ${
+                      activeIndex === itemIndex
+                        ? 'bg-accent/10 text-white'
+                        : 'text-slate-300 hover:bg-white/[0.04] hover:text-white'
+                    }`}
+                  >
+                    {t.escudoUrl ? (
+                      <img src={t.escudoUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[9px] font-bold text-accent">
+                        {t.sigla?.[0] || t.nome[0]}
+                      </div>
+                    )}
+                    <span>{t.nome}</span>
+                    <span className="ml-auto text-[10px] text-slate-600">{t.sigla}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -134,23 +188,33 @@ export default function SearchBar({ placeholder = 'Buscar...', className = '', n
               <div className="px-3 py-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider bg-white/[0.02] border-t border-white/[0.04]">
                 Jogadores
               </div>
-              {results.jogadores.map((j) => (
-                <button
-                  key={`jogador-${j.id}`}
-                  onClick={() => handleSelect(`/jogadores/${j.id}`)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-300 hover:bg-white/[0.04] hover:text-white transition-colors text-left"
-                >
-                  {j.fotoUrl ? (
-                    <img src={j.fotoUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[9px] font-bold text-accent">
-                      {j.nome[0]}
-                    </div>
-                  )}
-                  <span>{j.nome}</span>
-                  {j.nomeTime && <span className="ml-auto text-[10px] text-slate-600">{j.nomeTime}</span>}
-                </button>
-              ))}
+              {results.jogadores.map((j) => {
+                const itemIndex = items.findIndex((i) => i.path === `/jogadores/${j.id}`);
+                return (
+                  <button
+                    key={`jogador-${j.id}`}
+                    id={`search-item-${itemIndex}`}
+                    role="option"
+                    aria-selected={activeIndex === itemIndex}
+                    onClick={() => handleSelect(`/jogadores/${j.id}`)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs text-left transition-colors ${
+                      activeIndex === itemIndex
+                        ? 'bg-accent/10 text-white'
+                        : 'text-slate-300 hover:bg-white/[0.04] hover:text-white'
+                    }`}
+                  >
+                    {j.fotoUrl ? (
+                      <img src={j.fotoUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center text-[9px] font-bold text-accent">
+                        {j.nome[0]}
+                      </div>
+                    )}
+                    <span>{j.nome}</span>
+                    {j.nomeTime && <span className="ml-auto text-[10px] text-slate-600">{j.nomeTime}</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
 

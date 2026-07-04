@@ -52,7 +52,7 @@ describe('Modal', () => {
   it('fecha ao clicar no backdrop', async () => {
     const user = userEvent.setup();
     renderModal();
-    const backdrop = screen.getByRole('dialog');
+    const backdrop = screen.getByTestId('modal-overlay');
     await user.click(backdrop);
     expect(onClose).toHaveBeenCalledTimes(1);
   });

@@ -13,10 +13,9 @@ const faseLabel: Record<FaseEnum, string> = {
 
 interface BracketViewProps {
   fases: FaseEliminatoria[];
-  getLogoUrl: (nome: string) => string;
 }
 
-export default function BracketView({ fases, getLogoUrl }: BracketViewProps) {
+export default function BracketView({ fases }: BracketViewProps) {
   const sorted = [...fases].sort((a, b) => faseOrder.indexOf(a.fase) - faseOrder.indexOf(b.fase));
   const maxConfrontos = Math.max(...sorted.map((f) => f.confrontos.length), 0);
 
@@ -40,7 +39,7 @@ export default function BracketView({ fases, getLogoUrl }: BracketViewProps) {
                     <div className="absolute right-0 top-1/2 w-3 h-1/2 border-r border-t border-white/[0.08] rounded-tr" />
                   </div>
                 )}
-                <ConfrontoCard confronto={conf} getLogoUrl={getLogoUrl} />
+                <ConfrontoCard confronto={conf} />
               </div>
             ))}
           </div>

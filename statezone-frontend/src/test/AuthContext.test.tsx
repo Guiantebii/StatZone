@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 
-// Mock api client
 const mockPost = vi.fn();
 const mockGet = vi.fn();
 
@@ -40,7 +39,7 @@ describe('AuthContext', () => {
   });
 
   it('starts loading while checking auth', () => {
-    mockGet.mockReturnValue(new Promise(() => {})); // never resolves
+    mockGet.mockReturnValue(new Promise(() => {}));
     render(
       <AuthProvider>
         <TestComponent />
@@ -64,6 +63,20 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('email').textContent).toBe('admin@test.com');
   });
 
+  it('sets isAdmin=false when role is USER', async () => {
+    mockGet.mockResolvedValue({ data: { email: 'user@test.com', role: 'USER' } });
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('loading').textContent).toBe('false');
+    });
+    expect(screen.getByTestId('authenticated').textContent).toBe('true');
+    expect(screen.getByTestId('admin').textContent).toBe('false');
+  });
+
   it('sets unauthenticated when /api/auth/me fails', async () => {
     mockGet.mockRejectedValue(new Error('Unauthorized'));
     render(
@@ -76,15 +89,12 @@ describe('AuthContext', () => {
     });
     expect(screen.getByTestId('authenticated').textContent).toBe('false');
     expect(screen.getByTestId('admin').textContent).toBe('false');
+    expect(screen.getByTestId('email').textContent).toBe('null');
   });
 
-  it('login sets token and auth state', async () => {
+  it('login sets auth state with ADMIN role', async () => {
     mockGet.mockResolvedValue({ data: { email: 'test@test.com', role: 'ADMIN' } });
-    mockPost.mockResolvedValue({
-      data: {
-        token: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0QHRlc3QuY29tIiwicm9sZXMiOiJST0xFX0FETUlOIn0.test',
-      },
-    });
+    mockPost.mockResolvedValue({ data: { token: 'fake-token' } });
 
     const user = userEvent.setup();
 
@@ -94,7 +104,6 @@ describe('AuthContext', () => {
       </AuthProvider>,
     );
 
-    // Wait for initial auth check
     await waitFor(() => {
       expect(screen.getByTestId('loading').textContent).toBe('false');
     });
@@ -106,5 +115,64 @@ describe('AuthContext', () => {
     });
     expect(screen.getByTestId('admin').textContent).toBe('true');
     expect(screen.getByTestId('email').textContent).toBe('test@test.com');
+  });
+
+  it('login sets isAdmin=false for USER role', async () => {
+    mockGet.mockResolvedValueOnce({ data: { email: 'user@test.com', role: 'ADMIN' } });
+    mockGet.mockResolvedValueOnce({ data: { email: 'user@test.com', role: 'USER' } });
+    mockPost.mockResolvedValue({ data: { token: 'fake-token' } });
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading').textContent).toBe('false');
+    });
+
+    await user.click(screen.getByText('Login'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('admin').textContent).toBe('false');
+    });
+    expect(screen.getByTestId('authenticated').textContent).toBe('true');
+    expect(screen.getByTestId('email').textContent).toBe('user@test.com');
+  });
+
+  it('logout clears auth state', async () => {
+    mockGet.mockResolvedValue({ data: { email: 'admin@test.com', role: 'ADMIN' } });
+    mockPost.mockResolvedValue({});
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading').textContent).toBe('false');
+    });
+
+    await user.click(screen.getByText('Logout'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('authenticated').textContent).toBe('false');
+    });
+    expect(screen.getByTestId('admin').textContent).toBe('false');
+    expect(screen.getByTestId('email').textContent).toBe('null');
+  });
+});
+
+describe('useAuth', () => {
+  it('throws error when used outside AuthProvider', () => {
+    expect(() => render(<TestComponent />)).toThrow(
+      'useAuth must be used within AuthProvider',
+    );
   });
 });
