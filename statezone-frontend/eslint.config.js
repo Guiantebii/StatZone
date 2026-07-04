@@ -17,6 +17,7 @@ export default defineConfig([
     ],
     rules: {
       'no-empty': ['error', { allowEmptyCatch: true }],
+      'react-refresh/only-export-components': ['error', { allowConstantExport: true }],
     },
     languageOptions: {
       globals: globals.browser,

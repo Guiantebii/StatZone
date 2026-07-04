@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type InternalAxiosRequestConfig } from 'axios';
 
 const baseURL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8080' : null);
 
@@ -15,7 +15,7 @@ const api = axios.create({
 });
 
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (val: unknown) => void; reject: (err: unknown) => void; config: any }> = [];
+let failedQueue: Array<{ resolve: (val: unknown) => void; reject: (err: unknown) => void; config: InternalAxiosRequestConfig }> = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
