@@ -38,16 +38,13 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          msg=""
-          add_line() { msg="${msg}%0A$1"; }
-          add_line "=== Test Summary ==="
-          add_line "$(grep -E "Tests run:" test-output.log | tail -1 || echo '(no summary)')"
-          add_line "=== Context load error ==="
+          msg="=== Test Summary ===%0A"
+          msg="${msg}$(grep -E 'Tests run:' test-output.log | tail -1 || echo '(no summary)')%0A"
+          msg="${msg}=== Context load error ===%0A"
           lineno=$(grep -n "AuthFlowIntegrationTest" test-output.log | head -1 | cut -d: -f1)
           if [ -n "$lineno" ]; then
-            sed -n "${lineno},$((lineno + 120))p" test-output.log | while IFS= read -r line; do
-              add_line "$line"
-            done
+            context=$(sed -n "${lineno},$((lineno + 120))p" test-output.log)
+            msg="${msg}${context}%0A"
           fi
           echo "::error::$msg"
 
