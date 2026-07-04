@@ -33,13 +33,12 @@ jobs:
       - name: Test
         shell: bash
         run: |
+          set +e
           mvn test -e 2>&1 | tee test-output.log
-          rc=$?
+          rc=${PIPESTATUS[0]}
           if [ $rc -ne 0 ]; then
             echo "::error::$(grep -E 'Tests run:' test-output.log | tail -1 || echo '(no summary)')"
-            echo "::error::================"
-            grep -n "AuthFlowIntegrationTest" test-output.log | head -3 || true
-            grep -A 60 "FAILURE\|Placeholder\|Caused by\|Context could not be found" test-output.log | tail -40 || true
+            echo "::error::$(grep -m 1 -B 2 -A 100 'AuthFlowIntegrationTest' test-output.log || echo '(no error context)')"
           fi
           exit $rc
 
