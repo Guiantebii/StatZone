@@ -10,18 +10,60 @@ const api = axios.create({
   baseURL,
   timeout: 15000,
   withCredentials: true, // rely on httpOnly cookie set by server
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
 });
+
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (val: unknown) => void; reject: (err: unknown) => void; config: any }> = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+};
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     if (
       error.response?.status === 401 &&
-      !error.config.url?.includes('/api/auth/') &&
+      !originalRequest.url?.includes('/api/auth/') &&
       !window.location.pathname.startsWith('/login')
     ) {
-      window.location.href = '/login';
+      if (originalRequest._retry) {
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject, config: originalRequest });
+        })
+          .then(() => api(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await api.post('/api/auth/refresh', null, { withCredentials: true });
+        processQueue(null, null);
+        return api(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        window.location.href = '/login';
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
     return Promise.reject(error);
   },
 );

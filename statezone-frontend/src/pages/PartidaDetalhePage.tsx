@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   ArrowLeft,
+  Calendar,
   Clock,
   MapPin,
   User,
@@ -140,8 +141,7 @@ export default function PartidaDetalhePage() {
 
   useEffect(() => {
     if (!id) return;
-    const p = partida;
-    if (!p || !isLiveStatus(p.status)) return;
+    if (!partida || !isLiveStatus(partida.status)) return;
     let timeoutId: ReturnType<typeof setTimeout>;
     let isCancelled = false;
     const poll = async () => {
@@ -289,7 +289,7 @@ export default function PartidaDetalhePage() {
               </div>
             ) : (
               <div className="text-center">
-                <CalendarIcon className="text-slate-500 mx-auto mb-1" size={20} />
+                <Calendar className="text-slate-500 mx-auto mb-1" size={20} />
                 <span className="text-xs text-slate-500">{formatDate(partida.dataPartida)}</span>
               </div>
             )}
@@ -637,21 +637,4 @@ function StatBar({ label, home, away, suffix = '' }: { label: string; home: numb
   );
 }
 
-function CalendarIcon({ className, size }: { className?: string; size?: number }) {
-  return (
-    <svg
-      className={className}
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  );
-}
+

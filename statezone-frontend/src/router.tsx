@@ -1,9 +1,9 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createBrowserRouter } from 'react-router-dom';
 import React, { lazy, Suspense, type ComponentType } from 'react';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
@@ -41,7 +41,7 @@ function LazyPage({ Component }: { Component: React.LazyExoticComponent<Componen
           <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-6">
             <h2 className="text-lg font-bold text-slate-100 mb-2">Erro ao carregar página</h2>
             <p className="text-sm text-slate-500 mb-4">
-              N&atilde;o foi poss&iacute;vel carregar este m&oacute;dulo. Tente recarregar a p&aacute;gina.
+              Não foi possível carregar este módulo. Tente recarregar a página.
             </p>
             <button
               onClick={() => window.location.reload()}
@@ -56,22 +56,6 @@ function LazyPage({ Component }: { Component: React.LazyExoticComponent<Componen
       </ErrorBoundary>
     </Suspense>
   );
-}
-
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode; fallback: React.ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode; fallback: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-  render() {
-    return this.state.hasError ? this.props.fallback : this.props.children;
-  }
 }
 
 export const router = createBrowserRouter([

@@ -78,6 +78,7 @@ public class Partida {
     @Enumerated(EnumType.STRING)
     @Column(name = "formacao_visitante")
     private Formacao formacaoVisitante;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fase_eliminatoria_id")
     private FaseEliminatoria faseEliminatoria;

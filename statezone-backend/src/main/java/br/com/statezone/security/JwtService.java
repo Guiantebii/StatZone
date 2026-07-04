@@ -27,8 +27,15 @@ public class JwtService {
     @Value("${jwt.expiration-ms}")
     private long expirationMs;
 
+    @Value("${jwt.refresh-expiration-ms:1209600000}")
+    private long refreshExpirationMs; // default 14 days
+
     public long getExpirationMs() {
         return expirationMs;
+    }
+
+    public long getRefreshExpirationMs() {
+        return refreshExpirationMs;
     }
 
     private SecretKey getSigningKey() {
@@ -45,12 +52,48 @@ public class JwtService {
                 .collect(Collectors.joining(","));
 
         return Jwts.builder()
+                .setId(java.util.UUID.randomUUID().toString())
                 .subject(userDetails.getUsername())
                 .claim("roles", roles)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String gerarRefreshToken(UserDetails userDetails) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + refreshExpirationMs);
+
+        // include jti so refresh tokens can be tracked/revoked server-side
+        String jti = java.util.UUID.randomUUID().toString();
+
+        return Jwts.builder()
+                .setId(jti)
+                .subject(userDetails.getUsername())
+                .issuedAt(now)
+                .setExpiration(expiry)
+                .claim("type", "refresh")
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String extrairId(String token) {
+        try {
+            return getClaims(token).getId();
+        } catch (Exception e) {
+            log.warn("Falha ao extrair jti do token: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    public boolean isRefreshToken(String token) {
+        try {
+            Object t = getClaims(token).get("type");
+            return "refresh".equals(String.valueOf(t));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public String extrairEmail(String token) {
