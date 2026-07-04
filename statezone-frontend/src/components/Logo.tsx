@@ -13,9 +13,7 @@ export default function Logo({ collapse, to = '/' }: LogoProps) {
       </div>
       {!collapse && (
         <div className="flex flex-col">
-          <span className="text-white font-bold text-lg tracking-tight leading-none">
-            StateZone
-          </span>
+          <span className="text-white font-bold text-lg tracking-tight leading-none">StateZone</span>
           <span className="text-[10px] text-slate-600 font-medium tracking-wider uppercase leading-none mt-0.5">
             Sports Analytics
           </span>

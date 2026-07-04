@@ -1,9 +1,16 @@
 const POSICAO_LABEL: Record<string, string> = {
-  GOLEIRO: 'Goleiro', ZAGUEIRO: 'Zagueiro', LATERAL_DIREITO: 'Lateral Direito',
-  LATERAL_ESQUERDO: 'Lateral Esquerdo', VOLANTE: 'Volante', MEIO_CAMPO: 'Meio-Campo',
-  MEIO_ESQUERDO: 'Meio Esquerdo', MEIO_DIREITO: 'Meio Direito',
-  PONTA_DIREITA: 'Ponta Direita', PONTA_ESQUERDA: 'Ponta Esquerda',
-  MEIA_ATACANTE: 'Meia-Atacante', CENTROAVANTE: 'Centroavante',
+  GOLEIRO: 'Goleiro',
+  ZAGUEIRO: 'Zagueiro',
+  LATERAL_DIREITO: 'Lateral Direito',
+  LATERAL_ESQUERDO: 'Lateral Esquerdo',
+  VOLANTE: 'Volante',
+  MEIO_CAMPO: 'Meio-Campo',
+  MEIO_ESQUERDO: 'Meio Esquerdo',
+  MEIO_DIREITO: 'Meio Direito',
+  PONTA_DIREITA: 'Ponta Direita',
+  PONTA_ESQUERDA: 'Ponta Esquerda',
+  MEIA_ATACANTE: 'Meia-Atacante',
+  CENTROAVANTE: 'Centroavante',
 };
 
 export function posicaoLabel(posicao: string): string {

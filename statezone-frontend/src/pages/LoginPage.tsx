@@ -38,14 +38,15 @@ export default function LoginPage() {
 
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-slate-100 tracking-tight">Bem-vindo de volta</h2>
-            <p className="text-sm text-slate-500 mt-1.5">
-              Entre com suas credenciais para continuar.
-            </p>
+            <p className="text-sm text-slate-500 mt-1.5">Entre com suas credenciais para continuar.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label
+                htmlFor="email"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
                 Email
               </label>
               <div className="relative">
@@ -64,7 +65,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="senha" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label
+                htmlFor="senha"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
                 Senha
               </label>
               <div className="relative">
@@ -120,7 +124,8 @@ export default function LoginPage() {
             Sua plataforma de estatísticas e gestão de futebol
           </h2>
           <p className="text-sm text-slate-400 max-w-md leading-relaxed">
-            Cadastre campeonatos, times e jogadores. Gerencie partidas ao vivo, classificação, artilharia e fases eliminatórias — tudo em tempo real.
+            Cadastre campeonatos, times e jogadores. Gerencie partidas ao vivo, classificação, artilharia e fases
+            eliminatórias — tudo em tempo real.
           </p>
 
           <div className="mt-12 space-y-5">
@@ -130,7 +135,9 @@ export default function LoginPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-200">Estatísticas completas</p>
-                <p className="text-xs text-slate-500 mt-0.5">Classificação, artilharia, assistências, cartões e muito mais.</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Classificação, artilharia, assistências, cartões e muito mais.
+                </p>
               </div>
             </div>
 
@@ -140,7 +147,9 @@ export default function LoginPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-200">Atualizações ao vivo</p>
-                <p className="text-xs text-slate-500 mt-0.5">Acompanhe eventos de partida em tempo real via WebSocket.</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Acompanhe eventos de partida em tempo real via WebSocket.
+                </p>
               </div>
             </div>
 
@@ -150,7 +159,9 @@ export default function LoginPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-200">Mata-mata automático</p>
-                <p className="text-xs text-slate-500 mt-0.5">Bracket engine com propagação de vencedores e disputa de pênaltis.</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Bracket engine com propagação de vencedores e disputa de pênaltis.
+                </p>
               </div>
             </div>
           </div>
@@ -158,11 +169,17 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-4 text-xs text-slate-600 mb-3">
-            <a href="/" className="hover:text-slate-400 transition-colors">Termos de uso</a>
+            <a href="/" className="hover:text-slate-400 transition-colors">
+              Termos de uso
+            </a>
             <span className="text-slate-700">·</span>
-            <a href="/" className="hover:text-slate-400 transition-colors">Privacidade</a>
+            <a href="/" className="hover:text-slate-400 transition-colors">
+              Privacidade
+            </a>
             <span className="text-slate-700">·</span>
-            <a href="/" className="hover:text-slate-400 transition-colors">Suporte</a>
+            <a href="/" className="hover:text-slate-400 transition-colors">
+              Suporte
+            </a>
           </div>
           <p className="text-xs text-slate-600">
             &copy; {new Date().getFullYear()} StateZone. Todos os direitos reservados.

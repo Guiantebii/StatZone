@@ -12,8 +12,9 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const senhaErro = senha.length > 0 && (
-    senha.length < 8
+  const senhaErro =
+    senha.length > 0 &&
+    (senha.length < 8
       ? 'Mínimo 8 caracteres'
       : !/[A-Z]/.test(senha)
         ? 'Deve conter uma letra maiúscula'
@@ -23,8 +24,7 @@ export default function RegisterPage() {
             ? 'Deve conter um número'
             : !/[^A-Za-z0-9]/.test(senha)
               ? 'Deve conter um caractere especial'
-              : ''
-  );
+              : '');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,14 +61,15 @@ export default function RegisterPage() {
 
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-slate-100 tracking-tight">Crie sua conta</h2>
-            <p className="text-sm text-slate-500 mt-1.5">
-              Comece a gerenciar seus campeonatos de futebol.
-            </p>
+            <p className="text-sm text-slate-500 mt-1.5">Comece a gerenciar seus campeonatos de futebol.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label
+                htmlFor="email"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
                 Email
               </label>
               <div className="relative">
@@ -87,7 +88,10 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="senha" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label
+                htmlFor="senha"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
                 Senha
               </label>
               <div className="relative">
@@ -103,13 +107,14 @@ export default function RegisterPage() {
                   placeholder="Mínimo 8 caracteres, maiúscula, número e caractere especial"
                 />
               </div>
-              {senhaErro && (
-                <p className="text-xs text-danger mt-1.5">{senhaErro}</p>
-              )}
+              {senhaErro && <p className="text-xs text-danger mt-1.5">{senhaErro}</p>}
             </div>
 
             <div>
-              <label htmlFor="confirmarSenha" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label
+                htmlFor="confirmarSenha"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
                 Confirmar Senha
               </label>
               <div className="relative">
@@ -166,7 +171,8 @@ export default function RegisterPage() {
             Comece a usar gratuitamente
           </h2>
           <p className="text-sm text-slate-400 max-w-md leading-relaxed">
-            Registre-se agora e tenha acesso a todas as funcionalidades: cadastro de campeonatos, times, jogadores, partidas ao vivo, estatísticas e muito mais.
+            Registre-se agora e tenha acesso a todas as funcionalidades: cadastro de campeonatos, times, jogadores,
+            partidas ao vivo, estatísticas e muito mais.
           </p>
 
           <div className="mt-12 space-y-5">
@@ -196,7 +202,9 @@ export default function RegisterPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-200">Acesso total</p>
-                <p className="text-xs text-slate-500 mt-0.5">Todas as funcionalidades liberadas para usuários registrados.</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Todas as funcionalidades liberadas para usuários registrados.
+                </p>
               </div>
             </div>
           </div>
@@ -204,11 +212,17 @@ export default function RegisterPage() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-4 text-xs text-slate-600 mb-3">
-            <a href="/" className="hover:text-slate-400 transition-colors">Termos de uso</a>
+            <a href="/" className="hover:text-slate-400 transition-colors">
+              Termos de uso
+            </a>
             <span className="text-slate-700">·</span>
-            <a href="/" className="hover:text-slate-400 transition-colors">Privacidade</a>
+            <a href="/" className="hover:text-slate-400 transition-colors">
+              Privacidade
+            </a>
             <span className="text-slate-700">·</span>
-            <a href="/" className="hover:text-slate-400 transition-colors">Suporte</a>
+            <a href="/" className="hover:text-slate-400 transition-colors">
+              Suporte
+            </a>
           </div>
           <p className="text-xs text-slate-600">
             &copy; {new Date().getFullYear()} StateZone. Todos os direitos reservados.

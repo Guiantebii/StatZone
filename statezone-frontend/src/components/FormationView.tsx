@@ -40,7 +40,7 @@ function buildFormacaoRows(titulares: EscalacaoPartida[], formacao: Formacao) {
       const idx = posCount[slot.posicao] || 0;
       posCount[slot.posicao] = idx + 1;
       return titulares.filter((t) => t.posicao === slot.posicao)[idx] || null;
-    })
+    }),
   );
 
   const rows: { nomeJogador: string; numeroCamisa: number }[][] = [];
@@ -59,7 +59,10 @@ function buildFormacaoRows(titulares: EscalacaoPartida[], formacao: Formacao) {
 export default function FormationView({ titulares, formacao }: FormationViewProps) {
   const rawRows = formacao ? buildFormacaoRows(titulares, formacao) : buildDefaultRows(titulares);
   const formacaoLabel = formacao ? FORMACOES[formacao]?.label : null;
-  const formacaoCalculada = rawRows.slice(1).map((r) => r.length).join('-');
+  const formacaoCalculada = rawRows
+    .slice(1)
+    .map((r) => r.length)
+    .join('-');
 
   const displayRows = [...rawRows].reverse();
 
@@ -72,15 +75,12 @@ export default function FormationView({ titulares, formacao }: FormationViewProp
       </span>
 
       <div className="relative rounded-xl overflow-hidden aspect-[3/4] max-h-[400px] w-full max-w-[260px] mx-auto">
-
         <div className="absolute inset-0 bg-gradient-to-b from-green-700 via-green-600 to-green-700">
-
           <div className="absolute inset-x-[10%] top-0 bottom-0 border-x border-white/10" />
           <div className="absolute inset-y-[15%] left-0 right-0 border-y border-white/10" />
           <div className="absolute left-1/2 top-0 bottom-0 border-l border-white/10" />
           <div className="absolute left-1/2 top-[15%] -translate-x-1/2 w-16 aspect-square rounded-full border border-white/10" />
         </div>
-
 
         <div className="absolute inset-0 p-3">
           {displayRows.map((row, idx) => {

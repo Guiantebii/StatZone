@@ -4,11 +4,7 @@ interface SkeletonProps {
 }
 
 function SkeletonBlock({ className = '' }: { className?: string }) {
-  return (
-    <div
-      className={`rounded-lg animate-shimmer ${className}`}
-    />
-  );
+  return <div className={`rounded-lg animate-shimmer ${className}`} />;
 }
 
 export function SkeletonCard({ className = '' }: SkeletonProps) {

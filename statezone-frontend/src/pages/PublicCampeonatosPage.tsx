@@ -12,16 +12,21 @@ export default function PublicCampeonatosPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/campeonatos')
+    api
+      .get('/campeonatos')
       .then((r) => setCampeonatos(r.data))
-      .catch(() => { toast.error('Erro ao carregar campeonatos'); })
+      .catch(() => {
+        toast.error('Erro ao carregar campeonatos');
+      })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
     );
   }
@@ -48,7 +53,9 @@ export default function PublicCampeonatosPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-200 truncate">{c.nome}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{c.pais} · {c.temporada}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {c.pais} · {c.temporada}
+                  </p>
                 </div>
                 <ChevronRight size={16} className="text-slate-600 shrink-0" />
               </div>

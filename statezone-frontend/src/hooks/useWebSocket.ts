@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { getToken } from '../api/tokenManager';
+import logger from '../utils/logger';
 
 const SOCKET_URL = import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'http://localhost:8080/ws' : null);
 
@@ -15,10 +15,9 @@ interface UseWebSocketOptions {
 }
 
 function createClient(): Client {
-  const token = getToken();
   return new Client({
     webSocketFactory: () => new SockJS(SOCKET_URL),
-    connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+    // Cookie-based authentication will be sent by the browser automatically.
     reconnectDelay: 5000,
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,
@@ -42,8 +41,25 @@ export function useWebSocket(options?: UseWebSocketOptions) {
     client.activate();
     clientRef.current = client;
 
+    const onTokenChange = () => {
+      try {
+        client.deactivate();
+      } catch {}
+      const newClient = createClient();
+      newClient.onConnect = client.onConnect;
+      newClient.onDisconnect = client.onDisconnect;
+      newClient.activate();
+      clientRef.current = newClient;
+      logger.info('WebSocket client reconnected after token change');
+    };
+
+    window.addEventListener('auth:token-changed', onTokenChange);
+
     return () => {
-      client.deactivate();
+      try {
+        client.deactivate();
+      } catch {}
+      window.removeEventListener('auth:token-changed', onTokenChange);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -79,7 +95,7 @@ export function usePartidaWebSocket(
   useEffect(() => {
     if (!partidaId) return;
 
-    const client = createClient();
+    let client = createClient();
 
     client.onConnect = () => {
       client.subscribe(`/topic/partidas/${partidaId}`, (message: IMessage) => {
@@ -87,7 +103,7 @@ export function usePartidaWebSocket(
           const data = JSON.parse(message.body);
           updateRef.current(data);
         } catch (err) {
-          console.warn('WebSocket: erro ao parsear atualização da partida', err);
+          logger.warn('WebSocket: erro ao parsear atualização da partida', err);
         }
       });
 
@@ -96,15 +112,29 @@ export function usePartidaWebSocket(
           const data = JSON.parse(message.body);
           eventRef.current?.(data);
         } catch (err) {
-          console.warn('WebSocket: erro ao parsear evento da partida', err);
+          logger.warn('WebSocket: erro ao parsear evento da partida', err);
         }
       });
     };
 
     client.activate();
 
+    const onTokenChange = () => {
+      try {
+        client.deactivate();
+      } catch {}
+      client = createClient();
+      client.activate();
+      logger.info('Partida WebSocket reconnected after token change');
+    };
+
+    window.addEventListener('auth:token-changed', onTokenChange);
+
     return () => {
-      client.deactivate();
+      try {
+        client.deactivate();
+      } catch {}
+      window.removeEventListener('auth:token-changed', onTokenChange);
     };
   }, [partidaId]);
 }

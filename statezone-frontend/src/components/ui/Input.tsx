@@ -1,22 +1,14 @@
-interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   leftIcon?: React.ReactNode;
 }
 
-export default function Input({
-  className = '',
-  leftIcon,
-  ...props
-}: InputProps) {
+export default function Input({ className = '', leftIcon, ...props }: InputProps) {
   // If no aria-label or id is provided, generate one from placeholder
-  const inputId = props.id || (props.placeholder ? `input-${props.placeholder.replace(/\s+/g, '-').toLowerCase()}` : undefined);
+  const inputId =
+    props.id || (props.placeholder ? `input-${props.placeholder.replace(/\s+/g, '-').toLowerCase()}` : undefined);
   return (
     <div className="relative">
-      {leftIcon && (
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
-          {leftIcon}
-        </div>
-      )}
+      {leftIcon && <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">{leftIcon}</div>}
       <input
         id={inputId}
         {...props}

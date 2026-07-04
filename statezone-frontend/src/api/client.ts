@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getToken } from './tokenManager';
 
 const baseURL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8080' : null);
 
@@ -10,15 +9,7 @@ if (!baseURL) {
 const api = axios.create({
   baseURL,
   timeout: 15000,
-  withCredentials: true,
-});
-
-api.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true, // rely on httpOnly cookie set by server
 });
 
 api.interceptors.response.use(
@@ -32,7 +23,7 @@ api.interceptors.response.use(
       window.location.href = '/login';
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

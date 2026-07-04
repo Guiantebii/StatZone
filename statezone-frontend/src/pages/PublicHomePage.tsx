@@ -24,10 +24,7 @@ export default function PublicHomePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [partidasRes, campRes] = await Promise.all([
-          api.get('/partidas'),
-          api.get('/campeonatos'),
-        ]);
+        const [partidasRes, campRes] = await Promise.all([api.get('/partidas'), api.get('/campeonatos')]);
 
         const todas: Partida[] = partidasRes.data;
 
@@ -48,7 +45,9 @@ export default function PublicHomePage() {
         setCampeonatos(campRes.data);
 
         if (campRes.data.length > 0) {
-          const artRes = await api.get(`/campeonatos/${campRes.data[0].id}/artilharia?pagina=0&tamanho=${ARTILHARIA_TOP}`);
+          const artRes = await api.get(
+            `/campeonatos/${campRes.data[0].id}/artilharia?pagina=0&tamanho=${ARTILHARIA_TOP}`,
+          );
           setArtilharia(artRes.data);
         }
       } catch {
@@ -80,7 +79,9 @@ export default function PublicHomePage() {
       <div className="space-y-8">
         <div className="h-64 rounded-2xl animate-shimmer" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       </div>
     );
@@ -88,7 +89,6 @@ export default function PublicHomePage() {
 
   return (
     <div className="space-y-8 animate-fade-in-up">
-
       {aoVivo.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-4">
@@ -98,11 +98,7 @@ export default function PublicHomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {aoVivo.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => navigate(`/partidas/${p.id}`)}
-                className="group text-left w-full"
-              >
+              <button key={p.id} onClick={() => navigate(`/partidas/${p.id}`)} className="group text-left w-full">
                 <Card hover className="p-5 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-success via-success to-transparent animate-pulse" />
                   <div className="flex items-center gap-2 mb-3 text-xs text-slate-500">
@@ -141,7 +137,6 @@ export default function PublicHomePage() {
         </section>
       )}
 
-
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-slate-100 uppercase tracking-wider">Campeonatos</h2>
@@ -151,29 +146,27 @@ export default function PublicHomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {campeonatos.map((c) => (
-              <Link key={c.id} to={`/campeonatos/${c.id}`}>
+            <Link key={c.id} to={`/campeonatos/${c.id}`}>
               <Card hover className="p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center text-accent font-bold text-lg">
                   {c.nome.charAt(0)}
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-200 truncate">{c.nome}</p>
-                  <p className="text-[10px] text-slate-500">{c.pais} · {c.temporada}</p>
+                  <p className="text-[10px] text-slate-500">
+                    {c.pais} · {c.temporada}
+                  </p>
                 </div>
               </Card>
             </Link>
           ))}
           {campeonatos.length === 0 && (
-            <div className="col-span-full text-center py-12 text-sm text-slate-500">
-              Nenhum campeonato cadastrado
-            </div>
+            <div className="col-span-full text-center py-12 text-sm text-slate-500">Nenhum campeonato cadastrado</div>
           )}
         </div>
       </section>
 
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-100 uppercase tracking-wider">Próximas partidas</h2>
@@ -190,24 +183,30 @@ export default function PublicHomePage() {
           ) : (
             <div className="space-y-2">
               {proximas.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => navigate(`/partidas/${p.id}`)}
-                  className="w-full text-left"
-                >
+                <button key={p.id} onClick={() => navigate(`/partidas/${p.id}`)} className="w-full text-left">
                   <Card hover className="p-3">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2 w-10 text-[10px] text-slate-500">
                         <Clock size={10} />
-                        <span>{new Date(p.dataPartida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>
+                          {new Date(p.dataPartida).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </div>
                       <div className="flex-1 flex items-center gap-2 justify-end">
                         <span className="text-xs font-medium text-slate-300">{p.timeMandanteNome}</span>
-                        <img src={getLogoUrl(p.timeMandanteNome)} alt={p.timeMandanteNome} className="w-6 h-6 rounded-full bg-white/5" />
+                        <img
+                          src={getLogoUrl(p.timeMandanteNome)}
+                          alt={p.timeMandanteNome}
+                          className="w-6 h-6 rounded-full bg-white/5"
+                        />
                       </div>
                       <span className="text-xs font-mono text-slate-600 w-8 text-center">vs</span>
                       <div className="flex-1 flex items-center gap-2">
-                        <img src={getLogoUrl(p.timeVisitanteNome)} alt={p.timeVisitanteNome} className="w-6 h-6 rounded-full bg-white/5" />
+                        <img
+                          src={getLogoUrl(p.timeVisitanteNome)}
+                          alt={p.timeVisitanteNome}
+                          className="w-6 h-6 rounded-full bg-white/5"
+                        />
                         <span className="text-xs font-medium text-slate-300">{p.timeVisitanteNome}</span>
                       </div>
                       <span className="text-[10px] text-slate-600 w-16 text-right">{p.rodada}ª rod.</span>
@@ -218,7 +217,6 @@ export default function PublicHomePage() {
             </div>
           )}
 
-
           {recentes.length > 0 && (
             <div>
               <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-3">Últimos resultados</h3>
@@ -228,17 +226,29 @@ export default function PublicHomePage() {
                     <Card className="p-2.5">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 flex items-center gap-2 justify-end">
-                          <span className={`text-xs ${p.golsMandante > p.golsVisitante ? 'text-accent font-bold' : 'text-slate-400'}`}>
+                          <span
+                            className={`text-xs ${p.golsMandante > p.golsVisitante ? 'text-accent font-bold' : 'text-slate-400'}`}
+                          >
                             {p.timeMandanteNome}
                           </span>
-                          <img src={getLogoUrl(p.timeMandanteNome)} alt={p.timeMandanteNome} className="w-5 h-5 rounded-full bg-white/5" />
+                          <img
+                            src={getLogoUrl(p.timeMandanteNome)}
+                            alt={p.timeMandanteNome}
+                            className="w-5 h-5 rounded-full bg-white/5"
+                          />
                         </div>
                         <span className="text-sm font-bold font-mono text-slate-100">
                           {p.golsMandante} - {p.golsVisitante}
                         </span>
                         <div className="flex-1 flex items-center gap-2">
-                          <img src={getLogoUrl(p.timeVisitanteNome)} alt={p.timeVisitanteNome} className="w-5 h-5 rounded-full bg-white/5" />
-                          <span className={`text-xs ${p.golsVisitante > p.golsMandante ? 'text-accent font-bold' : 'text-slate-400'}`}>
+                          <img
+                            src={getLogoUrl(p.timeVisitanteNome)}
+                            alt={p.timeVisitanteNome}
+                            className="w-5 h-5 rounded-full bg-white/5"
+                          />
+                          <span
+                            className={`text-xs ${p.golsVisitante > p.golsMandante ? 'text-accent font-bold' : 'text-slate-400'}`}
+                          >
                             {p.timeVisitanteNome}
                           </span>
                         </div>
@@ -251,9 +261,7 @@ export default function PublicHomePage() {
           )}
         </div>
 
-
         <div className="space-y-4">
-
           {artilharia.length > 0 && (
             <Card className="overflow-hidden">
               <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/[0.04]">
@@ -262,8 +270,14 @@ export default function PublicHomePage() {
               </div>
               <div className="divide-y divide-white/[0.03]">
                 {artilharia.map((a) => (
-                  <Link key={a.jogadorId} to={`/jogadores/${a.jogadorId}`} className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors">
-                    <span className={`text-xs font-bold font-mono w-5 ${a.posicao <= 3 ? 'text-accent' : 'text-slate-600'}`}>
+                  <Link
+                    key={a.jogadorId}
+                    to={`/jogadores/${a.jogadorId}`}
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors"
+                  >
+                    <span
+                      className={`text-xs font-bold font-mono w-5 ${a.posicao <= 3 ? 'text-accent' : 'text-slate-600'}`}
+                    >
                       {a.posicao}
                     </span>
                     <img
@@ -282,22 +296,29 @@ export default function PublicHomePage() {
             </Card>
           )}
 
-
           <Card className="p-4">
             <h3 className="text-sm font-semibold text-slate-200 mb-3">Navegar</h3>
             <div className="space-y-1">
-              <Link to="/partidas" className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors">
+              <Link
+                to="/partidas"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
+              >
                 <Calendar size={14} /> Todas as partidas <ChevronRight size={12} className="ml-auto text-slate-600" />
               </Link>
-              <Link to="/campeonatos" className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors">
+              <Link
+                to="/campeonatos"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
+              >
                 <Trophy size={14} /> Campeonatos <ChevronRight size={12} className="ml-auto text-slate-600" />
               </Link>
-              <Link to="/times" className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors">
+              <Link
+                to="/times"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-colors"
+              >
                 <Users size={14} /> Times <ChevronRight size={12} className="ml-auto text-slate-600" />
               </Link>
             </div>
           </Card>
-
 
           <Card className="p-4">
             <div className="grid grid-cols-2 gap-3 text-center">

@@ -44,7 +44,8 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
 
   useEffect(() => {
     let isMounted = true;
-    api.get<EscalacaoPartidaList>(`/partidas/${partidaId}/escalacao`)
+    api
+      .get<EscalacaoPartidaList>(`/partidas/${partidaId}/escalacao`)
       .then((res) => {
         if (!isMounted) return;
         const all = [...(res.data.titulares || []), ...(res.data.reservas || [])];
@@ -64,7 +65,9 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
       .finally(() => {
         if (isMounted) setLoadingJogadores(false);
       });
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [partidaId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,7 +102,12 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label htmlFor="tipoEvento" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Tipo</label>
+            <label
+              htmlFor="tipoEvento"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+            >
+              Tipo
+            </label>
             <div id="tipoEvento" className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
               {tiposEvento.map((t) => (
                 <button
@@ -121,7 +129,12 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="minuto" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Minuto</label>
+              <label
+                htmlFor="minuto"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
+                Minuto
+              </label>
               <input
                 id="minuto"
                 type="number"
@@ -134,7 +147,12 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
               />
             </div>
             <div>
-              <label htmlFor="minutoExtra" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Acréscimos</label>
+              <label
+                htmlFor="minutoExtra"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
+                Acréscimos
+              </label>
               <input
                 id="minutoExtra"
                 type="number"
@@ -149,7 +167,12 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
           </div>
 
           <div>
-            <label htmlFor="jogadorId" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Jogador</label>
+            <label
+              htmlFor="jogadorId"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+            >
+              Jogador
+            </label>
             <select
               id="jogadorId"
               value={jogadorId ?? ''}
@@ -158,14 +181,19 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
             >
               <option value="">Selecione (opcional)</option>
               {jogadores.map((j) => (
-                <option key={j.id} value={j.id}>{j.nome} {j.nomeTime ? `(${j.nomeTime})` : ''}</option>
+                <option key={j.id} value={j.id}>
+                  {j.nome} {j.nomeTime ? `(${j.nomeTime})` : ''}
+                </option>
               ))}
             </select>
           </div>
 
           {['SUBSTITUICAO', 'GOL'].includes(tipoEvento) && (
             <div>
-              <label htmlFor="jogadorSecundarioId" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label
+                htmlFor="jogadorSecundarioId"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
+              >
                 {tipoEvento === 'SUBSTITUICAO' ? 'Substituto' : 'Assistente'}
               </label>
               <select
@@ -176,16 +204,24 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
               >
                 <option value="">Selecione (opcional)</option>
                 {loadingJogadores ? (
-                  <option value="" disabled>Carregando jogadores...</option>
-                ) : jogadores.map((j) => (
-                  <option key={j.id} value={j.id}>{j.nome} {j.nomeTime ? `(${j.nomeTime})` : ''}</option>
-                ))}
+                  <option value="" disabled>
+                    Carregando jogadores...
+                  </option>
+                ) : (
+                  jogadores.map((j) => (
+                    <option key={j.id} value={j.id}>
+                      {j.nome} {j.nomeTime ? `(${j.nomeTime})` : ''}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+            <Button type="button" variant="ghost" onClick={onClose}>
+              Cancelar
+            </Button>
             <Button type="submit" disabled={saving}>
               {saving ? 'Salvando...' : 'Registrar'}
             </Button>

@@ -44,11 +44,13 @@ export default function DashboardPage() {
           todas
             .filter((p) => isFinishedStatus(p.status))
             .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
-            .slice(0, 5)
+            .slice(0, 5),
         );
 
         if (campeonatosRes.data.length > 0) {
-          const artRes = await api.get(`/campeonatos/${campeonatosRes.data[0].id}/artilharia?pagina=0&tamanho=${ARTILHARIA_TOP}`);
+          const artRes = await api.get(
+            `/campeonatos/${campeonatosRes.data[0].id}/artilharia?pagina=0&tamanho=${ARTILHARIA_TOP}`,
+          );
           setArtilharia(artRes.data);
         }
       } catch (err) {
@@ -70,24 +72,32 @@ export default function DashboardPage() {
           todas
             .filter((p) => isFinishedStatus(p.status))
             .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
-            .slice(0, 5)
+            .slice(0, 5),
         );
-      } catch {
-        console.error('Erro ao atualizar partidas ao vivo');
+      } catch (err) {
+        // Use centralized logger and show a non-blocking notification
+        // to the user if needed. Avoid leaking internals via console.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const anyErr = err as any;
+        // fallback to toast error
+        import('../utils/logger').then((m) => m.default.error('Erro ao atualizar partidas ao vivo', anyErr));
       }
     }, 15000);
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) return (
-    <div className="space-y-6">
-      <div className="h-8 w-56 rounded-lg animate-shimmer" />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+  if (loading)
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-56 rounded-lg animate-shimmer" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+        <div className="h-48 rounded-2xl animate-shimmer" />
       </div>
-      <div className="h-48 rounded-2xl animate-shimmer" />
-    </div>
-  );
+    );
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -95,7 +105,6 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold text-slate-100 tracking-tight">Dashboard</h1>
         <p className="text-sm text-slate-500 mt-1">Visão geral da plataforma</p>
       </div>
-
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
@@ -129,9 +138,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
         <div className="lg:col-span-2 space-y-4">
-
           {aoVivo.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -140,17 +147,24 @@ export default function DashboardPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {aoVivo.map((p) => (
-                  <LiveMatchCard key={p.id} partida={p} onClick={() => navigate(`/dashboard/partidas/${p.id}`)} getLogoUrl={getLogoUrl} />
+                  <LiveMatchCard
+                    key={p.id}
+                    partida={p}
+                    onClick={() => navigate(`/dashboard/partidas/${p.id}`)}
+                    getLogoUrl={getLogoUrl}
+                  />
                 ))}
               </div>
             </div>
           )}
 
-
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Últimos resultados</h2>
-              <button onClick={() => navigate('/dashboard/partidas')} className="text-xs text-accent hover:text-accent-hover flex items-center gap-1">
+              <button
+                onClick={() => navigate('/dashboard/partidas')}
+                className="text-xs text-accent hover:text-accent-hover flex items-center gap-1"
+              >
                 Ver todas <ArrowRight size={12} />
               </button>
             </div>
@@ -161,24 +175,35 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-2">
                 {recentes.map((p) => (
-                  <RecentMatchRow key={p.id} partida={p} onClick={() => navigate(`/dashboard/partidas/${p.id}`)} getLogoUrl={getLogoUrl} />
+                  <RecentMatchRow
+                    key={p.id}
+                    partida={p}
+                    onClick={() => navigate(`/dashboard/partidas/${p.id}`)}
+                    getLogoUrl={getLogoUrl}
+                  />
                 ))}
               </div>
             )}
           </div>
 
-
           <Card className="p-4">
             <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-3">Ações rápidas</h2>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => navigate('/dashboard/campeonatos')}><Plus size={13} /> Novo campeonato</Button>
-              <Button size="sm" onClick={() => navigate('/dashboard/times')}><Plus size={13} /> Novo time</Button>
-              <Button size="sm" onClick={() => navigate('/dashboard/jogadores')}><Plus size={13} /> Novo jogador</Button>
-              <Button size="sm" onClick={() => navigate('/dashboard/partidas')}><Plus size={13} /> Nova partida</Button>
+              <Button size="sm" onClick={() => navigate('/dashboard/campeonatos')}>
+                <Plus size={13} /> Novo campeonato
+              </Button>
+              <Button size="sm" onClick={() => navigate('/dashboard/times')}>
+                <Plus size={13} /> Novo time
+              </Button>
+              <Button size="sm" onClick={() => navigate('/dashboard/jogadores')}>
+                <Plus size={13} /> Novo jogador
+              </Button>
+              <Button size="sm" onClick={() => navigate('/dashboard/partidas')}>
+                <Plus size={13} /> Nova partida
+              </Button>
             </div>
           </Card>
         </div>
-
 
         <div className="space-y-4">
           {artilharia.length > 0 && (
@@ -189,8 +214,14 @@ export default function DashboardPage() {
               </div>
               <div className="divide-y divide-white/[0.03]">
                 {artilharia.map((a) => (
-                  <Link key={a.jogadorId} to={`/jogadores/${a.jogadorId}`} className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors">
-                    <span className={`text-xs font-bold font-mono w-5 ${a.posicao <= 3 ? 'text-accent' : 'text-slate-600'}`}>
+                  <Link
+                    key={a.jogadorId}
+                    to={`/jogadores/${a.jogadorId}`}
+                    className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors"
+                  >
+                    <span
+                      className={`text-xs font-bold font-mono w-5 ${a.posicao <= 3 ? 'text-accent' : 'text-slate-600'}`}
+                    >
                       {a.posicao}
                     </span>
                     <img
@@ -209,7 +240,6 @@ export default function DashboardPage() {
             </Card>
           )}
 
-
           <Card className="p-4">
             <h2 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-3">Plataforma</h2>
             <div className="space-y-3">
@@ -226,16 +256,22 @@ export default function DashboardPage() {
 }
 
 function StatCard({
-  icon, label, value, color, onClick,
+  icon,
+  label,
+  value,
+  color,
+  onClick,
 }: {
-  icon: React.ReactNode; label: string; value: number; color: string; onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  color: string;
+  onClick: () => void;
 }) {
   return (
     <button onClick={onClick} className="text-left w-full">
       <Card hover className="p-4 flex items-center gap-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
-          {icon}
-        </div>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>{icon}</div>
         <div>
           <p className="text-xs text-slate-500">{label}</p>
           <p className="text-xl font-extrabold text-slate-100 font-mono">{value}</p>
@@ -245,7 +281,15 @@ function StatCard({
   );
 }
 
-function LiveMatchCard({ partida, onClick, getLogoUrl }: { partida: Partida; onClick: () => void; getLogoUrl: (n: string) => string }) {
+function LiveMatchCard({
+  partida,
+  onClick,
+  getLogoUrl,
+}: {
+  partida: Partida;
+  onClick: () => void;
+  getLogoUrl: (n: string) => string;
+}) {
   return (
     <button onClick={onClick} className="w-full text-left">
       <Card hover className="p-4">
@@ -257,13 +301,21 @@ function LiveMatchCard({ partida, onClick, getLogoUrl }: { partida: Partida; onC
         <div className="flex items-center gap-3">
           <div className="flex-1 flex items-center gap-2 justify-end">
             <span className="text-xs font-medium text-slate-200">{partida.timeMandanteNome}</span>
-            <img src={getLogoUrl(partida.timeMandanteNome)} alt={partida.timeMandanteNome} className="w-7 h-7 rounded-full bg-white/5" />
+            <img
+              src={getLogoUrl(partida.timeMandanteNome)}
+              alt={partida.timeMandanteNome}
+              className="w-7 h-7 rounded-full bg-white/5"
+            />
           </div>
           <span className="text-lg font-extrabold text-accent font-mono">
             {partida.golsMandante} - {partida.golsVisitante}
           </span>
           <div className="flex-1 flex items-center gap-2">
-            <img src={getLogoUrl(partida.timeVisitanteNome)} alt={partida.timeVisitanteNome} className="w-7 h-7 rounded-full bg-white/5" />
+            <img
+              src={getLogoUrl(partida.timeVisitanteNome)}
+              alt={partida.timeVisitanteNome}
+              className="w-7 h-7 rounded-full bg-white/5"
+            />
             <span className="text-xs font-medium text-slate-200">{partida.timeVisitanteNome}</span>
           </div>
         </div>
@@ -272,33 +324,54 @@ function LiveMatchCard({ partida, onClick, getLogoUrl }: { partida: Partida; onC
   );
 }
 
-function RecentMatchRow({ partida, onClick, getLogoUrl }: { partida: Partida; onClick: () => void; getLogoUrl: (n: string) => string }) {
+function RecentMatchRow({
+  partida,
+  onClick,
+  getLogoUrl,
+}: {
+  partida: Partida;
+  onClick: () => void;
+  getLogoUrl: (n: string) => string;
+}) {
   const winner =
-    partida.golsMandante > partida.golsVisitante ? 'mandante' :
-    partida.golsVisitante > partida.golsMandante ? 'visitante' : null;
+    partida.golsMandante > partida.golsVisitante
+      ? 'mandante'
+      : partida.golsVisitante > partida.golsMandante
+        ? 'visitante'
+        : null;
 
   return (
     <button onClick={onClick} className="w-full text-left">
       <Card className="p-3 hover:border-accent/20 transition-colors">
         <div className="flex items-center gap-3">
           <div className="flex-1 flex items-center gap-2 justify-end">
-            <span className={`text-xs font-medium ${winner === 'mandante' ? 'text-accent font-bold' : 'text-slate-400'}`}>
+            <span
+              className={`text-xs font-medium ${winner === 'mandante' ? 'text-accent font-bold' : 'text-slate-400'}`}
+            >
               {partida.timeMandanteNome}
             </span>
-            <img src={getLogoUrl(partida.timeMandanteNome)} alt={partida.timeMandanteNome} className="w-6 h-6 rounded-full bg-white/5" />
+            <img
+              src={getLogoUrl(partida.timeMandanteNome)}
+              alt={partida.timeMandanteNome}
+              className="w-6 h-6 rounded-full bg-white/5"
+            />
           </div>
           <span className="text-sm font-bold text-slate-100 font-mono">
             {partida.golsMandante} - {partida.golsVisitante}
           </span>
           <div className="flex-1 flex items-center gap-2">
-            <img src={getLogoUrl(partida.timeVisitanteNome)} alt={partida.timeVisitanteNome} className="w-6 h-6 rounded-full bg-white/5" />
-            <span className={`text-xs font-medium ${winner === 'visitante' ? 'text-accent font-bold' : 'text-slate-400'}`}>
+            <img
+              src={getLogoUrl(partida.timeVisitanteNome)}
+              alt={partida.timeVisitanteNome}
+              className="w-6 h-6 rounded-full bg-white/5"
+            />
+            <span
+              className={`text-xs font-medium ${winner === 'visitante' ? 'text-accent font-bold' : 'text-slate-400'}`}
+            >
               {partida.timeVisitanteNome}
             </span>
           </div>
-          <span className="text-[10px] text-slate-600 w-16 text-right">
-            {partida.rodada}ª rod.
-          </span>
+          <span className="text-[10px] text-slate-600 w-16 text-right">{partida.rodada}ª rod.</span>
         </div>
       </Card>
     </button>
@@ -314,7 +387,10 @@ function ProgressItem({ label, current, total }: { label: string; current: numbe
         <span className="text-slate-500 font-mono">{current}</span>
       </div>
       <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-        <div className="h-full rounded-full bg-gradient-to-r from-accent to-accent-hover transition-all" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-accent to-accent-hover transition-all"
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );

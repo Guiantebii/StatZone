@@ -12,9 +12,7 @@ export default function NavItems({ collapse }: NavItemsProps) {
   return (
     <nav className="flex flex-col flex-1">
       {!collapse && (
-        <p className="px-5 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
-          Gestão
-        </p>
+        <p className="px-5 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">Gestão</p>
       )}
 
       <div className="flex flex-col gap-0.5 px-2">
@@ -26,9 +24,7 @@ export default function NavItems({ collapse }: NavItemsProps) {
       </div>
 
       {!collapse && (
-        <p className="px-5 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
-          Análise
-        </p>
+        <p className="px-5 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">Análise</p>
       )}
       {collapse && <div className="pt-4" />}
 
