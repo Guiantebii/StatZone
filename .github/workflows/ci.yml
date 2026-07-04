@@ -48,7 +48,7 @@ jobs:
           cache: npm
           cache-dependency-path: statezone-frontend/package-lock.json
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Lint
         run: npm run lint
       - name: Type check & Build
