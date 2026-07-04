@@ -31,7 +31,15 @@ jobs:
       - name: Compile
         run: mvn compile -q
       - name: Test
-        run: mvn test -e
+        shell: bash
+        run: |
+          set -o pipefail
+          mvn test -e 2>&1 | tee test-output.log | tail -100
+      - name: Show test output on failure
+        if: failure()
+        run: |
+          echo "=== Full test output ==="
+          cat test-output.log
 
   frontend:
     runs-on: ubuntu-latest
