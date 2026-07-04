@@ -34,19 +34,14 @@ jobs:
         shell: bash
         run: |
           mvn test -e 2>&1 | tee test-output.log
-      - name: Show failure
-        if: failure()
-        shell: bash
-        run: |
-          msg="=== Test Summary ===%0A"
-          msg="${msg}$(grep -E 'Tests run:' test-output.log | tail -1 || echo '(no summary)')%0A"
-          msg="${msg}=== Context load error ===%0A"
-          lineno=$(grep -n "AuthFlowIntegrationTest" test-output.log | head -1 | cut -d: -f1)
-          if [ -n "$lineno" ]; then
-            context=$(sed -n "${lineno},$((lineno + 120))p" test-output.log)
-            msg="${msg}${context}%0A"
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::$(grep -E 'Tests run:' test-output.log | tail -1 || echo '(no summary)')"
+            echo "::error::================"
+            grep -n "AuthFlowIntegrationTest" test-output.log | head -3 || true
+            grep -A 60 "FAILURE\|Placeholder\|Caused by\|Context could not be found" test-output.log | tail -40 || true
           fi
-          echo "::error::$msg"
+          exit $rc
 
   frontend:
     runs-on: ubuntu-latest
