@@ -14,72 +14,69 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
- @RestControllerAdvice
- public class GlobalExceptionHandler {
+@RestControllerAdvice
+public class GlobalExceptionHandler {
 
-        @ExceptionHandler(ResourceNotFoundException.class)
-        public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex) {
-            log.warn("Resource not found: {}", ex.getMessage());
-            return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
-        }
-
-        @ExceptionHandler(ConflictException.class)
-        public ResponseEntity<Map<String, Object>> handleConflict(ConflictException ex) {
-            log.warn("Conflict: {}", ex.getMessage());
-            return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
-        }
-
-        @ExceptionHandler(UnauthorizedException.class)
-        public ResponseEntity<Map<String, Object>> handleUnauthorized(UnauthorizedException ex) {
-            log.warn("Unauthorized: {}", ex.getMessage());
-            return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
-        }
-
-        @ExceptionHandler(BusinessException.class)
-        public ResponseEntity<Map<String, Object>> handleBusiness(BusinessException ex) {
-            log.warn("Business error: {}", ex.getMessage());
-            return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
-        }
-
-        @ExceptionHandler(AuthenticationException.class)
-        public ResponseEntity<Map<String, Object>> handleAuthentication(AuthenticationException ex) {
-            log.warn("Authentication failed: {}", ex.getMessage());
-            return buildResponse(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
-        }
-
-        @ExceptionHandler(Exception.class)
-        public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
-            log.error("Unexpected error", ex);
-            return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Erro interno no servidor");
-        }
-
-        private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
-
-            Map<String, Object> body = new HashMap<>();
-
-            body.put("timestamp", LocalDateTime.now());
-            body.put("status", status.value());
-            body.put("error", status.name());
-            body.put("message", message);
-
-            return new ResponseEntity<>(body, status);
-        }
-     @ExceptionHandler(MethodArgumentNotValidException.class)
-     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-
-         List<String> erros = ex.getBindingResult()
-                 .getFieldErrors()
-                 .stream()
-                 .map(field -> field.getField() + ": " + field.getDefaultMessage())
-                 .toList();
-
-         Map<String, Object> body = new HashMap<>();
-         body.put("timestamp", LocalDateTime.now());
-         body.put("status", HttpStatus.BAD_REQUEST.value());
-         body.put("error", "Validation Failed");
-         body.put("messages", erros);
-
-         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
-     }
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex) {
+        log.warn("Resource not found: {}", ex.getMessage());
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleConflict(ConflictException ex) {
+        log.warn("Conflict: {}", ex.getMessage());
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, Object>> handleUnauthorized(UnauthorizedException ex) {
+        log.warn("Unauthorized: {}", ex.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<Map<String, Object>> handleBusiness(BusinessException ex) {
+        log.warn("Business error: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthentication(AuthenticationException ex) {
+        log.warn("Authentication failed: {}", ex.getMessage());
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Credenciais inválidas");
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
+        List<String> erros = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(field -> field.getField() + ": " + field.getDefaultMessage())
+                .toList();
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Validation Failed");
+        body.put("messages", erros);
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
+        log.error("Unexpected error", ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Erro interno no servidor");
+    }
+
+    private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("error", status.name());
+        body.put("message", message);
+        return new ResponseEntity<>(body, status);
+    }
+}

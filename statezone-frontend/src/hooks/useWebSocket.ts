@@ -17,7 +17,6 @@ interface UseWebSocketOptions {
 function createClient(): Client {
   return new Client({
     webSocketFactory: () => new SockJS(SOCKET_URL),
-    // Cookie-based authentication will be sent by the browser automatically.
     reconnectDelay: 5000,
     heartbeatIncoming: 10000,
     heartbeatOutgoing: 10000,
@@ -42,9 +41,12 @@ export function useWebSocket(options?: UseWebSocketOptions) {
     clientRef.current = client;
 
     const onTokenChange = () => {
-      try {
-        client.deactivate();
-      } catch {}
+      const oldClient = clientRef.current;
+      if (oldClient) {
+        try {
+          oldClient.deactivate();
+        } catch {}
+      }
       const newClient = createClient();
       newClient.onConnect = client.onConnect;
       newClient.onDisconnect = client.onDisconnect;
@@ -86,6 +88,7 @@ export function usePartidaWebSocket(
 ) {
   const updateRef = useRef(onUpdate);
   const eventRef = useRef(onEvent);
+  const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
     updateRef.current = onUpdate;
@@ -95,7 +98,7 @@ export function usePartidaWebSocket(
   useEffect(() => {
     if (!partidaId) return;
 
-    let client = createClient();
+    const client = createClient();
 
     client.onConnect = () => {
       client.subscribe(`/topic/partidas/${partidaId}`, (message: IMessage) => {
@@ -118,23 +121,29 @@ export function usePartidaWebSocket(
     };
 
     client.activate();
+    clientRef.current = client;
 
     const onTokenChange = () => {
-      try {
-        client.deactivate();
-      } catch {}
-      client = createClient();
-      client.activate();
+      const oldClient = clientRef.current;
+      if (oldClient) {
+        try {
+          oldClient.deactivate();
+        } catch {}
+      }
+      const newClient = createClient();
+      newClient.onConnect = client.onConnect;
+      newClient.activate();
+      clientRef.current = newClient;
       logger.info('Partida WebSocket reconnected after token change');
     };
 
     window.addEventListener('auth:token-changed', onTokenChange);
 
     return () => {
+      window.removeEventListener('auth:token-changed', onTokenChange);
       try {
         client.deactivate();
       } catch {}
-      window.removeEventListener('auth:token-changed', onTokenChange);
     };
   }, [partidaId]);
 }

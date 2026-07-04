@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
@@ -27,10 +28,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final int WINDOW_SECONDS = 60;
 
     private final Map<String, SlidingWindow> attempts = new ConcurrentHashMap<>();
+    private ScheduledExecutorService scheduler;
 
     @PostConstruct
     void startCleanup() {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "rate-limiter-cleanup");
             t.setDaemon(true);
             return t;
@@ -42,6 +44,13 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 return w.count > 0 && !w.isBlocked();
             });
         }, 1, 1, TimeUnit.MINUTES);
+    }
+
+    @PreDestroy
+    void shutdownCleanup() {
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+        }
     }
 
     @Override

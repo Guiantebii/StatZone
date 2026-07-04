@@ -56,6 +56,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             email = jwtService.extrairEmail(token);
         } catch (Exception e) {
+            // try to refresh silently by returning 401 to client; client may call /api/auth/refresh
             response.setStatus(401);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write(

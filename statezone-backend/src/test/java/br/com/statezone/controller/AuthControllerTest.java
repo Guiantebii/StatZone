@@ -44,6 +44,7 @@ class AuthControllerTest {
     @MockBean private UsuarioRepository usuarioRepository;
     @MockBean private PasswordEncoder passwordEncoder;
     @MockBean private UserDetailsService userDetailsService;
+    @MockBean private br.com.statezone.service.RefreshTokenService refreshTokenService;
 
     @Test
     void login_deveRetornarToken() throws Exception {

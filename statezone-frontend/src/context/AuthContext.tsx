@@ -9,7 +9,7 @@ interface AuthContextType {
   isAdmin: boolean;
   userEmail: string | null;
   loading: boolean;
-  login: (email: string, senha: string) => Promise<{ token: string | null; isAdmin: boolean }>;
+  login: (email: string, senha: string) => Promise<{ isAdmin: boolean }>;
   logout: () => void;
 }
 
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const admin = data.role === 'ADMIN';
     setIsAdmin(admin);
     setIsAuthenticated(true);
-    return { token: null, isAdmin: admin };
+    return { isAdmin: admin };
   }, []);
 
   const logout = useCallback(async () => {

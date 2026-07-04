@@ -36,9 +36,11 @@ public class AuthController {
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final br.com.statezone.service.RefreshTokenService refreshTokenService;
 
-    @Value("${app.security.cookie-secure:false}")
+    @Value("${app.security.cookie-secure:true}")
     private boolean cookieSecure;
+
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request,
                                                 HttpServletResponse response) {
@@ -48,7 +50,10 @@ public class AuthController {
         UserDetails user = (UserDetails) auth.getPrincipal();
         String token = jwtService.gerarToken(user);
 
-        ResponseCookie cookie = ResponseCookie.from("token", token)
+        // create and persist refresh token server-side (returns token string)
+        String refresh = refreshTokenService.createRefreshToken(user);
+
+        ResponseCookie tokenCookie = ResponseCookie.from("token", token)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite("Lax")
@@ -56,8 +61,18 @@ public class AuthController {
                 .maxAge(jwtService.getExpirationMs() / 1000)
                 .build();
 
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh", refresh)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path("/api/auth/refresh")
+                .maxAge(jwtService.getRefreshExpirationMs() / 1000)
+                .build();
 
+        response.addHeader(HttpHeaders.SET_COOKIE, tokenCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+        // keep token in response body for backward compatibility (tests/clients)
         return ResponseEntity.ok(new LoginResponse(token));
     }
 
@@ -84,7 +99,8 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from("token", "")
+        // clear access token cookie
+        ResponseCookie tokenCookie = ResponseCookie.from("token", "")
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite("Lax")
@@ -92,7 +108,25 @@ public class AuthController {
                 .maxAge(0)
                 .build();
 
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        // clear refresh cookie
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh", "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path("/api/auth/refresh")
+                .maxAge(0)
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, tokenCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+        // revoke server-side refresh tokens if user authenticated
+        Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            String email = auth.getName();
+            usuarioRepository.findByEmail(email).ifPresent(u -> refreshTokenService.revokeAllForUsuario(u));
+        }
+
         return ResponseEntity.ok().build();
     }
 
