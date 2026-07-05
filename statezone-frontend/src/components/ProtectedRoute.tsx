@@ -1,9 +1,22 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
 export default function ProtectedRoute() {
   const { isAuthenticated, isAdmin, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      toast.error('Você precisa estar logado para acessar esta página');
+    }
+  }, [loading, isAuthenticated]);
+
+  useEffect(() => {
+    if (!loading && isAuthenticated && !isAdmin) {
+      toast.error('Acesso restrito a administradores');
+    }
+  }, [loading, isAuthenticated, isAdmin]);
 
   if (loading) {
     return (
@@ -16,11 +29,9 @@ export default function ProtectedRoute() {
     );
   }
   if (!isAuthenticated) {
-    toast.error('Você precisa estar logado para acessar esta página');
     return <Navigate to="/login" replace />;
   }
   if (!isAdmin) {
-    toast.error('Acesso restrito a administradores');
     return <Navigate to="/" replace />;
   }
 

@@ -4,6 +4,9 @@ import { Trophy, Shield, Users, Calendar, Plus, ArrowRight, Medal } from 'lucide
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
 import { getLogoUrl, getAvatarUrl } from '../constants/helpers';
+import type { Campeonato } from '../types/campeonato';
+import type { Time } from '../types/time';
+import type { Jogador } from '../types/jogador';
 import type { Partida } from '../types/partida';
 import type { Artilharia } from '../types/estatisticas';
 import Card from '../components/ui/Card';
@@ -26,10 +29,10 @@ export default function DashboardPage() {
     const load = async () => {
       try {
         const [campeonatosRes, timesRes, jogadoresRes, partidasRes] = await Promise.all([
-          api.get('/campeonatos'),
-          api.get('/times'),
-          api.get('/jogadores'),
-          api.get('/partidas'),
+          api.get<Campeonato[]>('/campeonatos'),
+          api.get<Time[]>('/times'),
+          api.get<Jogador[]>('/jogadores'),
+          api.get<Partida[]>('/partidas'),
         ]);
 
         setStats({
@@ -39,7 +42,7 @@ export default function DashboardPage() {
           partidas: partidasRes.data.length,
         });
 
-        const todas: Partida[] = partidasRes.data;
+        const todas = partidasRes.data;
         setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
         setRecentes(
           todas
@@ -64,18 +67,21 @@ export default function DashboardPage() {
   }, []);
 
   const pollPartidas = useCallback(() => {
-    api.get('/partidas').then((res) => {
-      const todas: Partida[] = res.data;
-      setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
-      setRecentes(
-        todas
-          .filter((p) => isFinishedStatus(p.status))
-          .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
-          .slice(0, 5),
-      );
-    }).catch((err) => {
-      import('../utils/logger').then((m) => m.default.error('Erro ao atualizar partidas ao vivo', err));
-    });
+    api
+      .get<Partida[]>('/partidas')
+      .then((res) => {
+        const todas = res.data;
+        setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
+        setRecentes(
+          todas
+            .filter((p) => isFinishedStatus(p.status))
+            .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
+            .slice(0, 5),
+        );
+      })
+      .catch((err) => {
+        import('../utils/logger').then((m) => m.default.error('Erro ao atualizar partidas ao vivo', err));
+      });
   }, []);
 
   usePolling(pollPartidas, 15000);
@@ -141,11 +147,7 @@ export default function DashboardPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {aoVivo.map((p) => (
-                  <LiveMatchCard
-                    key={p.id}
-                    partida={p}
-                    onClick={() => navigate(`/dashboard/partidas/${p.id}`)}
-                  />
+                  <LiveMatchCard key={p.id} partida={p} onClick={() => navigate(`/dashboard/partidas/${p.id}`)} />
                 ))}
               </div>
             </div>
@@ -168,11 +170,7 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-2">
                 {recentes.map((p) => (
-                  <RecentMatchRow
-                    key={p.id}
-                    partida={p}
-                    onClick={() => navigate(`/dashboard/partidas/${p.id}`)}
-                  />
+                  <RecentMatchRow key={p.id} partida={p} onClick={() => navigate(`/dashboard/partidas/${p.id}`)} />
                 ))}
               </div>
             )}
@@ -273,13 +271,7 @@ function StatCard({
   );
 }
 
-function LiveMatchCard({
-  partida,
-  onClick,
-}: {
-  partida: Partida;
-  onClick: () => void;
-}) {
+function LiveMatchCard({ partida, onClick }: { partida: Partida; onClick: () => void }) {
   return (
     <button onClick={onClick} className="w-full text-left">
       <Card hover className="p-4">
@@ -314,13 +306,7 @@ function LiveMatchCard({
   );
 }
 
-function RecentMatchRow({
-  partida,
-  onClick,
-}: {
-  partida: Partida;
-  onClick: () => void;
-}) {
+function RecentMatchRow({ partida, onClick }: { partida: Partida; onClick: () => void }) {
   const winner =
     partida.golsMandante > partida.golsVisitante
       ? 'mandante'

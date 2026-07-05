@@ -182,7 +182,7 @@ export default function PartidasPage() {
             </div>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
-            {(filterStatus !== 'TODOS' ? filtered : filtered.filter((p) => p.status === 'AGENDADA')).map((p) => (
+            {filtered.map((p) => (
               <PartidaCard key={p.id} partida={p} />
             ))}
           </div>

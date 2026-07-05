@@ -71,29 +71,31 @@ public class CampeonatoService {
     }
 
     public void deletarCampeonato(Long id) {
-        Campeonato campeonato = campeonatoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
+        synchronized (this) {
+            Campeonato campeonato = campeonatoRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
 
-        List<String> dependencias = new ArrayList<>();
+            List<String> dependencias = new ArrayList<>();
 
-        if (campeonato.getPartidas() != null && !campeonato.getPartidas().isEmpty()) {
-            dependencias.add(campeonato.getPartidas().size() + " partida(s)");
-        }
-        if (campeonato.getTimes() != null && !campeonato.getTimes().isEmpty()) {
-            dependencias.add(campeonato.getTimes().size() + " time(s)");
-        }
-        if (grupoRepository != null && grupoRepository.countByCampeonatoId(id) > 0) {
-            dependencias.add("grupo(s)");
-        }
+            if (campeonato.getPartidas() != null && !campeonato.getPartidas().isEmpty()) {
+                dependencias.add(campeonato.getPartidas().size() + " partida(s)");
+            }
+            if (campeonato.getTimes() != null && !campeonato.getTimes().isEmpty()) {
+                dependencias.add(campeonato.getTimes().size() + " time(s)");
+            }
+            if (grupoRepository != null && grupoRepository.countByCampeonatoId(id) > 0) {
+                dependencias.add("grupo(s)");
+            }
 
-        if (!dependencias.isEmpty()) {
-            throw new BusinessException(
-                    "Não é possível excluir o campeonato '" + campeonato.getNome() +
-                            "'. Remova primeiro: " + String.join(", ", dependencias) + "."
-            );
-        }
+            if (!dependencias.isEmpty()) {
+                throw new BusinessException(
+                        "Não é possível excluir o campeonato '" + campeonato.getNome() +
+                                "'. Remova primeiro: " + String.join(", ", dependencias) + "."
+                );
+            }
 
-        campeonatoRepository.delete(campeonato);
+            campeonatoRepository.delete(campeonato);
+        }
     }
 
     public void adicionarTime(Long campeonatoId, Long timeId){

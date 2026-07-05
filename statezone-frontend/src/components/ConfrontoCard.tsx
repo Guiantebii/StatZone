@@ -18,6 +18,8 @@ export default function ConfrontoCard({ confronto }: ConfrontoCardProps) {
         return <span className="text-[10px] text-accent font-semibold animate-pulse">Ao vivo</span>;
       case 'PENDENTE':
         return <span className="text-[10px] text-slate-500">Pendente</span>;
+      case 'AGUARDANDO_PENALTIS':
+        return <span className="text-[10px] text-warning font-semibold animate-pulse">Aguardando pênaltis</span>;
       case 'PENALTIS':
         return <span className="text-[10px] text-warning font-semibold animate-pulse">Pênaltis</span>;
       default:

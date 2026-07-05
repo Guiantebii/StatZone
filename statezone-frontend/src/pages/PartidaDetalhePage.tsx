@@ -7,21 +7,19 @@ import {
   MapPin,
   User,
   Trophy,
-  Play,
+  Play as PlayIcon,
   Square,
   Pause,
-  Ban,
+  Ban as BanIcon,
   Users,
   Trash2,
   CircleDot,
   ArrowLeftRight,
-  Ban as BanIcon,
   Shield,
   ShieldAlert,
   Eye,
   CheckCircle,
   Circle,
-  Play as PlayIcon,
   Flag,
 } from 'lucide-react';
 import api from '../api/client';
@@ -65,7 +63,9 @@ export default function PartidaDetalhePage() {
     try {
       const res = await api.get(`/partidas/${id}/timeline`);
       setTimeline(res.data);
-    } catch {}
+    } catch (err) {
+      console.error('Erro ao carregar timeline', err);
+    }
   };
 
   const loadEscalacao = async () => {
@@ -73,7 +73,9 @@ export default function PartidaDetalhePage() {
     try {
       const res = await api.get(`/partidas/${id}/escalacao`);
       setEscalacao(res.data);
-    } catch {}
+    } catch (err) {
+      console.error('Erro ao carregar escalação', err);
+    }
   };
 
   const loadEstatisticas = async () => {
@@ -81,7 +83,9 @@ export default function PartidaDetalhePage() {
     try {
       const res = await api.get(`/estatisticas/${id}`);
       setEstatisticas(res.data);
-    } catch {}
+    } catch (err) {
+      console.error('Erro ao carregar estatísticas', err);
+    }
   };
 
   useEffect(() => {
@@ -348,7 +352,7 @@ export default function PartidaDetalhePage() {
             </Button>
             {isScheduled && (
               <Button size="sm" onClick={() => handleAction('iniciar')} disabled={actionLoading}>
-                <Play size={14} /> Iniciar
+                <PlayIcon size={14} /> Iniciar
               </Button>
             )}
             {partida.status === STATUS_PARTIDA.AO_VIVO && (
@@ -371,7 +375,7 @@ export default function PartidaDetalhePage() {
             )}
             {partida.status === STATUS_PARTIDA.INTERVALO && (
               <Button size="sm" onClick={() => handleAction('segundo-tempo')} disabled={actionLoading}>
-                <Play size={14} /> Segundo tempo
+                <PlayIcon size={14} /> Segundo tempo
               </Button>
             )}
             {isScheduled && (
@@ -380,7 +384,7 @@ export default function PartidaDetalhePage() {
                   <Clock size={14} /> Adiar
                 </Button>
                 <Button size="sm" variant="danger" onClick={() => handleAction('cancelar')} disabled={actionLoading}>
-                  <Ban size={14} /> Cancelar
+                  <BanIcon size={14} /> Cancelar
                 </Button>
               </>
             )}
@@ -636,5 +640,3 @@ function StatBar({ label, home, away, suffix = '' }: { label: string; home: numb
     </div>
   );
 }
-
-

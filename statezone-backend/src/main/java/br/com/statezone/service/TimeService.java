@@ -85,32 +85,34 @@ public class TimeService {
     }
 
     public void deletarTime(Long id) {
-        Time time = timeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Time com id " + id + " não encontrado"));
-        
-        List<String> dependencias = new ArrayList<>();
+        synchronized (this) {
+            Time time = timeRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Time com id " + id + " não encontrado"));
 
-        if (time.getJogadores() != null && !time.getJogadores().isEmpty()) {
-            dependencias.add(time.getJogadores().size() + " jogador(es)");
-        }
-        if (time.getPartidasMandante() != null && !time.getPartidasMandante().isEmpty()) {
-            dependencias.add(time.getPartidasMandante().size() + " partida(s) como mandante");
-        }
-        if (time.getPartidasVisitante() != null && !time.getPartidasVisitante().isEmpty()) {
-            dependencias.add(time.getPartidasVisitante().size() + " partida(s) como visitante");
-        }
-        if (timeRepository.countCampeonatosByTimeId(id) > 0) {
-            dependencias.add("vinculado a campeonato(s)");
-        }
+            List<String> dependencias = new ArrayList<>();
 
-        if (!dependencias.isEmpty()) {
-            throw new BusinessException(
-                    "Não é possível excluir o time '" + time.getNome() +
-                            "'. Remova primeiro: " + String.join(", ", dependencias) + "."
-            );
-        }
+            if (time.getJogadores() != null && !time.getJogadores().isEmpty()) {
+                dependencias.add(time.getJogadores().size() + " jogador(es)");
+            }
+            if (time.getPartidasMandante() != null && !time.getPartidasMandante().isEmpty()) {
+                dependencias.add(time.getPartidasMandante().size() + " partida(s) como mandante");
+            }
+            if (time.getPartidasVisitante() != null && !time.getPartidasVisitante().isEmpty()) {
+                dependencias.add(time.getPartidasVisitante().size() + " partida(s) como visitante");
+            }
+            if (timeRepository.countCampeonatosByTimeId(id) > 0) {
+                dependencias.add("vinculado a campeonato(s)");
+            }
 
-        timeRepository.delete(time);
+            if (!dependencias.isEmpty()) {
+                throw new BusinessException(
+                        "Não é possível excluir o time '" + time.getNome() +
+                                "'. Remova primeiro: " + String.join(", ", dependencias) + "."
+                );
+            }
+
+            timeRepository.delete(time);
+        }
     }
     public List<JogadorResponseDto> listarJogadoresPorTime(Long timeId) {
 

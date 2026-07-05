@@ -33,6 +33,8 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
 
     @Query("""
     SELECT p FROM Partida p
+    JOIN FETCH p.timeMandante
+    JOIN FETCH p.timeVisitante
     WHERE (p.timeMandante.id = :timeId OR p.timeVisitante.id = :timeId)
     AND p.status = br.com.statezone.enums.StatusPartida.ENCERRADA
     ORDER BY p.dataPartida DESC

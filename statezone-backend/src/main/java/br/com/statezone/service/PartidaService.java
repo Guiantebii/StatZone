@@ -29,6 +29,12 @@ import static br.com.statezone.enums.StatusPartida.*;
 @RequiredArgsConstructor
 public class PartidaService {
 
+    private static final int MINUTO_INICIO = 1;
+    private static final int MINUTO_INTERVALO = 45;
+    private static final int MINUTO_SEGUNDO_TEMPO = 46;
+    private static final int MINUTO_FIM = 90;
+    private static final int MINUTO_PRORROGACAO_FIM = 120;
+
     private final PartidaRepository partidaRepository;
     private final CampeonatoRepository campeonatoRepository;
     private final TimeRepository timeRepository;
@@ -98,7 +104,7 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
 
-        criarEventoSistema(salva, TipoEvento.INICIO_PRIMEIRO_TEMPO, 1);
+        criarEventoSistema(salva, TipoEvento.INICIO_PRIMEIRO_TEMPO, MINUTO_INICIO);
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
@@ -117,7 +123,7 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
 
-        criarEventoSistema(salva, TipoEvento.FIM_PRIMEIRO_TEMPO, 45);
+        criarEventoSistema(salva, TipoEvento.FIM_PRIMEIRO_TEMPO, MINUTO_INTERVALO);
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
@@ -136,7 +142,7 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
 
-        criarEventoSistema(salva, TipoEvento.INICIO_SEGUNDO_TEMPO, 46);
+        criarEventoSistema(salva, TipoEvento.INICIO_SEGUNDO_TEMPO, MINUTO_SEGUNDO_TEMPO);
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
@@ -155,7 +161,7 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
 
-        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 90);
+        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_FIM);
 
         processamentoConfrontoPendenteRepository.save(
                 ProcessamentoConfrontoPendente.builder()
@@ -184,7 +190,7 @@ public class PartidaService {
         partida.setGolsVisitante(3);
 
         Partida salva = partidaRepository.save(partida);
-        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 90);
+        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_FIM);
         processamentoConfrontoPendenteRepository.save(
                 ProcessamentoConfrontoPendente.builder()
                         .partidaId(salva.getId())
@@ -209,7 +215,7 @@ public class PartidaService {
         partida.setGolsVisitante(0);
 
         Partida salva = partidaRepository.save(partida);
-        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 90);
+        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_FIM);
         processamentoConfrontoPendenteRepository.save(
                 ProcessamentoConfrontoPendente.builder()
                         .partidaId(salva.getId())
@@ -274,7 +280,7 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
 
-        criarEventoSistema(salva, TipoEvento.INICIO_PRORROGACAO, 90);
+        criarEventoSistema(salva, TipoEvento.INICIO_PRORROGACAO, MINUTO_FIM);
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
@@ -295,7 +301,7 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
 
-        criarEventoSistema(salva, TipoEvento.FIM_PRORROGACAO, 120);
+        criarEventoSistema(salva, TipoEvento.FIM_PRORROGACAO, MINUTO_PRORROGACAO_FIM);
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
@@ -339,7 +345,7 @@ public class PartidaService {
 
         Partida salva = partidaRepository.save(partida);
 
-        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, 120);
+        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_PRORROGACAO_FIM);
         publisher.publishEvent(new PartidaEncerradaEvent(salva));
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
