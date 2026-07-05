@@ -13,8 +13,11 @@ import java.util.List;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    @Value("${app.websocket.allowed-origins:http://localhost:5173}")
-    private String allowedOrigins;
+    private final String allowedOrigins;
+
+    public WebSocketConfig(@Value("${app.websocket.allowed-origins:http://localhost:5173}") String allowedOrigins) {
+        this.allowedOrigins = allowedOrigins;
+    }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {

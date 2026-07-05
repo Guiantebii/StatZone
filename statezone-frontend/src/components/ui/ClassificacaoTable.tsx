@@ -41,7 +41,15 @@ export default function ClassificacaoTable({ dados, onTimeClick, isGroup = false
                       ? 'bg-success/5'
                       : ''
               }`}
+              tabIndex={0}
+              role="button"
               onClick={() => onTimeClick(c.timeId)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onTimeClick(c.timeId);
+                }
+              }}
             >
               <td className="px-5 py-3">
                 <span
@@ -62,11 +70,7 @@ export default function ClassificacaoTable({ dados, onTimeClick, isGroup = false
               </td>
               <td className="px-5 py-3">
                 <div className="flex items-center gap-2">
-                  <img
-                    src={getLogoUrl(c.nomeTime)}
-                    alt={c.nomeTime}
-                    className="w-6 h-6 rounded-full bg-white/5"
-                  />
+                  <img src={getLogoUrl(c.nomeTime)} alt={c.nomeTime} className="w-6 h-6 rounded-full bg-white/5" />
                   <span className="text-sm font-medium text-slate-200">{c.nomeTime}</span>
                 </div>
               </td>
@@ -83,9 +87,7 @@ export default function ClassificacaoTable({ dados, onTimeClick, isGroup = false
                 {c.saldoGols > 0 ? '+' : ''}
                 {c.saldoGols}
               </td>
-              <td className="px-5 py-3 text-right text-sm text-slate-400 font-mono">
-                {c.aproveitamento.toFixed(1)}%
-              </td>
+              <td className="px-5 py-3 text-right text-sm text-slate-400 font-mono">{c.aproveitamento.toFixed(1)}%</td>
             </tr>
           ))}
         </tbody>

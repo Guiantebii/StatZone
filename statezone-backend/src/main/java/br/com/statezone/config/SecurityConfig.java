@@ -2,7 +2,6 @@ package br.com.statezone.config;
 
 import br.com.statezone.exception.SecurityExceptionHandler;
 import br.com.statezone.security.JwtAuthFilter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -26,7 +25,6 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "JwtAuthFilter is a stateless Spring-managed bean; storing the reference is intentional and safe")
 public class SecurityConfig {
 
@@ -90,8 +88,18 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    @org.springframework.beans.factory.annotation.Value("${app.security.allowed-origins:http://localhost:5173}")
-    private String allowedOrigins;
+    private final String allowedOrigins;
+
+    public SecurityConfig(
+            JwtAuthFilter jwtAuthFilter,
+            UserDetailsService userDetailsService,
+            SecurityExceptionHandler securityExceptionHandler,
+            @org.springframework.beans.factory.annotation.Value("${app.security.allowed-origins:http://localhost:5173}") String allowedOrigins) {
+        this.jwtAuthFilter = jwtAuthFilter;
+        this.userDetailsService = userDetailsService;
+        this.securityExceptionHandler = securityExceptionHandler;
+        this.allowedOrigins = allowedOrigins;
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

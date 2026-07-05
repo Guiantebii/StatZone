@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
-import { posicaoLabel, getLogoUrl } from '../constants/helpers';
+import { posicaoLabel, getJogadorAvatarUrl } from '../constants/helpers';
 import type { Jogador } from '../types/jogador';
 import type { EstatisticasJogador } from '../types/estatisticasJogador';
 import Card from '../components/ui/Card';
@@ -129,7 +129,7 @@ export default function JogadorDetalhePage() {
         <div className="flex items-center gap-5 p-6">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center shrink-0">
             <img
-              src={jogador.fotoUrl || getLogoUrl(jogador.nome, 80)}
+              src={jogador.fotoUrl || getJogadorAvatarUrl(jogador.nome, 80)}
               alt={jogador.nome}
               className="w-16 h-16 rounded-xl object-cover"
             />

@@ -3,7 +3,6 @@ package br.com.statezone.controller;
 import br.com.statezone.security.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -16,15 +15,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class RefreshController {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final br.com.statezone.service.RefreshTokenService refreshTokenService;
 
-    @Value("${app.security.cookie-secure:true}")
-    private boolean cookieSecure;
+    private final boolean cookieSecure;
+
+    public RefreshController(
+            JwtService jwtService,
+            UserDetailsService userDetailsService,
+            br.com.statezone.service.RefreshTokenService refreshTokenService,
+            @Value("${app.security.cookie-secure:true}") boolean cookieSecure) {
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
+        this.refreshTokenService = refreshTokenService;
+        this.cookieSecure = cookieSecure;
+    }
 
     @PostMapping("/refresh")
     public ResponseEntity<Void> refresh(HttpServletRequest request, HttpServletResponse response) {

@@ -18,7 +18,11 @@ import java.util.Map;
 @Component
 public class SecurityExceptionHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
+
+    public SecurityExceptionHandler(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,

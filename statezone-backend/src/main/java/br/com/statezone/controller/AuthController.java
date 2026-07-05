@@ -13,7 +13,6 @@ import br.com.statezone.security.JwtService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -29,7 +28,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -38,8 +36,22 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final br.com.statezone.service.RefreshTokenService refreshTokenService;
 
-    @Value("${app.security.cookie-secure:true}")
-    private boolean cookieSecure;
+    private final boolean cookieSecure;
+
+    public AuthController(
+            AuthenticationManager authenticationManager,
+            JwtService jwtService,
+            UsuarioRepository usuarioRepository,
+            PasswordEncoder passwordEncoder,
+            br.com.statezone.service.RefreshTokenService refreshTokenService,
+            @Value("${app.security.cookie-secure:true}") boolean cookieSecure) {
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.refreshTokenService = refreshTokenService;
+        this.cookieSecure = cookieSecure;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request,

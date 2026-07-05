@@ -44,7 +44,7 @@ public class ConfrontoPendenteJob {
                 pendenteRepository.save(p);
             } catch (Exception e) {
                 p.setTentativas(p.getTentativas() + 1);
-                p.setUltimoErro(e.getMessage());
+                p.setUltimoErro("Erro ao processar confronto pendente");
                 if (p.getTentativas() >= MAX_TENTATIVAS) {
                     log.error("Falha definitiva ao processar confronto da partida {}", p.getPartidaId(), e);
                 }

@@ -89,21 +89,23 @@ export default function CampeonatoDetalhePage() {
                 try {
                   const r = await api.get(`/campeonatos/${id}/grupos/${g.id}/classificacao`);
                   classMap[g.id] = r.data;
-                } catch {
+                } catch (err) {
+                  console.error('Erro ao carregar classificação do grupo', err);
                   classMap[g.id] = [];
                 }
               }),
             );
             if (isMounted) setGrupoClassificacoes(classMap);
-          } catch {
-            // ignore - grupos sem classificação ainda
+          } catch (err) {
+            console.error('Erro ao carregar grupos do campeonato', err);
           }
         }
         if (camp.tipoFormato === 'MATA_MATA' || camp.tipoFormato === 'GRUPOS_E_MATA_MATA') {
           try {
             const fasesRes = await api.get(`/campeonatos/${id}/fases`);
             if (isMounted) setFases(fasesRes.data);
-          } catch {
+          } catch (err) {
+            console.error('Erro ao carregar fases do campeonato', err);
             if (isMounted) setFases([]);
           }
         }

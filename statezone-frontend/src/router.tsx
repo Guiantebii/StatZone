@@ -3,12 +3,26 @@ import { LazyPage } from './components/LazyPage';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import ProtectedRoute from './components/ProtectedRoute';
+import RedirectIfAuthenticated from './components/RedirectIfAuthenticated';
 import {
-  LoginPage, RegisterPage, DashboardPage, CampeonatosPage, TimesPage,
-  TimeDetalhePage, JogadoresPage, PartidasPage, PartidaDetalhePage,
-  EstatisticasPage, FasesPage, ImportacaoPage, PublicHomePage,
-  PublicCampeonatosPage, PublicTimesPage, CampeonatoDetalhePage,
-  JogadorDetalhePage, NotFoundPage,
+  LoginPage,
+  RegisterPage,
+  DashboardPage,
+  CampeonatosPage,
+  TimesPage,
+  TimeDetalhePage,
+  JogadoresPage,
+  PartidasPage,
+  PartidaDetalhePage,
+  EstatisticasPage,
+  FasesPage,
+  ImportacaoPage,
+  PublicHomePage,
+  PublicCampeonatosPage,
+  PublicTimesPage,
+  CampeonatoDetalhePage,
+  JogadorDetalhePage,
+  NotFoundPage,
 } from './pages/lazy';
 
 export const router = createBrowserRouter([
@@ -27,7 +41,14 @@ export const router = createBrowserRouter([
     ],
   },
   { path: '/login', element: <LazyPage Component={LoginPage} /> },
-  { path: '/registro', element: <LazyPage Component={RegisterPage} /> },
+  {
+    path: '/registro',
+    element: (
+      <RedirectIfAuthenticated>
+        <LazyPage Component={RegisterPage} />
+      </RedirectIfAuthenticated>
+    ),
+  },
   {
     path: '/dashboard',
     element: <ProtectedRoute />,

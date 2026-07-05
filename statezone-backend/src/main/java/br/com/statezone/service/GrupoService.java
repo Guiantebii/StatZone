@@ -153,8 +153,10 @@ public class GrupoService {
                 partidaRepository.save(partida);
             }
 
-            Time ultimo = times.remove(n - 1);
-            times.add(1, ultimo);
+            var lista = new ArrayList<>(times);
+            Time ultimo = lista.remove(n - 1);
+            lista.add(1, ultimo);
+            times = lista;
         }
     }
     

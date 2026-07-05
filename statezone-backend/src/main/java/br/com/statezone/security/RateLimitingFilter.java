@@ -92,6 +92,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         void record() {
             timestamps[count % MAX_ATTEMPTS] = Instant.now().getEpochSecond();
             count++;
+            if (count < 0) count = 0;
         }
     }
 }

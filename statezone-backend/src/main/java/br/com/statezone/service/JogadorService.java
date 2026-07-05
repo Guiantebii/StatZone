@@ -88,42 +88,44 @@ public class JogadorService {
     }
 
     public void deletarJogador(Long id) {
-        Jogador jogador = jogadorRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Jogador com id " + id + " não encontrado"));
+        synchronized (this) {
+            Jogador jogador = jogadorRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Jogador com id " + id + " não encontrado"));
 
-        List<String> dependencias = new ArrayList<>();
+            List<String> dependencias = new ArrayList<>();
 
-        long eventosPrincipal = eventoPartidaRepository.countByJogadorId(id);
-        if (eventosPrincipal > 0) {
-            dependencias.add(eventosPrincipal + " evento(s) como participante");
+            long eventosPrincipal = eventoPartidaRepository.countByJogadorId(id);
+            if (eventosPrincipal > 0) {
+                dependencias.add(eventosPrincipal + " evento(s) como participante");
+            }
+
+            long eventosSecundario = eventoPartidaRepository.countByJogadorSecundarioId(id);
+            if (eventosSecundario > 0) {
+                dependencias.add(eventosSecundario + " evento(s) como jogador secundário");
+            }
+
+            if (estatisticasJogadorRepository.findByJogadorId(id).isPresent()) {
+                dependencias.add("estatísticas de carreira");
+            }
+
+            long statsCampeonato = estatisticasJogadorCampeonatoRepository.countByJogadorId(id);
+            if (statsCampeonato > 0) {
+                dependencias.add(statsCampeonato + " estatística(s) em campeonato(s)");
+            }
+
+            long suspensoes = suspensaoRepository.countByJogadorId(id);
+            if (suspensoes > 0) {
+                dependencias.add(suspensoes + " suspensão(ões)");
+            }
+
+            if (!dependencias.isEmpty()) {
+                throw new BusinessException(
+                        "Não é possível excluir o jogador '" + jogador.getNome() +
+                                "'. Possui: " + String.join(", ", dependencias) + "."
+                );
+            }
+
+            jogadorRepository.delete(jogador);
         }
-
-        long eventosSecundario = eventoPartidaRepository.countByJogadorSecundarioId(id);
-        if (eventosSecundario > 0) {
-            dependencias.add(eventosSecundario + " evento(s) como jogador secundário");
-        }
-
-        if (estatisticasJogadorRepository.findByJogadorId(id).isPresent()) {
-            dependencias.add("estatísticas de carreira");
-        }
-
-        long statsCampeonato = estatisticasJogadorCampeonatoRepository.countByJogadorId(id);
-        if (statsCampeonato > 0) {
-            dependencias.add(statsCampeonato + " estatística(s) em campeonato(s)");
-        }
-
-        long suspensoes = suspensaoRepository.countByJogadorId(id);
-        if (suspensoes > 0) {
-            dependencias.add(suspensoes + " suspensão(ões)");
-        }
-
-        if (!dependencias.isEmpty()) {
-            throw new BusinessException(
-                    "Não é possível excluir o jogador '" + jogador.getNome() +
-                            "'. Possui: " + String.join(", ", dependencias) + "."
-            );
-        }
-
-        jogadorRepository.delete(jogador);
     }
 }

@@ -31,47 +31,20 @@ public class ClassificacaoService {
         public List<ClassificacaoResponseDto> gerarClassificacao(Long campeonatoId) {
             Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
                     .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
-
-            Map<Long, ClassificacaoStats> statsMap = rankingCacheService.getRanking(campeonatoId)
-                    .stream()
-                    .collect(Collectors.toMap(ClassificacaoStats::getTimeId, s -> s));
-
-            List<ClassificacaoStats> completo = campeonato.getTimes().stream()
-                    .map(time -> statsMap.containsKey(time.getId())
-                            ? statsMap.get(time.getId())
-                            : new ClassificacaoStats(time))
-                    .sorted((a, b) -> {
-                        int cmp = b.getPontos().compareTo(a.getPontos());
-                        if (cmp != 0) return cmp;
-                        cmp = b.getSaldoGols().compareTo(a.getSaldoGols());
-                        if (cmp != 0) return cmp;
-                        return b.getGolsFeitos().compareTo(a.getGolsFeitos());
-                    })
-                    .toList();
-
-            for (int i = 0; i < completo.size(); i++) {
-                ClassificacaoStats s = completo.get(i);
-                s.setPosicao(i + 1);
-                double ap = s.getJogos() > 0
-                        ? Math.round((s.getPontos() / (double)(s.getJogos() * 3)) * 1000.0) / 10.0
-                        : 0.0;
-                s.setAproveitamento(ap);
-            }
-
-            return completo.stream()
-                    .map(classificacaoMapper::toDto)
-                    .toList();
+            return gerar(campeonato.getTimes(), rankingCacheService.getRanking(campeonatoId));
         }
 
     public List<ClassificacaoResponseDto> gerarClassificacaoPorGrupo(Long grupoId) {
         Grupo grupo = grupoRepository.findById(grupoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
+        return gerar(grupo.getTimes(), rankingCacheService.getRankingPorGrupo(grupoId));
+    }
 
-        Map<Long, ClassificacaoStats> statsMap = rankingCacheService.getRankingPorGrupo(grupoId)
-                .stream()
+    private List<ClassificacaoResponseDto> gerar(List<br.com.statezone.model.Time> times, List<ClassificacaoStats> stats) {
+        Map<Long, ClassificacaoStats> statsMap = stats.stream()
                 .collect(Collectors.toMap(ClassificacaoStats::getTimeId, s -> s));
 
-        List<ClassificacaoStats> completo = grupo.getTimes().stream()
+        List<ClassificacaoStats> completo = times.stream()
                 .map(time -> statsMap.containsKey(time.getId())
                         ? statsMap.get(time.getId())
                         : new ClassificacaoStats(time))
