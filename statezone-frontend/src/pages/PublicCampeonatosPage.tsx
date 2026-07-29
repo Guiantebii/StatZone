@@ -13,7 +13,7 @@ export default function PublicCampeonatosPage() {
 
   useEffect(() => {
     api
-      .get('/campeonatos')
+      .get('/campeonatos?publico=true')
       .then((r) => setCampeonatos(r.data))
       .catch(() => {
         toast.error('Erro ao carregar campeonatos');

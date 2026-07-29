@@ -6,4 +6,5 @@ export interface Campeonato {
   logoUrl: string;
   tipoFormato?: string;
   amarelosParaSuspensao?: number;
+  status?: string;
 }

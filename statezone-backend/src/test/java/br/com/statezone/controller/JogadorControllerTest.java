@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -121,14 +122,14 @@ class JogadorControllerTest {
                 "Time"
         );
 
-        when(jogadorService.listarTodosJogadores()).thenReturn(java.util.List.of(response));
+        when(jogadorService.listarTodosJogadores(any(Pageable.class))).thenReturn(java.util.List.of(response));
 
         mockMvc.perform(get("/jogadores"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10))
                 .andExpect(jsonPath("$[0].nomeTime").value("Time"));
 
-        verify(jogadorService).listarTodosJogadores();
+        verify(jogadorService).listarTodosJogadores(any(Pageable.class));
     }
 
     @Test

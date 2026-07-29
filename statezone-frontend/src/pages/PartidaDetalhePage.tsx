@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -137,27 +137,34 @@ export default function PartidaDetalhePage() {
     const event = data as EventoTimeline;
     setTimeline((prev) => {
       if (prev.some((e) => e.id === event.id)) return prev;
-      return [...prev, event].sort((a, b) => a.minuto - b.minuto || (a.minutoExtra ?? 0) - (b.minutoExtra ?? 0));
+      return [...prev, event].sort((a, b) => {
+        const tempoOrder =
+          a.tempo === b.tempo ? 0 : a.tempo === 'PRIMEIRO_TEMPO' ? -1 : a.tempo === 'SEGUNDO_TEMPO' ? 1 : 0;
+        if (tempoOrder !== 0) return tempoOrder;
+        return a.minuto - b.minuto || (a.minutoExtra ?? 0) - (b.minutoExtra ?? 0);
+      });
     });
   }, []);
 
   usePartidaWebSocket(id ? Number(id) : undefined, handleWsUpdate, handleWsEvent);
 
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!id) return;
     if (!partida || !isLiveStatus(partida.status)) return;
-    let timeoutId: ReturnType<typeof setTimeout>;
-    let isCancelled = false;
+
     const poll = async () => {
       await Promise.all([loadTimeline(), loadEstatisticas()]);
-      if (!isCancelled) {
-        timeoutId = setTimeout(poll, 10000);
-      }
+      pollingRef.current = setTimeout(poll, 10000);
     };
-    timeoutId = setTimeout(poll, 10000);
+    pollingRef.current = setTimeout(poll, 10000);
+
     return () => {
-      isCancelled = true;
-      clearTimeout(timeoutId);
+      if (pollingRef.current) {
+        clearTimeout(pollingRef.current);
+        pollingRef.current = null;
+      }
     };
   }, [id, partida?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -194,37 +201,76 @@ export default function PartidaDetalhePage() {
   const isScheduled = partida?.status === STATUS_PARTIDA.AGENDADA;
   const isFinished = partida ? isFinishedStatus(partida.status) : false;
 
-  const eventIcon = (tipo: string) => {
-    switch (tipo) {
-      case 'GOL':
-      case 'PENALTI_GOL':
-        return <CircleDot size={14} className="text-accent" aria-label="Gol" />;
-      case 'GOL_CONTRA':
-        return <ArrowLeftRight size={14} className="text-danger" aria-label="Gol contra" />;
-      case 'CARTAO_AMARELO':
-        return <Shield size={14} className="text-yellow-400" aria-label="Cartão amarelo" />;
-      case 'CARTAO_VERMELHO':
-        return <ShieldAlert size={14} className="text-danger" aria-label="Cartão vermelho" />;
-      case 'SUBSTITUICAO':
-        return <ArrowLeftRight size={14} className="text-slate-400" aria-label="Substituição" />;
-      case 'PENALTI_PERDIDO':
-        return <BanIcon size={14} className="text-danger" aria-label="Pênalti perdido" />;
-      case 'PENALTI_DEFENDIDO':
-        return <Eye size={14} className="text-info" aria-label="Pênalti defendido" />;
-      case 'VAR_GOL_ANULADO':
-        return <CheckCircle size={14} className="text-danger" aria-label="Gol anulado pelo VAR" />;
-      case 'VAR_GOL_CONFIRMADO':
-        return <CheckCircle size={14} className="text-success" aria-label="Gol confirmado pelo VAR" />;
-      case 'FIM_PRIMEIRO_TEMPO':
-        return <Pause size={14} className="text-warning" aria-label="Fim do primeiro tempo" />;
-      case 'INICIO_SEGUNDO_TEMPO':
-        return <PlayIcon size={14} className="text-info" aria-label="Início do segundo tempo" />;
-      case 'FIM_PARTIDA':
-        return <Flag size={14} className="text-slate-400" aria-label="Fim da partida" />;
-      default:
-        return <Circle size={14} className="text-slate-600" aria-label="Evento" />;
-    }
+  const EVENT_CONFIG: Record<string, { icon: React.ReactNode; label: string; badgeClass: string }> = {
+    GOL: { icon: <CircleDot size={16} />, label: 'Gol', badgeClass: 'bg-accent/15 text-accent border-accent/30' },
+    PENALTI_GOL: {
+      icon: <CircleDot size={16} />,
+      label: 'Pênalti',
+      badgeClass: 'bg-accent/15 text-accent border-accent/30',
+    },
+    GOL_CONTRA: {
+      icon: <ArrowLeftRight size={16} />,
+      label: 'Gol contra',
+      badgeClass: 'bg-danger/15 text-danger border-danger/30',
+    },
+    CARTAO_AMARELO: {
+      icon: <Shield size={16} />,
+      label: 'Cartão amarelo',
+      badgeClass: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    },
+    CARTAO_VERMELHO: {
+      icon: <ShieldAlert size={16} />,
+      label: 'Cartão vermelho',
+      badgeClass: 'bg-danger/15 text-danger border-danger/30',
+    },
+    SUBSTITUICAO: {
+      icon: <ArrowLeftRight size={16} />,
+      label: 'Substituição',
+      badgeClass: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+    },
+    PENALTI_PERDIDO: {
+      icon: <BanIcon size={16} />,
+      label: 'Pênalti perdido',
+      badgeClass: 'bg-danger/15 text-danger border-danger/30',
+    },
+    PENALTI_DEFENDIDO: {
+      icon: <Eye size={16} />,
+      label: 'Pênalti defendido',
+      badgeClass: 'bg-info/15 text-info border-info/30',
+    },
+    VAR_GOL_ANULADO: {
+      icon: <CheckCircle size={16} />,
+      label: 'Gol anulado',
+      badgeClass: 'bg-danger/15 text-danger border-danger/30',
+    },
+    VAR_GOL_CONFIRMADO: {
+      icon: <CheckCircle size={16} />,
+      label: 'Gol confirmado',
+      badgeClass: 'bg-success/15 text-success border-success/30',
+    },
+    FIM_PRIMEIRO_TEMPO: {
+      icon: <Pause size={16} />,
+      label: 'Intervalo',
+      badgeClass: 'bg-warning/15 text-warning border-warning/30',
+    },
+    INICIO_SEGUNDO_TEMPO: {
+      icon: <PlayIcon size={16} />,
+      label: '2º tempo',
+      badgeClass: 'bg-info/15 text-info border-info/30',
+    },
+    FIM_PARTIDA: {
+      icon: <Flag size={16} />,
+      label: 'Fim de jogo',
+      badgeClass: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+    },
   };
+
+  const eventConfig = (tipo: string) =>
+    EVENT_CONFIG[tipo] || {
+      icon: <Circle size={16} />,
+      label: tipo,
+      badgeClass: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+    };
 
   if (loading)
     return (
@@ -261,7 +307,7 @@ export default function PartidaDetalhePage() {
       <Card className="p-6 md:p-8">
         <div className="flex items-center justify-center gap-4 md:gap-10">
           <Link
-            to={`/times/${partida.timeMandanteId}`}
+            to={`${isAdminContext ? '/dashboard' : ''}/times/${partida.timeMandanteId}`}
             className="flex flex-col items-center gap-2 flex-1 text-right hover:opacity-80 transition-opacity"
           >
             <img
@@ -311,7 +357,7 @@ export default function PartidaDetalhePage() {
           </div>
 
           <Link
-            to={`/times/${partida.timeVisitanteId}`}
+            to={`${isAdminContext ? '/dashboard' : ''}/times/${partida.timeVisitanteId}`}
             className="flex flex-col items-center gap-2 flex-1 hover:opacity-80 transition-opacity"
           >
             <img
@@ -423,43 +469,52 @@ export default function PartidaDetalhePage() {
             <div className="relative space-y-0">
               {timeline
                 .filter((e) => !['INICIO_PRIMEIRO_TEMPO', 'FIM_PARTIDA'].includes(e.tipo))
-                .map((event, idx) => (
-                  <div key={event.id} className="flex gap-3 py-2 group">
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={`w-2 h-2 rounded-full mt-1.5 ${
-                          ['GOL', 'PENALTI_GOL'].includes(event.tipo)
-                            ? 'bg-accent'
-                            : ['CARTAO_VERMELHO'].includes(event.tipo)
-                              ? 'bg-danger'
-                              : ['CARTAO_AMARELO'].includes(event.tipo)
-                                ? 'bg-warning'
-                                : 'bg-slate-600'
-                        }`}
-                      />
-                      {idx < timeline.length - 1 && <div className="w-px flex-1 bg-white/[0.04]" />}
-                    </div>
-                    <div className="flex-1 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-bold text-slate-500 w-8">
-                          {event.minuto}
-                          {event.minutoExtra ? `+${event.minutoExtra}` : ''}'
-                        </span>
-                        <span className="text-sm">{eventIcon(event.tipo)}</span>
-                        <span className="text-sm text-slate-200 font-medium">{event.jogador}</span>
-                        {event.jogadorSecundario && (
-                          <span className="text-xs text-slate-500">({event.jogadorSecundario})</span>
-                        )}
-                        {event.tipo === 'GOL_CONTRA' && (
-                          <span className="text-xs text-danger font-semibold">(gol contra)</span>
+                .map((event, idx) => {
+                  const cfg = eventConfig(event.tipo);
+                  const isGoal = ['GOL', 'PENALTI_GOL'].includes(event.tipo);
+                  return (
+                    <div
+                      key={event.id}
+                      className={`flex gap-3 py-2 group ${isGoal ? 'bg-accent/[0.03] -mx-5 px-5 rounded-lg' : ''}`}
+                    >
+                      <div className="flex flex-col items-center">
+                        <div
+                          className={`w-2 h-2 rounded-full mt-1.5 ${
+                            ['GOL', 'PENALTI_GOL'].includes(event.tipo)
+                              ? 'bg-accent'
+                              : ['CARTAO_VERMELHO'].includes(event.tipo)
+                                ? 'bg-danger'
+                                : ['CARTAO_AMARELO'].includes(event.tipo)
+                                  ? 'bg-warning'
+                                  : 'bg-slate-600'
+                          }`}
+                        />
+                        {idx < timeline.length - 1 && <div className="w-px flex-1 bg-white/[0.04]" />}
+                      </div>
+                      <div className="flex-1 pb-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-mono font-bold text-slate-500 w-8 shrink-0">
+                            {event.minuto}
+                            {event.minutoExtra ? `+${event.minutoExtra}` : ''}'
+                          </span>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${cfg.badgeClass}`}
+                          >
+                            {cfg.icon}
+                            {cfg.label}
+                          </span>
+                          <span className="text-sm text-slate-200 font-medium">{event.jogador}</span>
+                          {event.jogadorSecundario && (
+                            <span className="text-xs text-slate-500">({event.jogadorSecundario})</span>
+                          )}
+                        </div>
+                        {event.nomeTime && (
+                          <span className="text-[10px] text-slate-600 ml-[4.5rem]">{event.nomeTime}</span>
                         )}
                       </div>
-                      {event.nomeTime && (
-                        <span className="text-[10px] text-slate-600 ml-[4.5rem]">{event.nomeTime}</span>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           )}
         </Card>
@@ -475,7 +530,7 @@ export default function PartidaDetalhePage() {
             return (
               <Card key={timeId} className="p-5">
                 <Link
-                  to={`/times/${timeId}`}
+                  to={`${isAdminContext ? '/dashboard' : ''}/times/${timeId}`}
                   className="flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity"
                 >
                   <img src={getLogoUrl(timeNome)} alt={timeNome} className="w-8 h-8 rounded-full bg-white/5" />

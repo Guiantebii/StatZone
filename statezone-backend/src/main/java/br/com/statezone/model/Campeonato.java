@@ -1,5 +1,6 @@
 package br.com.statezone.model;
 
+import br.com.statezone.enums.StatusCampeonato;
 import br.com.statezone.enums.TipoFormato;
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -43,13 +45,17 @@ public class Campeonato {
     @Column(name = "tipo_formato")
     private TipoFormato tipoFormato = TipoFormato.PONTOS_CORRIDOS;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private StatusCampeonato status = StatusCampeonato.RASCUNHO;
+
     @ManyToMany
     @JoinTable(
             name = "campeonato_times",
             joinColumns = @JoinColumn(name = "campeonato_id"),
             inverseJoinColumns = @JoinColumn(name = "time_id")
     )
-    private List<Time> times;
+    private List<Time> times = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "criado_em")

@@ -18,7 +18,9 @@ public record CampeonatoResponseDto(
         String tipoFormato,
 
         Integer amarelosParaSuspensao,
-        
+
+        String status,
+
         LocalDateTime criadoEm,
 
         LocalDateTime atualizadoEm,

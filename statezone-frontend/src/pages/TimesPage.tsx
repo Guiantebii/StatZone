@@ -10,7 +10,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import StatCard from '../components/ui/StatCard';
 import { SkeletonCard } from '../components/ui/Skeleton';
-import { getAvatarUrl } from '../constants/helpers';
+import { getLogoUrl } from '../constants/helpers';
 import { toast } from 'sonner';
 
 export default function TimesPage() {
@@ -148,11 +148,11 @@ export default function TimesPage() {
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <img
-                    src={t.escudoUrl}
+                    src={t.escudoUrl || getLogoUrl(t.nome)}
                     alt={t.nome}
                     className="w-16 h-16 object-contain mb-3 rounded-full bg-white/5 ring-2 ring-white/[0.06] relative"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = getAvatarUrl(t.sigla || '?', 64, 'DC052D', 'fff');
+                      (e.target as HTMLImageElement).src = getLogoUrl(t.nome);
                     }}
                   />
                 </div>
@@ -201,7 +201,12 @@ export default function TimesPage() {
               </div>
 
               <div className="flex gap-2 mt-5">
-                <Button variant="primary" size="sm" className="flex-1" onClick={() => navigate(`/times/${t.id}`)}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => navigate(`/dashboard/times/${t.id}`)}
+                >
                   Ver time
                 </Button>
                 <Button variant="secondary" size="sm" className="flex-1" onClick={() => openEdit(t)}>

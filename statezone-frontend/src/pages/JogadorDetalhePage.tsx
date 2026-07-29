@@ -65,7 +65,9 @@ export default function JogadorDetalhePage() {
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const idade = (dataNasc: string) => {
+    if (!dataNasc) return 0;
     const nasc = new Date(dataNasc);
+    if (isNaN(nasc.getTime())) return 0;
     const hoje = new Date();
     let idade = hoje.getFullYear() - nasc.getFullYear();
     const mes = hoje.getMonth() - nasc.getMonth();

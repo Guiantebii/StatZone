@@ -16,7 +16,7 @@ import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.SuspensaoRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

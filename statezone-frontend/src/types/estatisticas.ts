@@ -55,6 +55,7 @@ export interface RankingGoleiro {
 }
 
 export interface SelecaoCampeonato {
+  jogadorId: number;
   posicao: string;
   nomeJogador: string;
   nomeTime: string;

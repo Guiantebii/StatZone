@@ -15,6 +15,7 @@ import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.JogadorRepository;
+import br.com.statezone.service.helper.StatsHelper;
 import br.com.statezone.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,7 +39,7 @@ import static br.com.statezone.support.TestFixtures.jogador;
 import static br.com.statezone.support.TestFixtures.partida;
 import static br.com.statezone.support.TestFixtures.time;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -65,6 +66,9 @@ class StatsEngineTest {
     @Mock
     private EscalacaoPartidaRepository escalacaoPartidaRepository;
 
+    @Mock
+    private StatsHelper statsHelper;
+
     private StatsEngine engine;
 
     @BeforeEach
@@ -73,7 +77,8 @@ class StatsEngineTest {
                 estatisticasJogadorRepository,
                 estatisticasJogadorCampeonatoRepository,
                 jogadorRepository,
-                escalacaoPartidaRepository
+                escalacaoPartidaRepository,
+                statsHelper
         );
     }
 
@@ -99,7 +104,7 @@ class StatsEngineTest {
         EventoPartida gol = evento(100L, TipoEvento.GOL, 15, null, "Gol", atacante, assistente, mandante, false);
         EventoPartida finalizacao = evento(101L, TipoEvento.FINALIZACAO, 16, null, "Finalizacao", atacante, null, mandante, false);
         EventoPartida amarelo = evento(102L, TipoEvento.CARTAO_AMARELO, 17, null, "Amarelo", defensor, null, visitante, false);
-        EventoPartida penaltiDefendido = evento(103L, TipoEvento.PENALTI_DEFENDIDO, 18, null, "Defesa", goleiro, null, mandante, false);
+        EventoPartida penaltiDefendido = evento(103L, TipoEvento.PENALTI_DEFENDIDO, 18, null, "Defesa", atacante, goleiro, mandante, false);
         EventoPartida golAnulado = evento(104L, TipoEvento.GOL, 19, null, "Anulado", atacante, assistente, mandante, true);
         List<EventoPartida> eventos = new java.util.ArrayList<>(List.of(gol, finalizacao, amarelo, penaltiDefendido, golAnulado));
         eventos.add(null);
@@ -108,29 +113,25 @@ class StatsEngineTest {
         when(escalacaoPartidaRepository.findByPartidaIdWithJogador(30L)).thenReturn(escalacoes);
 
         Map<Long, EstatisticasJogador> carreiraStore = new HashMap<>();
-        when(estatisticasJogadorRepository.findByJogadorId(anyLong())).thenAnswer(invocation -> {
-            Long jogadorId = invocation.getArgument(0);
-            return Optional.ofNullable(carreiraStore.get(jogadorId));
-        });
-        when(estatisticasJogadorRepository.save(org.mockito.ArgumentMatchers.any(EstatisticasJogador.class)))
-                .thenAnswer(invocation -> {
-                    EstatisticasJogador estatisticas = invocation.getArgument(0);
-                    carreiraStore.put(estatisticas.getJogador().getId(), estatisticas);
-                    return estatisticas;
-                });
-
         Map<String, EstatisticasJogadorCampeonato> campeonatoStore = new HashMap<>();
-        when(estatisticasJogadorCampeonatoRepository.findByJogadorIdAndCampeonatoId(anyLong(), eq(1L)))
-                .thenAnswer(invocation -> {
-                    Long jogadorId = invocation.getArgument(0);
-                    return Optional.ofNullable(campeonatoStore.get(chave(jogadorId, 1L)));
-                });
-        when(estatisticasJogadorCampeonatoRepository.save(org.mockito.ArgumentMatchers.any(EstatisticasJogadorCampeonato.class)))
-                .thenAnswer(invocation -> {
-                    EstatisticasJogadorCampeonato estatisticas = invocation.getArgument(0);
-                    campeonatoStore.put(chave(estatisticas.getJogador().getId(), estatisticas.getCampeonato().getId()), estatisticas);
-                    return estatisticas;
-                });
+
+        when(statsHelper.buscarOuCriarCarreira(any())).thenAnswer(inv -> {
+            Jogador j = inv.getArgument(0);
+            return carreiraStore.computeIfAbsent(j.getId(), k -> {
+                EstatisticasJogador e = new EstatisticasJogador();
+                e.setJogador(j);
+                return e;
+            });
+        });
+        when(statsHelper.obterOuCriarCampeonato(any(), eq(partida))).thenAnswer(inv -> {
+            Jogador j = inv.getArgument(0);
+            return campeonatoStore.computeIfAbsent(j.getId() + ":" + 1L, k -> {
+                EstatisticasJogadorCampeonato e = new EstatisticasJogadorCampeonato();
+                e.setJogador(j);
+                e.setCampeonato(campeonato);
+                return e;
+            });
+        });
 
         engine.process(partida);
 
@@ -142,8 +143,8 @@ class StatsEngineTest {
         assertThat(carreiraStore.get(22L).getPenaltisDefendidos()).isEqualTo(1);
         assertThat(carreiraStore.get(23L).getCartoesAmarelos()).isEqualTo(1);
         assertThat(carreiraStore.get(23L).getPartidasJogadas()).isEqualTo(1);
-        assertThat(campeonatoStore.get(chave(20L, 1L)).getGols()).isEqualTo(1);
-        assertThat(campeonatoStore.get(chave(22L, 1L)).getPenaltisDefendidos()).isEqualTo(1);
+        assertThat(campeonatoStore.get(20L + ":" + 1L).getGols()).isEqualTo(1);
+        assertThat(campeonatoStore.get(22L + ":" + 1L).getPenaltisDefendidos()).isEqualTo(1);
     }
 
     @Test
@@ -161,29 +162,21 @@ class StatsEngineTest {
         when(jogadorRepository.findByTimeIdIn(List.of(10L, 11L))).thenReturn(List.of(goleiroMandante, atacanteVisitante));
 
         Map<Long, EstatisticasJogador> carreiraStore = new HashMap<>();
-        when(estatisticasJogadorRepository.findByJogadorId(anyLong())).thenAnswer(invocation -> {
-            Long jogadorId = invocation.getArgument(0);
-            return Optional.ofNullable(carreiraStore.get(jogadorId));
+        when(statsHelper.buscarOuCriarCarreira(any())).thenAnswer(inv -> {
+            Jogador j = inv.getArgument(0);
+            return carreiraStore.computeIfAbsent(j.getId(), k -> {
+                EstatisticasJogador e = new EstatisticasJogador();
+                e.setJogador(j);
+                return e;
+            });
         });
-        when(estatisticasJogadorRepository.save(org.mockito.ArgumentMatchers.any(EstatisticasJogador.class)))
-                .thenAnswer(invocation -> {
-                    EstatisticasJogador estatisticas = invocation.getArgument(0);
-                    carreiraStore.put(estatisticas.getJogador().getId(), estatisticas);
-                    return estatisticas;
-                });
-
-        Map<String, EstatisticasJogadorCampeonato> campeonatoStore = new HashMap<>();
-        when(estatisticasJogadorCampeonatoRepository.findByJogadorIdAndCampeonatoId(anyLong(), eq(1L)))
-                .thenAnswer(invocation -> {
-                    Long jogadorId = invocation.getArgument(0);
-                    return Optional.ofNullable(campeonatoStore.get(chave(jogadorId, 1L)));
-                });
-        when(estatisticasJogadorCampeonatoRepository.save(org.mockito.ArgumentMatchers.any(EstatisticasJogadorCampeonato.class)))
-                .thenAnswer(invocation -> {
-                    EstatisticasJogadorCampeonato estatisticas = invocation.getArgument(0);
-                    campeonatoStore.put(chave(estatisticas.getJogador().getId(), estatisticas.getCampeonato().getId()), estatisticas);
-                    return estatisticas;
-                });
+        when(statsHelper.obterOuCriarCampeonato(any(), eq(partida))).thenAnswer(inv -> {
+            Jogador j = inv.getArgument(0);
+            EstatisticasJogadorCampeonato e = new EstatisticasJogadorCampeonato();
+            e.setJogador(j);
+            e.setCampeonato(campeonato);
+            return e;
+        });
 
         engine.process(partida);
 
@@ -191,9 +184,5 @@ class StatsEngineTest {
         assertThat(carreiraStore.get(20L).getPartidasJogadas()).isEqualTo(1);
         assertThat(carreiraStore.get(21L).getPartidasJogadas()).isEqualTo(1);
         verify(jogadorRepository).findByTimeIdIn(List.of(10L, 11L));
-    }
-
-    private String chave(Long jogadorId, Long campeonatoId) {
-        return jogadorId + ":" + campeonatoId;
     }
 }

@@ -40,7 +40,14 @@ export const router = createBrowserRouter([
       { path: '/estatisticas', element: <LazyPage Component={EstatisticasPage} /> },
     ],
   },
-  { path: '/login', element: <LazyPage Component={LoginPage} /> },
+  {
+    path: '/login',
+    element: (
+      <RedirectIfAuthenticated>
+        <LazyPage Component={LoginPage} />
+      </RedirectIfAuthenticated>
+    ),
+  },
   {
     path: '/registro',
     element: (

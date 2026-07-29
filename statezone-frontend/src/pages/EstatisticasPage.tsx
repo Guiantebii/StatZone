@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Trophy, Medal, Shield, Eye, User, Star, Swords, GitBranch } from 'lucide-react';
 import api from '../api/client';
 import { PAGE_SIZE } from '../constants/pagination';
@@ -70,10 +70,11 @@ export default function EstatisticasPage() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
+  const campeonatosEndpoint = isAdminContext ? '/campeonatos' : '/campeonatos?publico=true';
 
   useEffect(() => {
     api
-      .get('/campeonatos')
+      .get(campeonatosEndpoint)
       .then((res) => {
         const data = res.data as Campeonato[];
         setCampeonatos(data);
@@ -84,7 +85,7 @@ export default function EstatisticasPage() {
       })
       .catch(() => toast.error('Erro ao carregar campeonatos'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [campeonatosEndpoint]);
 
   useEffect(() => {
     if (!campeonatoId) return;
@@ -363,6 +364,7 @@ export default function EstatisticasPage() {
                 <span className="text-sm font-bold text-accent font-mono">{(a as Artilharia).gols}</span>
               )}
               getJogador={(a) => ({ nome: (a as Artilharia).nomeJogador, time: (a as Artilharia).nomeTime })}
+              getJogadorId={(a) => (a as Artilharia).jogadorId}
               emptyText="Nenhum gol registrado"
               pagination={{ page, hasMore, onPrev: () => setPage((p) => p - 1), onNext: () => setPage((p) => p + 1) }}
             />
@@ -382,6 +384,7 @@ export default function EstatisticasPage() {
                 nome: (a as AssistenciaRanking).nomeJogador,
                 time: (a as AssistenciaRanking).nomeTime,
               })}
+              getJogadorId={(a) => (a as AssistenciaRanking).jogadorId}
               emptyText="Nenhuma assistência registrada"
               pagination={{ page, hasMore, onPrev: () => setPage((p) => p - 1), onNext: () => setPage((p) => p + 1) }}
             />
@@ -399,6 +402,7 @@ export default function EstatisticasPage() {
                   </span>
                 )}
                 getJogador={(a) => ({ nome: (a as RankingCartao).nomeJogador, time: (a as RankingCartao).nomeTime })}
+                getJogadorId={(a) => (a as RankingCartao).jogadorId}
                 emptyText="Nenhum cartão amarelo"
               />
               <RankingTable
@@ -411,6 +415,7 @@ export default function EstatisticasPage() {
                   </span>
                 )}
                 getJogador={(a) => ({ nome: (a as RankingCartao).nomeJogador, time: (a as RankingCartao).nomeTime })}
+                getJogadorId={(a) => (a as RankingCartao).jogadorId}
                 emptyText="Nenhum cartão vermelho"
               />
             </div>
@@ -449,7 +454,11 @@ export default function EstatisticasPage() {
                   </thead>
                   <tbody className="divide-y divide-white/[0.03]">
                     {goleiros.map((g) => (
-                      <tr key={g.jogadorId} className="hover:bg-white/[0.02] transition-colors">
+                      <tr
+                        key={g.jogadorId}
+                        className="hover:bg-white/[0.02] transition-colors cursor-pointer"
+                        onClick={() => navigate(`/jogadores/${g.jogadorId}`)}
+                      >
                         <td className="px-5 py-3">
                           <span className="text-sm font-bold font-mono text-slate-400">{g.posicao}</span>
                         </td>
@@ -461,7 +470,9 @@ export default function EstatisticasPage() {
                               className="w-7 h-7 rounded-full bg-white/5"
                             />
                             <div>
-                              <p className="text-sm font-medium text-slate-200">{g.nomeJogador}</p>
+                              <p className="text-sm font-medium text-slate-200 hover:text-accent transition-colors">
+                                {g.nomeJogador}
+                              </p>
                               <p className="text-[10px] text-slate-500">{g.nomeTime}</p>
                             </div>
                           </div>
@@ -498,9 +509,10 @@ export default function EstatisticasPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {selecao.map((j) => (
-                    <div
+                    <Link
                       key={`${j.posicao}-${j.nomeJogador}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+                      to={`/jogadores/${j.jogadorId}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-accent/20 transition-all duration-200"
                     >
                       <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0">
                         {j.posicao.substring(0, 2)}
@@ -512,7 +524,7 @@ export default function EstatisticasPage() {
                       <div className="ml-auto text-right">
                         <span className="text-xs font-mono text-accent">{j.score.toFixed(1)}</span>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -524,11 +536,13 @@ export default function EstatisticasPage() {
               {!mvp ? (
                 <p className="text-sm text-slate-500 text-center py-10">Nenhum MVP disponível</p>
               ) : (
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 ring-4 ring-accent/20">
+                <Link to={`/jogadores/${mvp.jogadorId}`} className="flex flex-col items-center text-center group">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 ring-4 ring-accent/20 group-hover:ring-accent/40 transition-all">
                     <Swords size={36} className="text-accent" />
                   </div>
-                  <h3 className="text-xl font-bold text-slate-100">{mvp.nomeJogador}</h3>
+                  <h3 className="text-xl font-bold text-slate-100 group-hover:text-accent transition-colors">
+                    {mvp.nomeJogador}
+                  </h3>
                   <p className="text-sm text-slate-400 mt-1">{mvp.nomeTime}</p>
 
                   <div className="flex items-center gap-1 mt-2">
@@ -548,7 +562,7 @@ export default function EstatisticasPage() {
                     <span>🟥 {mvp.cartoesVermelhos} vermelhos</span>
                     <span>❌ {mvp.penaltisPerdidos} pênaltis perdidos</span>
                   </div>
-                </div>
+                </Link>
               )}
             </Card>
           )}
@@ -584,6 +598,7 @@ interface RankingTableProps<T extends { posicao: number }> {
   data: T[];
   renderValue: (item: T) => React.ReactNode;
   getJogador: (item: T) => { nome: string; time?: string };
+  getJogadorId?: (item: T) => number;
   emptyText: string;
   pagination?: {
     page: number;
@@ -599,6 +614,7 @@ function RankingTable<T extends { posicao: number }>({
   data,
   renderValue,
   getJogador,
+  getJogadorId,
   emptyText,
   pagination,
 }: RankingTableProps<T>) {
@@ -649,7 +665,16 @@ function RankingTable<T extends { posicao: number }>({
                         className="w-7 h-7 rounded-full bg-white/5"
                       />
                       <div>
-                        <p className="text-sm font-medium text-slate-200">{jog.nome}</p>
+                        {getJogadorId ? (
+                          <Link
+                            to={`/jogadores/${getJogadorId(item)}`}
+                            className="text-sm font-medium text-slate-200 hover:text-accent transition-colors"
+                          >
+                            {jog.nome}
+                          </Link>
+                        ) : (
+                          <p className="text-sm font-medium text-slate-200">{jog.nome}</p>
+                        )}
                         {jog.time && <p className="text-[10px] text-slate-500">{jog.time}</p>}
                       </div>
                     </div>

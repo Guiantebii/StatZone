@@ -10,6 +10,7 @@ import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.JogadorRepository;
+import br.com.statezone.service.helper.StatsHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ public class StatsEngine {
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
     private final JogadorRepository jogadorRepository;
     private final EscalacaoPartidaRepository escalacaoPartidaRepository;
+    private final StatsHelper statsHelper;
 
     public void process(Partida partida) {
         if (partida == null) {
@@ -68,8 +70,11 @@ public class StatsEngine {
             case CARTAO_VERMELHO -> registrarCartaoVermelho(jogador, partida);
             case DEFESA -> registrarDefesa(jogador, partida);
             case PENALTI_DEFENDIDO -> {
-                registrarDefesa(jogador, partida);
-                registrarPenaltiDefendido(jogador, partida);
+                Jogador goleiro = evento.getJogadorSecundario();
+                if (goleiro != null) {
+                    registrarDefesa(goleiro, partida);
+                    registrarPenaltiDefendido(goleiro, partida);
+                }
             }
             case PENALTI_PERDIDO -> registrarPenaltiPerdido(jogador, partida);
             default -> {
@@ -98,21 +103,13 @@ public class StatsEngine {
     }
 
     private void registrarPartidaJogada(Jogador jogador, Partida partida) {
-        EstatisticasJogador carreira = estatisticasJogadorRepository
-                .findByJogadorId(jogador.getId())
-                .orElseGet(() -> {
-                    EstatisticasJogador estatisticas = new EstatisticasJogador();
-                    estatisticas.setJogador(jogador);
-                    return estatisticas;
-                });
-
-        EstatisticasJogadorCampeonato campeonato = obterEstatisticasCampeonato(jogador, partida);
+        EstatisticasJogador carreira = statsHelper.buscarOuCriarCarreira(jogador);
+        EstatisticasJogadorCampeonato campeonato = statsHelper.obterOuCriarCampeonato(jogador, partida);
 
         carreira.setPartidasJogadas(somar(carreira.getPartidasJogadas(), 1));
         campeonato.setPartidasJogadas(somar(campeonato.getPartidasJogadas(), 1));
 
-        estatisticasJogadorRepository.save(carreira);
-        estatisticasJogadorCampeonatoRepository.save(campeonato);
+        statsHelper.salvarAmbos(carreira, campeonato);
     }
 
     private void registrarGol(Jogador jogador, Partida partida) {
@@ -182,31 +179,13 @@ public class StatsEngine {
             return;
         }
 
-        EstatisticasJogador carreira = estatisticasJogadorRepository
-                .findByJogadorId(jogador.getId())
-                .orElseGet(() -> {
-                    EstatisticasJogador estatisticas = new EstatisticasJogador();
-                    estatisticas.setJogador(jogador);
-                    return estatisticas;
-                });
-        EstatisticasJogadorCampeonato campeonato = obterEstatisticasCampeonato(jogador, partida);
+        EstatisticasJogador carreira = statsHelper.buscarOuCriarCarreira(jogador);
+        EstatisticasJogadorCampeonato campeonato = statsHelper.obterOuCriarCampeonato(jogador, partida);
 
         atualizarCarreira.accept(carreira);
         atualizarCampeonato.accept(campeonato);
 
-        estatisticasJogadorRepository.save(carreira);
-        estatisticasJogadorCampeonatoRepository.save(campeonato);
-    }
-
-    private EstatisticasJogadorCampeonato obterEstatisticasCampeonato(Jogador jogador, Partida partida) {
-        return estatisticasJogadorCampeonatoRepository
-                .findByJogadorIdAndCampeonatoId(jogador.getId(), partida.getCampeonato().getId())
-                .orElseGet(() -> {
-                    EstatisticasJogadorCampeonato estatisticas = new EstatisticasJogadorCampeonato();
-                    estatisticas.setJogador(jogador);
-                    estatisticas.setCampeonato(partida.getCampeonato());
-                    return estatisticas;
-                });
+        statsHelper.salvarAmbos(carreira, campeonato);
     }
 
     private int somar(Integer valor, int incremento) {

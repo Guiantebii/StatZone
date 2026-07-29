@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface ConfrontoEliminatorioRepository extends JpaRepository<ConfrontoEliminatorio, Long> {
 
-    List<ConfrontoEliminatorio> findByFaseEliminatoriaId(Long faseEliminatoriaId);
+    List<ConfrontoEliminatorio> findByFaseEliminatoriaIdOrderByBracketIndexAsc(Long faseEliminatoriaId);
 
     @Query("""
         SELECT c FROM ConfrontoEliminatorio c
@@ -22,6 +22,7 @@ public interface ConfrontoEliminatorioRepository extends JpaRepository<Confronto
         LEFT JOIN FETCH c.partidaIda
         LEFT JOIN FETCH c.partidaVolta
         WHERE c.faseEliminatoria.id = :faseId
+        ORDER BY c.bracketIndex ASC
     """)
     List<ConfrontoEliminatorio> findByFaseIdWithDetails(
             @Param("faseId") Long faseId
@@ -33,6 +34,7 @@ public interface ConfrontoEliminatorioRepository extends JpaRepository<Confronto
         LEFT JOIN FETCH c.timeA
         LEFT JOIN FETCH c.timeB
         WHERE c.partidaIda.id = :partidaId OR c.partidaVolta.id = :partidaId
+        ORDER BY c.bracketIndex ASC
     """)
     Optional<ConfrontoEliminatorio> findConfrontoByPartidaId(@Param("partidaId") Long partidaId);
 
@@ -42,6 +44,7 @@ public interface ConfrontoEliminatorioRepository extends JpaRepository<Confronto
         JOIN FETCH c.timeB
         LEFT JOIN FETCH c.timeClassificado
         WHERE c.faseEliminatoria.campeonato.id = :campeonatoId
+        ORDER BY c.bracketIndex ASC
     """)
     List<ConfrontoEliminatorio> findByCampeonatoId(
             @Param("campeonatoId") Long campeonatoId

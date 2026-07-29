@@ -1,21 +1,21 @@
 package br.com.statezone.listeners;
 
 import br.com.statezone.events.PartidaEncerradaEvent;
-import br.com.statezone.service.MatchEngine;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class EstatisticasEventListener {
 
-    private final MatchEngine matchEngineService;
+    private final PartidaEncerradaOrchestrator orchestrator;
 
     @EventListener
-    @Transactional
     public void onEvento(PartidaEncerradaEvent event) {
-        matchEngineService.process(event.getPartida());
+        log.warn("EstatisticasEventListener chamado diretamente - delegando para PartidaEncerradaOrchestrator");
+        orchestrator.handlePartidaEncerrada(event);
     }
 }

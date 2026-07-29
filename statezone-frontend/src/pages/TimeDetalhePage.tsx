@@ -243,6 +243,9 @@ export default function TimeDetalhePage() {
 
 function PartidaRow({ partida, timeId }: { partida: Partida; timeId: number }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDashboardContext = location.pathname.startsWith('/dashboard');
+  const partidaBasePath = isDashboardContext ? '/dashboard/partidas' : '/partidas';
   const mandante = partida.timeMandanteId === timeId;
   const isFinished = isFinishedStatus(partida.status);
 
@@ -251,7 +254,7 @@ function PartidaRow({ partida, timeId }: { partida: Partida; timeId: number }) {
 
   return (
     <button
-      onClick={() => navigate(`/partidas/${partida.id}`)}
+      onClick={() => navigate(`${partidaBasePath}/${partida.id}`)}
       className="w-full flex items-center gap-2 p-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left"
     >
       <span className="text-[10px] text-slate-600 w-5 font-mono text-right">{partida.campeonatoNome?.charAt(0)}</span>

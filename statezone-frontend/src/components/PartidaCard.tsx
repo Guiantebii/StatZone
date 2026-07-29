@@ -1,4 +1,4 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Clock, Calendar, Trophy } from 'lucide-react';
 import { getLogoUrl } from '../constants/helpers';
 import type { Partida } from '../types/partida';
@@ -23,6 +23,10 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 export default function PartidaCard({ partida }: PartidaCardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDashboardContext = location.pathname.startsWith('/dashboard');
+  const partidaBasePath = isDashboardContext ? '/dashboard/partidas' : '/partidas';
+  const timeBasePath = isDashboardContext ? '/dashboard/times' : '/times';
   const isLive = isLiveStatus(partida.status);
   const isFinished = isFinishedStatus(partida.status);
   const showScore = isLive || isFinished;
@@ -40,7 +44,7 @@ export default function PartidaCard({ partida }: PartidaCardProps) {
   };
 
   return (
-    <Card hover className="p-4 cursor-pointer" onClick={() => navigate(`/partidas/${partida.id}`)}>
+    <Card hover className="p-4 cursor-pointer" onClick={() => navigate(`${partidaBasePath}/${partida.id}`)}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5 text-xs text-slate-500">
           <Trophy size={12} />
@@ -58,7 +62,7 @@ export default function PartidaCard({ partida }: PartidaCardProps) {
       <div className="flex items-center gap-3 py-2">
         <div className="flex-1 flex items-center justify-end gap-2 text-right">
           <Link
-            to={`/times/${partida.timeMandanteId}`}
+            to={`${timeBasePath}/${partida.timeMandanteId}`}
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
@@ -93,7 +97,7 @@ export default function PartidaCard({ partida }: PartidaCardProps) {
 
         <div className="flex-1 flex items-center gap-2">
           <Link
-            to={`/times/${partida.timeVisitanteId}`}
+            to={`${timeBasePath}/${partida.timeVisitanteId}`}
             onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >

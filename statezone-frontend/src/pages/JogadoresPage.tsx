@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Search, UserPlus, Users } from 'lucide-react';
+import { Search, UserPlus, Users, Filter } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
 import { posicaoLabel, getJogadorAvatarUrl } from '../constants/helpers';
 import type { Jogador } from '../types/jogador';
+import type { Time } from '../types/time';
 import JogadorForm from '../components/JogadorForm';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import PageHeader from '../components/ui/PageHeader';
@@ -21,17 +22,21 @@ export default function JogadoresPage() {
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState<Jogador | null>(null);
   const [search, setSearch] = useState('');
+  const [timeFiltro, setTimeFiltro] = useState<number | ''>('');
+  const [times, setTimes] = useState<Time[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; nome: string } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    api
-      .get('/jogadores')
-      .then((res) => {
-        if (isMounted) setJogadores(res.data);
+    Promise.all([api.get('/jogadores'), api.get('/times')])
+      .then(([jogRes, timesRes]) => {
+        if (isMounted) {
+          setJogadores(jogRes.data);
+          setTimes(timesRes.data);
+        }
       })
       .catch((err) => {
-        toast.error(getApiError(err, 'Erro ao carregar jogadores'));
+        toast.error(getApiError(err, 'Erro ao carregar dados'));
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -75,12 +80,16 @@ export default function JogadoresPage() {
     return 'bg-warning-bg text-warning border border-warning-border';
   };
 
-  const filtered = jogadores.filter(
-    (j) =>
-      j.nome.toLowerCase().includes(search.toLowerCase()) ||
-      j.nomeTime?.toLowerCase().includes(search.toLowerCase()) ||
-      posicaoLabel(j.posicao).toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = jogadores.filter((j) => {
+    if (timeFiltro !== '' && j.timeId !== timeFiltro) return false;
+    const q = search.toLowerCase();
+    return (
+      !q ||
+      j.nome.toLowerCase().includes(q) ||
+      j.nomeTime?.toLowerCase().includes(q) ||
+      posicaoLabel(j.posicao).toLowerCase().includes(q)
+    );
+  });
 
   if (loading)
     return (
@@ -119,8 +128,31 @@ export default function JogadoresPage() {
       </div>
 
       <Card className="overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.04]">
-          <span className="text-sm font-semibold text-slate-200">Todos os jogadores</span>
+        <div className="flex flex-wrap items-center gap-3 px-5 py-3.5 border-b border-white/[0.04]">
+          <span className="text-sm font-semibold text-slate-200 mr-auto">Todos os jogadores</span>
+
+          <div className="relative">
+            <Filter
+              size={13}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+            />
+            <select
+              value={timeFiltro}
+              onChange={(e) => setTimeFiltro(e.target.value === '' ? '' : Number(e.target.value))}
+              className="h-8 pl-7 pr-3 text-xs rounded-lg bg-white/5 border border-white/[0.06] text-slate-200 focus:outline-none focus:ring-1 focus:ring-accent appearance-none cursor-pointer"
+            >
+              <option value="">Todos os times</option>
+              {times
+                .slice()
+                .sort((a, b) => a.nome.localeCompare(b.nome))
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nome}
+                  </option>
+                ))}
+            </select>
+          </div>
+
           <Input
             placeholder="Buscar..."
             value={search}

@@ -5,6 +5,7 @@ import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.dto.partida.PenaltisRequestDto;
 import br.com.statezone.service.EventoPartidaService;
+import br.com.statezone.service.PartidaLifecycleService;
 import br.com.statezone.service.PartidaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +15,17 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/partidas")
 @RequiredArgsConstructor
 public class PartidaController {
     private final PartidaService partidaService;
+    private final PartidaLifecycleService partidaLifecycleService;
     private final EventoPartidaService eventoPartidaService;
 
     @PostMapping
@@ -34,8 +40,12 @@ public class PartidaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PartidaResponseDto>> listarTodasPartidas(){
-        return ResponseEntity.ok(partidaService.listarTodas());
+    public ResponseEntity<List<PartidaResponseDto>> listarTodasPartidas(
+            @RequestParam(required = false, defaultValue = "0") int pagina,
+            @RequestParam(required = false, defaultValue = "50") int tamanho
+    ){
+        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.DESC, "dataPartida"));
+        return ResponseEntity.ok(partidaService.listarTodas(pageable));
     }
     @GetMapping("/{id}")
     public ResponseEntity<PartidaResponseDto> obterPartidaPorId(@PathVariable Long id){
@@ -55,24 +65,24 @@ public class PartidaController {
     @PostMapping("/{id}/iniciar")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PartidaResponseDto> iniciar(@PathVariable Long id) {
-        return ResponseEntity.ok(partidaService.iniciar(id));
+        return ResponseEntity.ok(partidaLifecycleService.iniciar(id));
     }
     @PostMapping("/{id}/encerrar")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PartidaResponseDto> encerrar(@PathVariable Long id) {
-        return ResponseEntity.ok(partidaService.encerrar(id));
+        return ResponseEntity.ok(partidaLifecycleService.encerrar(id));
     }
 
     @PostMapping("/{id}/intervalo")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PartidaResponseDto> intervalo(@PathVariable Long id) {
-        return ResponseEntity.ok(partidaService.intervalo(id));
+        return ResponseEntity.ok(partidaLifecycleService.intervalo(id));
     }
 
     @PostMapping("/{id}/segundo-tempo")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PartidaResponseDto> iniciarSegundoTempo(@PathVariable Long id) {
-        return ResponseEntity.ok(partidaService.iniciarSegundoTempo(id));
+        return ResponseEntity.ok(partidaLifecycleService.iniciarSegundoTempo(id));
     }
 
     @PostMapping("/{id}/adiar")
@@ -99,31 +109,31 @@ public class PartidaController {
     @PostMapping("/{id}/wo-mandante")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PartidaResponseDto> woMandante(@PathVariable Long id) {
-        return ResponseEntity.ok(partidaService.woMandante(id));
+        return ResponseEntity.ok(partidaLifecycleService.woMandante(id));
     }
 
     @PostMapping("/{id}/wo-visitante")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PartidaResponseDto> woVisitante(@PathVariable Long id) {
-        return ResponseEntity.ok(partidaService.woVisitante(id));
+        return ResponseEntity.ok(partidaLifecycleService.woVisitante(id));
     }
 
     @PostMapping("/{id}/prorrogacao")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PartidaResponseDto> iniciarProrrogacao(@PathVariable Long id) {
-        return ResponseEntity.ok(partidaService.iniciarProrrogacao(id));
+        return ResponseEntity.ok(partidaLifecycleService.iniciarProrrogacao(id));
     }
 
     @PostMapping("/{id}/encerrar-prorrogacao")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PartidaResponseDto> encerrarProrrogacao(@PathVariable Long id) {
-        return ResponseEntity.ok(partidaService.encerrarProrrogacao(id));
+        return ResponseEntity.ok(partidaLifecycleService.encerrarProrrogacao(id));
     }
 
     @PostMapping("/{id}/penaltis")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PartidaResponseDto> iniciarPenaltis(@PathVariable Long id) {
-        return ResponseEntity.ok(partidaService.iniciarPenaltis(id));
+        return ResponseEntity.ok(partidaLifecycleService.iniciarPenaltis(id));
     }
 
     @PostMapping("/{id}/encerrar-penaltis")
@@ -132,7 +142,7 @@ public class PartidaController {
             @PathVariable Long id,
             @RequestBody @Valid PenaltisRequestDto dto
     ) {
-        return ResponseEntity.ok(partidaService.encerrarComPenaltis(
+        return ResponseEntity.ok(partidaLifecycleService.encerrarComPenaltis(
                 id,
                 dto.golsPenaltisMandante(),
                 dto.golsPenaltisVisitante()

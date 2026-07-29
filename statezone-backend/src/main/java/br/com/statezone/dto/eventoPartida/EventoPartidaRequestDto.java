@@ -11,8 +11,8 @@ public record EventoPartidaRequestDto(
         TipoEvento tipoEvento,
 
         @NotNull(message = "Minuto é obrigatório")
-        @Min(value = 1, message = "Minuto deve ser no mínimo 1")
-        @Max(value = 120, message = "Minuto deve ser no máximo 120")
+        @Min(value = 0, message = "Minuto deve ser no mínimo 0")
+        @Max(value = 150, message = "Minuto deve ser no máximo 150")
         Integer minuto,
 
         @Min(value = 1, message = "Minuto extra deve ser no mínimo 1")

@@ -52,7 +52,7 @@ public class JwtService {
                 .collect(Collectors.joining(","));
 
         return Jwts.builder()
-                .setId(java.util.UUID.randomUUID().toString())
+                .id(java.util.UUID.randomUUID().toString())
                 .subject(userDetails.getUsername())
                 .claim("roles", roles)
                 .issuedAt(now)
@@ -69,10 +69,10 @@ public class JwtService {
         String jti = java.util.UUID.randomUUID().toString();
 
         return Jwts.builder()
-                .setId(jti)
+                .id(jti)
                 .subject(userDetails.getUsername())
                 .issuedAt(now)
-                .setExpiration(expiry)
+                .expiration(expiry)
                 .claim("type", "refresh")
                 .signWith(getSigningKey())
                 .compact();

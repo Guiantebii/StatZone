@@ -9,8 +9,9 @@ import br.com.statezone.model.Grupo;
 import br.com.statezone.repository.CampeonatoRepository;
 import br.com.statezone.repository.GrupoRepository;
 import br.com.statezone.service.helper.ClassificacaoStats;
+import br.com.statezone.service.helper.CampeonatoAccessHelper;
 import br.com.statezone.service.ranking.RankingCacheService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -27,16 +28,19 @@ public class ClassificacaoService {
         private final ClassificacaoMapper classificacaoMapper;
         private final GrupoRepository grupoRepository;
         private final CampeonatoRepository campeonatoRepository;
+        private final CampeonatoAccessHelper campeonatoAccessHelper;
 
         public List<ClassificacaoResponseDto> gerarClassificacao(Long campeonatoId) {
             Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
                     .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
+            campeonatoAccessHelper.validarVisibilidade(campeonato);
             return gerar(campeonato.getTimes(), rankingCacheService.getRanking(campeonatoId));
         }
 
     public List<ClassificacaoResponseDto> gerarClassificacaoPorGrupo(Long grupoId) {
         Grupo grupo = grupoRepository.findById(grupoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
+        campeonatoAccessHelper.validarVisibilidade(grupo.getCampeonato());
         return gerar(grupo.getTimes(), rankingCacheService.getRankingPorGrupo(grupoId));
     }
 
@@ -79,10 +83,13 @@ public class ClassificacaoService {
             throw new BusinessException("Turno inválido — informe 1 ou 2");
         }
 
+        Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
+        campeonatoAccessHelper.validarVisibilidade(campeonato);
+
         return rankingCacheService.getRankingPorTurno(campeonatoId, turno)
                 .stream()
                 .map(classificacaoMapper::toDto)
                 .toList();
     }
 }
-

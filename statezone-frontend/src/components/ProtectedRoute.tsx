@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
@@ -6,14 +6,14 @@ import { toast } from 'sonner';
 export default function ProtectedRoute() {
   const { isAuthenticated, isAdmin, loading } = useAuth();
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      toast.error('Você precisa estar logado para acessar esta página');
-    }
-  }, [loading, isAuthenticated]);
+  const redirectReason = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!loading && isAuthenticated && !isAdmin) {
+    if (!loading && !isAuthenticated && !redirectReason.current) {
+      redirectReason.current = 'not-authenticated';
+      toast.error('Você precisa estar logado para acessar esta página');
+    } else if (!loading && isAuthenticated && !isAdmin && !redirectReason.current) {
+      redirectReason.current = 'not-admin';
       toast.error('Acesso restrito a administradores');
     }
   }, [loading, isAuthenticated, isAdmin]);

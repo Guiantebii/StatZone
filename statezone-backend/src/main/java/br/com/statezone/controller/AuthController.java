@@ -84,8 +84,8 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, tokenCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        // keep token in response body for backward compatibility (tests/clients)
-        return ResponseEntity.ok(new LoginResponse(token));
+        LoginResponse loginResponse = new LoginResponse(token);
+        return ResponseEntity.ok(loginResponse);
     }
 
     @GetMapping("/me")

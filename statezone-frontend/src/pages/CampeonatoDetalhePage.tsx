@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, Trophy, Swords, Medal, Star, Calendar, Zap, RefreshCw, GitBranch } from 'lucide-react';
+import { ArrowLeft, Trophy, Swords, Medal, Star, Calendar, Zap, RefreshCw, GitBranch, Globe } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
 import { PAGE_SIZE } from '../constants/pagination';
@@ -61,21 +61,34 @@ export default function CampeonatoDetalhePage() {
     let isMounted = true;
     const load = async () => {
       try {
-        const [campRes, classRes, partRes, artRes, selRes, mvpRes] = await Promise.all([
+        const [campRes, classRes, partRes] = await Promise.all([
           api.get(`/campeonatos/${id}`),
           api.get(`/campeonatos/${id}/classificacao`),
           api.get(`/campeonatos/${id}/partidas`),
-          api.get(`/campeonatos/${id}/artilharia?pagina=0&tamanho=${PAGE_SIZE}`),
-          api.get(`/campeonatos/${id}/selecao-do-campeonato`),
-          api.get(`/campeonatos/${id}/mvp`),
         ]);
         if (!isMounted) return;
         setCampeonato(campRes.data);
         setClassificacao(classRes.data);
         setPartidas(partRes.data);
-        setArtilharia(artRes.data);
-        setSelecao(selRes.data);
-        setMvp(mvpRes.data);
+
+        try {
+          const [artRes, selRes, mvpRes] = await Promise.all([
+            api.get(`/campeonatos/${id}/artilharia?pagina=0&tamanho=${PAGE_SIZE}`),
+            api.get(`/campeonatos/${id}/selecao-do-campeonato`),
+            api.get(`/campeonatos/${id}/mvp`),
+          ]);
+          if (isMounted) {
+            setArtilharia(artRes.data);
+            setSelecao(selRes.data);
+            setMvp(mvpRes.data);
+          }
+        } catch {
+          if (isMounted) {
+            setArtilharia([]);
+            setSelecao([]);
+            setMvp(null);
+          }
+        }
 
         const camp = campRes.data as Campeonato;
         if (camp.tipoFormato === 'GRUPOS_E_MATA_MATA') {
@@ -188,20 +201,66 @@ export default function CampeonatoDetalhePage() {
             <Trophy size={28} />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-slate-100 tracking-tight">{campeonato.nome}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-slate-100 tracking-tight">{campeonato.nome}</h1>
+              <span
+                className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${
+                  campeonato.status === 'ATIVO'
+                    ? 'bg-success-bg text-success border border-success-border'
+                    : 'bg-warning-bg text-warning border border-warning-border'
+                }`}
+              >
+                {campeonato.status === 'ATIVO' ? 'Ativo' : 'Rascunho'}
+              </span>
+            </div>
             <p className="text-sm text-slate-500 mt-0.5">
               {campeonato.pais} · Temporada {campeonato.temporada}
             </p>
           </div>
           {isAdminContext && (
-            <button
-              onClick={handleReprocess}
-              disabled={reprocessing}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw size={13} className={reprocessing ? 'animate-spin' : ''} />
-              {reprocessing ? 'Reprocessando...' : 'Reprocessar estatísticas'}
-            </button>
+            <div className="flex items-center gap-2">
+              {campeonato.status === 'RASCUNHO' ? (
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await api.patch(`/campeonatos/${id}/ativar`);
+                      setCampeonato(res.data);
+                      toast.success('Campeonato publicado com sucesso');
+                    } catch (err) {
+                      toast.error(getApiError(err, 'Erro ao publicar campeonato'));
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-success-bg text-success hover:bg-success/20 transition-colors"
+                >
+                  <Globe size={13} />
+                  Publicar
+                </button>
+              ) : (
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await api.patch(`/campeonatos/${id}/reverter`);
+                      setCampeonato(res.data);
+                      toast.success('Campeonato revertido para rascunho');
+                    } catch (err) {
+                      toast.error(getApiError(err, 'Erro ao reverter campeonato'));
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-warning-bg text-warning hover:bg-warning/20 transition-colors"
+                >
+                  <Globe size={13} />
+                  Reverter rascunho
+                </button>
+              )}
+              <button
+                onClick={handleReprocess}
+                disabled={reprocessing}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={13} className={reprocessing ? 'animate-spin' : ''} />
+                {reprocessing ? 'Reprocessando...' : 'Reprocessar estatísticas'}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -340,9 +399,10 @@ export default function CampeonatoDetalhePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {selecao.map((j) => (
-                <div
+                <Link
                   key={`${j.posicao}-${j.nomeJogador}`}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+                  to={`/jogadores/${j.jogadorId}`}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-accent/20 transition-all duration-200"
                 >
                   <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0">
                     {j.posicao.substring(0, 2)}
@@ -354,7 +414,7 @@ export default function CampeonatoDetalhePage() {
                   <div className="ml-auto text-right">
                     <span className="text-xs font-mono text-accent">{j.score.toFixed(1)}</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -366,11 +426,13 @@ export default function CampeonatoDetalhePage() {
           {!mvp ? (
             <p className="text-sm text-slate-500 text-center py-10">Nenhum MVP disponível</p>
           ) : (
-            <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 ring-4 ring-accent/20">
+            <Link to={`/jogadores/${mvp.jogadorId}`} className="flex flex-col items-center text-center group">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-4 ring-4 ring-accent/20 group-hover:ring-accent/40 transition-all">
                 <Medal size={36} className="text-accent" />
               </div>
-              <h3 className="text-xl font-bold text-slate-100">{mvp.nomeJogador}</h3>
+              <h3 className="text-xl font-bold text-slate-100 group-hover:text-accent transition-colors">
+                {mvp.nomeJogador}
+              </h3>
               <p className="text-sm text-slate-400 mt-1">{mvp.nomeTime}</p>
 
               <div className="flex items-center gap-1 mt-2">
@@ -402,7 +464,7 @@ export default function CampeonatoDetalhePage() {
                 <span>&#x1F7E5; {mvp.cartoesVermelhos} vermelhos</span>
                 <span>&#x274C; {mvp.penaltisPerdidos} pênaltis perdidos</span>
               </div>
-            </div>
+            </Link>
           )}
         </Card>
       )}

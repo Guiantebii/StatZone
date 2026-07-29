@@ -100,7 +100,7 @@ class EventoPartidaServiceTest {
                 null
         );
 
-        when(partidaRepository.findById(30L)).thenReturn(Optional.of(partida));
+        when(partidaRepository.findByIdWithLock(30L)).thenReturn(Optional.of(partida));
         when(jogadorRepository.findById(20L)).thenReturn(Optional.of(atacante));
         when(jogadorRepository.findById(21L)).thenReturn(Optional.of(assistente));
         when(eventoPartidaRepository.save(any(EventoPartida.class))).thenAnswer(invocation -> {
@@ -148,7 +148,7 @@ class EventoPartidaServiceTest {
                 100L
         );
 
-        when(partidaRepository.findById(30L)).thenReturn(Optional.of(partida));
+        when(partidaRepository.findByIdWithLock(30L)).thenReturn(Optional.of(partida));
         when(eventoPartidaRepository.findById(100L)).thenReturn(Optional.of(original));
         when(eventoPartidaRepository.save(any(EventoPartida.class))).thenAnswer(invocation -> {
             EventoPartida evento = invocation.getArgument(0);
@@ -193,7 +193,7 @@ class EventoPartidaServiceTest {
                 null
         );
 
-        when(partidaRepository.findById(30L)).thenReturn(Optional.of(partida));
+        when(partidaRepository.findByIdWithLock(30L)).thenReturn(Optional.of(partida));
         when(jogadorRepository.findById(20L)).thenReturn(Optional.of(atacante));
 
         assertThatThrownBy(() -> service.registrarEvento(request, 30L))
@@ -222,7 +222,7 @@ class EventoPartidaServiceTest {
                 null
         );
 
-        when(partidaRepository.findById(30L)).thenReturn(Optional.of(partida));
+        when(partidaRepository.findByIdWithLock(30L)).thenReturn(Optional.of(partida));
 
         assertThatThrownBy(() -> service.registrarEvento(request, 30L))
                 .isInstanceOf(BusinessException.class)

@@ -21,6 +21,7 @@ import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.SuspensaoRepository;
 import br.com.statezone.security.JwtService;
 import br.com.statezone.service.ranking.RankingEngine;
+import br.com.statezone.service.helper.CampeonatoAccessHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -85,6 +86,9 @@ class BracketServiceTest {
     @Mock
     private RankingEngine rankingEngine;
 
+    @Mock
+    private CampeonatoAccessHelper campeonatoAccessHelper;
+
     private BracketService service;
 
     private final FaseEliminatoriaMapper faseEliminatoriaMapper = Mappers.getMapper(FaseEliminatoriaMapper.class);
@@ -100,7 +104,8 @@ class BracketServiceTest {
                 faseEliminatoriaMapper,
                 grupoRepository,
                 suspensaoRepository,
-                rankingEngine
+                rankingEngine,
+                campeonatoAccessHelper
         );
     }
 
@@ -139,6 +144,7 @@ class BracketServiceTest {
         pendente.setJogador(br.com.statezone.support.TestFixtures.jogador(20L, a, "Suspenso"));
 
         when(faseEliminatoriaRepository.findById(10L)).thenReturn(Optional.of(fase));
+        when(confrontoEliminatorioRepository.findByFaseEliminatoriaIdOrderByBracketIndexAsc(10L)).thenReturn(List.of());
         when(grupoRepository.findByCampeonatoIdWithTimes(1L)).thenReturn(List.of());
         when(bracketEngine.gerarFaseInicial(anyList(), eq(fase))).thenReturn(List.of(confronto1, confronto2));
         when(partidaRepository.save(any(Partida.class))).thenAnswer(new org.mockito.stubbing.Answer<Partida>() {
@@ -188,8 +194,7 @@ class BracketServiceTest {
 
         when(confrontoEliminatorioRepository.findById(100L)).thenReturn(Optional.of(confronto));
         when(bracketEngine.resolverVencedor(confronto)).thenReturn(a);
-        when(bracketEngine.propagarVencedor(confronto, a)).thenReturn(Optional.empty());
-        when(confrontoEliminatorioRepository.findByFaseEliminatoriaId(10L)).thenReturn(List.of(confronto));
+        when(confrontoEliminatorioRepository.findByFaseEliminatoriaIdOrderByBracketIndexAsc(10L)).thenReturn(List.of(confronto));
         when(confrontoEliminatorioRepository.save(any(ConfrontoEliminatorio.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         FaseEliminatoriaResponseDto response = service.encerraConfronto(1L, 100L);
@@ -197,7 +202,6 @@ class BracketServiceTest {
         assertThat(confronto.getStatusConfronto()).isEqualTo(StatusConfronto.ENCERRADO);
         assertThat(response.id()).isEqualTo(10L);
         verify(bracketEngine).resolverVencedor(confronto);
-        verify(bracketEngine).propagarVencedor(confronto, a);
         verify(faseEliminatoriaRepository, never()).save(any());
     }
 }

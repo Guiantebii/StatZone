@@ -8,9 +8,10 @@ import br.com.statezone.mapper.JogadorMapper;
 import br.com.statezone.model.Jogador;
 import br.com.statezone.model.Time;
 import br.com.statezone.repository.*;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,8 +42,8 @@ public class JogadorService {
         return jogadorMapper.toDto(salvo);
     }
 
-    public List<JogadorResponseDto> listarTodosJogadores() {
-        return jogadorRepository.findAll()
+    public List<JogadorResponseDto> listarTodosJogadores(Pageable pageable) {
+        return jogadorRepository.findAll(pageable)
                 .stream()
                 .map(jogadorMapper::toDto)
                 .toList();

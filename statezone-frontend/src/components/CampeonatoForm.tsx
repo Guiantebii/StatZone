@@ -32,7 +32,7 @@ export default function CampeonatoForm({ campeonato, onClose, onSaved }: Campeon
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const logoUrlFinal = logoManual ? logoUrl : CAMPEONATO_LOGO(nome || campeonato?.nome || '');
+  const logoUrlFinal = logoManual ? logoUrl : CAMPEONATO_LOGO(nome || campeonato?.nome || 'Campeonato');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

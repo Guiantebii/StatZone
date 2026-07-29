@@ -3,48 +3,37 @@ package br.com.statezone.service;
 import br.com.statezone.dto.partida.FormacaoUpdateRequest;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
+import br.com.statezone.enums.StatusCampeonato;
 import br.com.statezone.enums.StatusPartida;
-import br.com.statezone.enums.TipoEvento;
-import br.com.statezone.events.EventoPartidaCriadaEvent;
-import br.com.statezone.events.PartidaEncerradaEvent;
 import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;
 import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.PartidaMapper;
 import br.com.statezone.model.*;
 import br.com.statezone.repository.*;
-import jakarta.transaction.Transactional;
+import br.com.statezone.service.helper.CampeonatoAccessHelper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 import static br.com.statezone.enums.StatusPartida.*;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class PartidaService {
-
-    private static final int MINUTO_INICIO = 1;
-    private static final int MINUTO_INTERVALO = 45;
-    private static final int MINUTO_SEGUNDO_TEMPO = 46;
-    private static final int MINUTO_FIM = 90;
-    private static final int MINUTO_PRORROGACAO_FIM = 120;
 
     private final PartidaRepository partidaRepository;
     private final CampeonatoRepository campeonatoRepository;
     private final TimeRepository timeRepository;
     private final PartidaMapper partidaMapper;
-    private final ApplicationEventPublisher publisher;
-    private final PartidaWebSocketService partidaWebSocketService;
     private final ConfrontoEliminatorioRepository confrontoEliminatorioRepository;
-    private final EventoPartidaRepository eventoPartidaRepository;
-    private final ProcessamentoConfrontoPendenteRepository processamentoConfrontoPendenteRepository;
+    private final CampeonatoAccessHelper campeonatoAccessHelper;
 
+    @Transactional
     public PartidaResponseDto criar(PartidaRequestDto dto) {
 
         Campeonato campeonato = buscarCampeonato(dto.campeonatoId());
@@ -63,17 +52,23 @@ public class PartidaService {
         return partidaMapper.toDto(partidaRepository.save(entity));
     }
 
-    public List<PartidaResponseDto> listarTodas() {
-        return partidaRepository.findAll()
+    @Transactional(readOnly = true)
+    public List<PartidaResponseDto> listarTodas(Pageable pageable) {
+        return partidaRepository.findAllWithTimes(pageable)
                 .stream()
+                .filter(this::partidaVisivelParaUsuarioAtual)
                 .map(partidaMapper::toDto)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public PartidaResponseDto buscarPorId(Long id) {
-        return partidaMapper.toDto(buscarPartida(id));
+        Partida partida = buscarPartida(id);
+        campeonatoAccessHelper.validarVisibilidade(partida);
+        return partidaMapper.toDto(partida);
     }
 
+    @Transactional
     public PartidaResponseDto atualizar(Long id, PartidaRequestDto dto) {
 
         Partida partida = buscarPartida(id);
@@ -93,142 +88,7 @@ public class PartidaService {
         return partidaMapper.toDto(partidaRepository.save(partida));
     }
 
-    public PartidaResponseDto iniciar(Long id) {
-
-        Partida partida = buscarPartida(id);
-        if (!Set.of(AGENDADA, ADIADA).contains(partida.getStatus())) {
-            throw new BusinessException("Partida não pode ser iniciada a partir do status " + partida.getStatus());
-        }
-
-        partida.setStatus(StatusPartida.AO_VIVO);
-
-        Partida salva = partidaRepository.save(partida);
-
-        criarEventoSistema(salva, TipoEvento.INICIO_PRIMEIRO_TEMPO, MINUTO_INICIO);
-
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
-
-        return partidaMapper.toDto(salva);
-    }
-
-    public PartidaResponseDto intervalo(Long id) {
-
-        Partida partida = buscarPartida(id);
-
-        if (partida.getStatus() != StatusPartida.AO_VIVO) {
-            throw new BusinessException("Partida não está ao vivo");
-        }
-
-        partida.setStatus(StatusPartida.INTERVALO);
-
-        Partida salva = partidaRepository.save(partida);
-
-        criarEventoSistema(salva, TipoEvento.FIM_PRIMEIRO_TEMPO, MINUTO_INTERVALO);
-
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
-
-        return partidaMapper.toDto(salva);
-    }
-
-    public PartidaResponseDto iniciarSegundoTempo(Long id) {
-
-        Partida partida = buscarPartida(id);
-
-        if (partida.getStatus() != StatusPartida.INTERVALO) {
-            throw new BusinessException("Partida não está no intervalo");
-        }
-
-        partida.setStatus(StatusPartida.AO_VIVO);
-
-        Partida salva = partidaRepository.save(partida);
-
-        criarEventoSistema(salva, TipoEvento.INICIO_SEGUNDO_TEMPO, MINUTO_SEGUNDO_TEMPO);
-
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
-
-        return partidaMapper.toDto(salva);
-    }
-
-    public PartidaResponseDto encerrar(Long id) {
-
-        Partida partida = buscarPartida(id);
-
-        if (partida.getStatus() != StatusPartida.AO_VIVO && partida.getStatus() != StatusPartida.PENALTIS) {
-            throw new BusinessException("Apenas partidas ao vivo ou em pênaltis podem ser encerradas");
-        }
-
-        partida.setStatus(StatusPartida.ENCERRADA);
-
-        Partida salva = partidaRepository.save(partida);
-
-        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_FIM);
-
-        processamentoConfrontoPendenteRepository.save(
-                ProcessamentoConfrontoPendente.builder()
-                        .partidaId(partida.getId())
-                        .criadoEm(LocalDateTime.now())
-                        .tentativas(0)
-                        .resolvido(false)
-                        .build()
-        );
-        publisher.publishEvent(new PartidaEncerradaEvent(salva));
-
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
-
-        return partidaMapper.toDto(salva);
-    }
-
-
-    public PartidaResponseDto woMandante(Long id) {
-
-        Partida partida = buscarPartida(id);
-
-        validarNaoEncerradaOuWO(partida);
-
-        partida.setStatus(StatusPartida.WO_MANDANTE);
-        partida.setGolsMandante(0);
-        partida.setGolsVisitante(3);
-
-        Partida salva = partidaRepository.save(partida);
-        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_FIM);
-        processamentoConfrontoPendenteRepository.save(
-                ProcessamentoConfrontoPendente.builder()
-                        .partidaId(salva.getId())
-                        .criadoEm(LocalDateTime.now())
-                        .tentativas(0)
-                        .resolvido(false)
-                        .build()
-        );
-        publisher.publishEvent(new PartidaEncerradaEvent(salva));
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
-        return partidaMapper.toDto(salva);
-    }
-
-    public PartidaResponseDto woVisitante(Long id) {
-
-        Partida partida = buscarPartida(id);
-
-        validarNaoEncerradaOuWO(partida);
-
-        partida.setStatus(StatusPartida.WO_VISITANTE);
-        partida.setGolsMandante(3);
-        partida.setGolsVisitante(0);
-
-        Partida salva = partidaRepository.save(partida);
-        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_FIM);
-        processamentoConfrontoPendenteRepository.save(
-                ProcessamentoConfrontoPendente.builder()
-                        .partidaId(salva.getId())
-                        .criadoEm(LocalDateTime.now())
-                        .tentativas(0)
-                        .resolvido(false)
-                        .build()
-        );
-        publisher.publishEvent(new PartidaEncerradaEvent(salva));
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
-        return partidaMapper.toDto(salva);
-    }
-
+    @Transactional
     public void deletar(Long id) {
         Partida partida = buscarPartida(id);
 
@@ -248,6 +108,7 @@ public class PartidaService {
         partidaRepository.delete(partida);
     }
 
+    @Transactional
     public PartidaResponseDto atualizarFormacao(Long id, FormacaoUpdateRequest dto) {
         Partida partida = buscarPartida(id);
 
@@ -262,97 +123,15 @@ public class PartidaService {
         return partidaMapper.toDto(partidaRepository.save(partida));
     }
 
+    @Transactional
     public PartidaResponseDto adiar(Long id) {
         return alterarStatusAdministrativo(id, ADIADA);
     }
 
+    @Transactional
     public PartidaResponseDto cancelar(Long id) {
         return alterarStatusAdministrativo(id, CANCELADA);
     }
-
-    public PartidaResponseDto iniciarProrrogacao(Long id) {
-
-        Partida partida = buscarPartida(id);
-
-        if (partida.getStatus() != StatusPartida.AO_VIVO) {
-            throw new BusinessException("Partida não está ao vivo para iniciar prorrogação");
-        }
-
-        Partida salva = partidaRepository.save(partida);
-
-        criarEventoSistema(salva, TipoEvento.INICIO_PRORROGACAO, MINUTO_FIM);
-
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
-
-        return partidaMapper.toDto(salva);
-    }
-
-    public PartidaResponseDto encerrarProrrogacao(Long id) {
-
-        Partida partida = buscarPartida(id);
-
-        if (partida.getStatus() != StatusPartida.AO_VIVO) {
-            throw new BusinessException("Partida não está ao vivo para encerrar prorrogação");
-        }
-
-        partida.setStatus(StatusPartida.PENALTIS);
-        partida.setGolsPenaltisMandante(partida.getGolsPenaltisMandante() != null ? partida.getGolsPenaltisMandante() : 0);
-        partida.setGolsPenaltisVisitante(partida.getGolsPenaltisVisitante() != null ? partida.getGolsPenaltisVisitante() : 0);
-
-        Partida salva = partidaRepository.save(partida);
-
-        criarEventoSistema(salva, TipoEvento.FIM_PRORROGACAO, MINUTO_PRORROGACAO_FIM);
-
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
-
-        return partidaMapper.toDto(salva);
-    }
-
-    public PartidaResponseDto iniciarPenaltis(Long id) {
-
-        Partida partida = buscarPartida(id);
-
-        if (partida.getStatus() != StatusPartida.AO_VIVO) {
-            throw new BusinessException("Partida não está ao vivo");
-        }
-
-        partida.setStatus(StatusPartida.PENALTIS);
-        partida.setGolsPenaltisMandante(partida.getGolsPenaltisMandante() != null ? partida.getGolsPenaltisMandante() : 0);
-        partida.setGolsPenaltisVisitante(partida.getGolsPenaltisVisitante() != null ? partida.getGolsPenaltisVisitante() : 0);
-
-        return partidaMapper.toDto(partidaRepository.save(partida));
-    }
-
-    public PartidaResponseDto encerrarComPenaltis(
-            Long id,
-            Integer penA,
-            Integer penB
-    ) {
-
-        Partida partida = buscarPartida(id);
-
-        if (partida.getStatus() != StatusPartida.PENALTIS) {
-            throw new BusinessException("Partida não está em pênaltis");
-        }
-
-        if (penA.equals(penB)) {
-            throw new BusinessException("Pênaltis não podem empatar");
-        }
-
-        partida.setGolsPenaltisMandante(penA);
-        partida.setGolsPenaltisVisitante(penB);
-        partida.setStatus(StatusPartida.ENCERRADA);
-
-        Partida salva = partidaRepository.save(partida);
-
-        criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_PRORROGACAO_FIM);
-        publisher.publishEvent(new PartidaEncerradaEvent(salva));
-
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
-
-        return partidaMapper.toDto(salva);
-    }
-
 
     private Partida buscarPartida(Long id) {
         return partidaRepository.findById(id)
@@ -375,17 +154,6 @@ public class PartidaService {
         }
     }
 
-    private void validarNaoEncerradaOuWO(Partida p) {
-        if (p.getStatus() == StatusPartida.ENCERRADA) {
-            throw new BusinessException("Já encerrada");
-        }
-
-        if (p.getStatus() == StatusPartida.WO_MANDANTE ||
-                p.getStatus() == StatusPartida.WO_VISITANTE) {
-            throw new ConflictException("Já existe WO");
-        }
-    }
-
     private PartidaResponseDto alterarStatusAdministrativo(Long id, StatusPartida novoStatus) {
         Partida partida = buscarPartida(id);
 
@@ -404,22 +172,7 @@ public class PartidaService {
 
         partida.setStatus(novoStatus);
         Partida salva = partidaRepository.save(partida);
-        partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
         return partidaMapper.toDto(salva);
-    }
-
-    private void criarEventoSistema(
-            Partida partida,
-            TipoEvento tipo,
-            Integer minuto
-    ) {
-        EventoPartida evento = new EventoPartida();
-        evento.setPartida(partida);
-        evento.setTipoEvento(tipo);
-        evento.setMinuto(minuto);
-        evento.setDescricao(tipo.name());
-        eventoPartidaRepository.save(evento);
-        publisher.publishEvent(new EventoPartidaCriadaEvent(evento, partida));
     }
 
     private void definirGolsIniciais(Partida partida) {
@@ -430,5 +183,14 @@ public class PartidaService {
         if (partida.getGolsVisitante() == null) {
             partida.setGolsVisitante(0);
         }
+    }
+
+    private boolean partidaVisivelParaUsuarioAtual(Partida partida) {
+        if (campeonatoAccessHelper.podeVerRascunho()) {
+            return true;
+        }
+
+        return partida.getCampeonato() != null
+                && partida.getCampeonato().getStatus() == StatusCampeonato.ATIVO;
     }
 }

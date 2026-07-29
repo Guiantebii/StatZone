@@ -5,7 +5,7 @@ import br.com.statezone.model.Partida;
 import br.com.statezone.model.ProcessamentoConfrontoPendente;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.ProcessamentoConfrontoPendenteRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -44,8 +44,8 @@ public class ConfrontoPendenteJob {
                 pendenteRepository.save(p);
             } catch (Exception e) {
                 p.setTentativas(p.getTentativas() + 1);
-                p.setUltimoErro("Erro ao processar confronto pendente");
-                if (p.getTentativas() >= MAX_TENTATIVAS) {
+                p.setUltimoErro("Erro ao processar confronto pendente: " + e.getMessage());
+if (p.getTentativas() >= MAX_TENTATIVAS) {
                     log.error("Falha definitiva ao processar confronto da partida {}", p.getPartidaId(), e);
                 }
                 pendenteRepository.save(p);

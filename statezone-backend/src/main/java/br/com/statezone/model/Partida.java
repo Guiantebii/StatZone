@@ -18,6 +18,9 @@ import java.util.List;
 @Table(name = "partidas")
 public class Partida {
 
+    @Version
+    private Long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
