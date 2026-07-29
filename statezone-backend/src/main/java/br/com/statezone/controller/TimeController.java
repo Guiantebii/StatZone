@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("times")
@@ -40,12 +42,15 @@ public class TimeController {
     }
     @GetMapping
     public ResponseEntity<List<TimeResponseDto>> listarTimes(
-            @RequestParam(required = false, defaultValue = "") String nome
+            @RequestParam(required = false, defaultValue = "") String nome,
+            @RequestParam(required = false, defaultValue = "0") int pagina,
+            @RequestParam(required = false, defaultValue = "50") int tamanho
     ) {
         if (!nome.isBlank()) {
             return ResponseEntity.ok(timeService.buscarPorNome(nome));
         }
-        return ResponseEntity.ok(timeService.listarTodosTimes());
+        var pageable = PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.ASC, "nome"));
+        return ResponseEntity.ok(timeService.listarTodosTimes(pageable));
     }
 
     @GetMapping("/{id}")

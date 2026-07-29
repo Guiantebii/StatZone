@@ -2,6 +2,7 @@ package br.com.statezone.dto.time;
 
 import br.com.statezone.model.TipoTime;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 
@@ -16,6 +17,7 @@ public record TimeRequestDto(
         @Size(min = 2, max = 5)
         String sigla,
 
+        @NotNull(message = "Tipo é obrigatório")
         TipoTime tipo,
 
         String cidade,

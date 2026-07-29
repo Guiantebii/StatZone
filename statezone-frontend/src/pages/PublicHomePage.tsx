@@ -20,12 +20,13 @@ export default function PublicHomePage() {
   const [recentes, setRecentes] = useState<Partida[]>([]);
   const [campeonatos, setCampeonatos] = useState<Campeonato[]>([]);
   const [artilharia, setArtilharia] = useState<Artilharia[]>([]);
+  const [totalPartidas, setTotalPartidas] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [partidasRes, campRes] = await Promise.all([api.get('/partidas'), api.get('/campeonatos')]);
+        const [partidasRes, campRes] = await Promise.all([api.get('/partidas'), api.get('/campeonatos?publico=true')]);
 
         const todas: Partida[] = partidasRes.data;
 
@@ -43,6 +44,7 @@ export default function PublicHomePage() {
         setAoVivo(live);
         setProximas(scheduled);
         setRecentes(finished);
+        setTotalPartidas(todas.length);
         setCampeonatos(campRes.data);
 
         if (campRes.data.length > 0) {
@@ -61,12 +63,15 @@ export default function PublicHomePage() {
   }, []);
 
   const pollAoVivo = useCallback(() => {
-    api.get('/partidas').then((res) => {
-      const todas: Partida[] = res.data;
-      setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
-    }).catch(() => {
-      toast.error('Erro ao atualizar partidas ao vivo');
-    });
+    api
+      .get('/partidas')
+      .then((res) => {
+        const todas: Partida[] = res.data;
+        setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
+      })
+      .catch(() => {
+        toast.error('Erro ao atualizar partidas ao vivo');
+      });
   }, []);
 
   usePolling(pollAoVivo, 15000, aoVivo.length > 0);
@@ -95,7 +100,11 @@ export default function PublicHomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {aoVivo.map((p) => (
-              <button key={p.id} onClick={() => navigate(`/partidas/${p.id}`)} className="group text-left w-full">
+              <button
+                key={p.id}
+                onClick={() => navigate(`/partidas/${p.id}`)}
+                className="group text-left w-full cursor-pointer"
+              >
                 <Card hover className="p-5 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-success via-success to-transparent animate-pulse" />
                   <div className="flex items-center gap-2 mb-3 text-xs text-slate-500">
@@ -180,7 +189,11 @@ export default function PublicHomePage() {
           ) : (
             <div className="space-y-2">
               {proximas.map((p) => (
-                <button key={p.id} onClick={() => navigate(`/partidas/${p.id}`)} className="w-full text-left">
+                <button
+                  key={p.id}
+                  onClick={() => navigate(`/partidas/${p.id}`)}
+                  className="w-full text-left cursor-pointer"
+                >
                   <Card hover className="p-3">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2 w-10 text-[10px] text-slate-500">
@@ -219,8 +232,12 @@ export default function PublicHomePage() {
               <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-3">Últimos resultados</h3>
               <div className="space-y-1.5">
                 {recentes.map((p) => (
-                  <button key={p.id} onClick={() => navigate(`/partidas/${p.id}`)} className="w-full text-left">
-                    <Card className="p-2.5">
+                  <button
+                    key={p.id}
+                    onClick={() => navigate(`/partidas/${p.id}`)}
+                    className="w-full text-left cursor-pointer"
+                  >
+                    <Card hover className="p-2.5">
                       <div className="flex items-center gap-2">
                         <div className="flex-1 flex items-center gap-2 justify-end">
                           <span
@@ -324,9 +341,7 @@ export default function PublicHomePage() {
                 <p className="text-[10px] text-slate-500 uppercase tracking-wider">Campeonatos</p>
               </div>
               <div>
-                <p className="text-lg font-extrabold text-accent font-mono">
-                  {proximas.length + recentes.length + aoVivo.length}
-                </p>
+                <p className="text-lg font-extrabold text-accent font-mono">{totalPartidas}</p>
                 <p className="text-[10px] text-slate-500 uppercase tracking-wider">Partidas</p>
               </div>
             </div>

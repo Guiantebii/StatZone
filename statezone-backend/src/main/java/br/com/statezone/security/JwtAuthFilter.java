@@ -56,16 +56,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             email = jwtService.extrairEmail(token);
         } catch (Exception e) {
-            // try to refresh silently by returning 401 to client; client may call /api/auth/refresh
-            response.setStatus(401);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write(
-                    "{\"timestamp\":\"" + java.time.Instant.now() + "\",\"status\":401,\"error\":\"UNAUTHORIZED\",\"message\":\"Token inválido ou expirado\"}");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (jwtService.isRefreshToken(token)) {
+            filterChain.doFilter(request, response);
             return;
         }
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            UserDetails userDetails;
+            try {
+                userDetails = userDetailsService.loadUserByUsername(email);
+            } catch (Exception e) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             if (jwtService.isTokenValido(token, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(

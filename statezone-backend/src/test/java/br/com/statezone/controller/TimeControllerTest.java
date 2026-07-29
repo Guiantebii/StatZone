@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -76,7 +77,7 @@ class TimeControllerTest {
                 "São Paulo", "Brasil", "https://example.com/pal.png", "Abel Ferreira",
                 "Allianz", LocalDate.of(2020, 1, 1), null, null);
 
-        when(timeService.listarTodosTimes()).thenReturn(List.of(t1, t2));
+        when(timeService.listarTodosTimes(any(Pageable.class))).thenReturn(List.of(t1, t2));
 
         mockMvc.perform(get("/times"))
                 .andExpect(status().isOk())

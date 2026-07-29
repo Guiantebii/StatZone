@@ -11,9 +11,11 @@ import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.GrupoMapper;
 import br.com.statezone.model.*;
 import br.com.statezone.repository.*;
-import jakarta.transaction.Transactional;
+import br.com.statezone.service.helper.CampeonatoAccessHelper;
+import br.com.statezone.service.helper.RoundRobinHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +30,8 @@ public class GrupoService {
     private final TimeRepository timeRepository;
     private final GrupoMapper grupoMapper;
     private final PartidaRepository partidaRepository;
+    private final CampeonatoAccessHelper campeonatoAccessHelper;
+    private final RoundRobinHelper roundRobinHelper;
 
 
     public GrupoResponseDto criarGrupo(Long campeonatoId, GrupoRequestDto dto) {
@@ -83,8 +87,9 @@ public class GrupoService {
     }
 
     public List<GrupoResponseDto> listarGrupos(Long campeonatoId) {
-        campeonatoRepository.findById(campeonatoId)
+        Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
+        campeonatoAccessHelper.validarVisibilidade(campeonato);
 
         return grupoRepository.findByCampeonatoIdWithTimes(campeonatoId)
                 .stream()
@@ -99,6 +104,8 @@ public class GrupoService {
         if (!grupo.getCampeonato().getId().equals(campeonatoId)) {
             throw new BusinessException("Grupo não pertence a este campeonato");
         }
+
+        campeonatoAccessHelper.validarVisibilidade(grupo.getCampeonato());
 
         return grupoMapper.toDto(grupo);
     }
@@ -121,43 +128,19 @@ public class GrupoService {
             throw new BusinessException("Grupo precisa ter pelo menos 2 times");
         }
 
-        boolean impar = times.size() % 2 != 0;
-        if (impar) {
-            times.add(null);
-        }
-
-        int n = times.size();
-        int totalRodadas = n - 1;
-        int jogosPorRodada = n / 2;
-
         Campeonato campeonato = grupo.getCampeonato();
 
-        for (int rodada = 1; rodada <= totalRodadas; rodada++) {
-            for (int j = 0; j < jogosPorRodada; j++) {
-
-                Time mandante = times.get(j);
-                Time visitante = times.get(n - 1 - j);
-
-                if (mandante == null || visitante == null) continue;
-
-                Partida partida = new Partida();
-                partida.setCampeonato(campeonato);
-                partida.setTimeMandante(mandante);
-                partida.setTimeVisitante(visitante);
-                partida.setRodada(rodada);
-                partida.setGolsMandante(0);
-                partida.setGolsVisitante(0);
-                partida.setStatus(StatusPartida.AGENDADA);
-                partida.setGrupo(grupo);
-
-                partidaRepository.save(partida);
-            }
-
-            var lista = new ArrayList<>(times);
-            Time ultimo = lista.remove(n - 1);
-            lista.add(1, ultimo);
-            times = lista;
-        }
+        roundRobinHelper.gerarTurno(times, 1, (mandante, visitante) -> {
+            Partida partida = new Partida();
+            partida.setCampeonato(campeonato);
+            partida.setTimeMandante(mandante);
+            partida.setTimeVisitante(visitante);
+            partida.setGolsMandante(0);
+            partida.setGolsVisitante(0);
+            partida.setStatus(StatusPartida.AGENDADA);
+            partida.setGrupo(grupo);
+            partidaRepository.save(partida);
+        });
     }
     
 }

@@ -2,22 +2,40 @@ package br.com.statezone.repository;
 
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.model.Partida;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PartidaRepository extends JpaRepository<Partida,Long> {
+
+    @Query(value = "SELECT p FROM Partida p JOIN FETCH p.timeMandante JOIN FETCH p.timeVisitante",
+           countQuery = "SELECT COUNT(p) FROM Partida p")
+    Page<Partida> findAllWithTimes(Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Partida p WHERE p.id = :id")
+    Optional<Partida> findByIdWithLock(@Param("id") Long id);
+
     List<Partida> findByCampeonatoIdAndStatus(
             Long campeonatoId,
             StatusPartida status
     );
     boolean existsByCampeonatoId(Long campeonatoId);
+
+    @Query("SELECT p FROM Partida p " +
+            "JOIN FETCH p.timeMandante " +
+            "JOIN FETCH p.timeVisitante " +
+            "WHERE p.campeonato.id = :campeonatoId")
+    List<Partida> findByCampeonatoIdWithTimes(@Param("campeonatoId") Long campeonatoId);
 
     @Query("SELECT p FROM Partida p " +
             "JOIN FETCH p.timeMandante " +

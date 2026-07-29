@@ -12,16 +12,18 @@ import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.JogadorMapper;
 import br.com.statezone.mapper.PartidaMapper;
 import br.com.statezone.mapper.TimeMapper;
+import br.com.statezone.enums.StatusCampeonato;
 import br.com.statezone.model.Partida;
 import br.com.statezone.model.Time;
 import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.TimeRepository;
-import jakarta.transaction.Transactional;
+import br.com.statezone.service.helper.CampeonatoAccessHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,7 @@ public class TimeService {
     private final JogadorMapper jogadorMapper;
     private final PartidaRepository partidaRepository;
     private final PartidaMapper partidaMapper;
+    private final CampeonatoAccessHelper campeonatoAccessHelper;
 
     public TimeResponseDto criar(TimeRequestDto dto){
         Time entity = timeMapper.toEntity(dto);
@@ -44,8 +47,8 @@ public class TimeService {
         return timeMapper.toDto(salvo);
     }
 
-    public List<TimeResponseDto> listarTodosTimes(){
-        return timeRepository.findAll()
+    public List<TimeResponseDto> listarTodosTimes(Pageable pageable){
+        return timeRepository.findAll(pageable)
                 .stream()
                 .map(timeMapper::toDto)
                 .toList();
@@ -133,6 +136,7 @@ public class TimeService {
         List<String> forma = partidaRepository
                 .findUltimasPartidas(timeId, PageRequest.of(0, 5))
                 .stream()
+                .filter(this::partidaVisivelParaUsuarioAtual)
                 .map(partida -> calcularResultado(partida, timeId))
                 .toList();
     return new UltimasPartidasTimeResponseDto(timeId,forma);
@@ -145,12 +149,14 @@ public class TimeService {
         List<PartidaResponseDto> ultimas = partidaRepository
                 .findUltimasPartidasComTimes(timeId, PageRequest.of(0, 5))
                 .stream()
+                .filter(this::partidaVisivelParaUsuarioAtual)
                 .map(partidaMapper::toDto)
                 .toList();
 
         List<PartidaResponseDto> proximas = partidaRepository
                 .findProximasPartidas(timeId, PageRequest.of(0, 5))
                 .stream()
+                .filter(this::partidaVisivelParaUsuarioAtual)
                 .map(partidaMapper::toDto)
                 .toList();
 
@@ -163,6 +169,9 @@ public class TimeService {
 
         List<Partida> partidas = partidaRepository
                 .findUltimasPartidas(timeId, Pageable.unpaged());
+        partidas = partidas.stream()
+                .filter(this::partidaVisivelParaUsuarioAtual)
+                .toList();
 
         int total = partidas.size();
         int vitorias = 0;
@@ -199,5 +208,14 @@ public class TimeService {
         if (golsTime > golsAdversario) return "V";
         if (golsTime < golsAdversario) return "D";
         return "E";
+    }
+
+    private boolean partidaVisivelParaUsuarioAtual(Partida partida) {
+        if (campeonatoAccessHelper.podeVerRascunho()) {
+            return true;
+        }
+
+        return partida.getCampeonato() != null
+                && partida.getCampeonato().getStatus() == StatusCampeonato.ATIVO;
     }
 }

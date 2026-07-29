@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
@@ -23,6 +23,7 @@ const tiposEvento: { value: TipoEvento; label: string; icon: string }[] = [
   { value: 'GOL', label: 'Gol', icon: '⚽' },
   { value: 'GOL_CONTRA', label: 'Gol contra', icon: '⚽🔄' },
   { value: 'PENALTI_GOL', label: 'Pênalti convertido', icon: '⚽' },
+  { value: 'PENALTI_DEFENDIDO', label: 'Pênalti defendido', icon: '🧤' },
   { value: 'PENALTI_PERDIDO', label: 'Pênalti perdido', icon: '❌' },
   { value: 'CARTAO_AMARELO', label: 'Cartão amarelo', icon: '🟨' },
   { value: 'CARTAO_VERMELHO', label: 'Cartão vermelho', icon: '🟥' },
@@ -41,6 +42,15 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
   const [jogadores, setJogadores] = useState<JogadorItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingJogadores, setLoadingJogadores] = useState(true);
+  const aceitaJogadorSecundario = ['SUBSTITUICAO', 'GOL', 'PENALTI_GOL', 'PENALTI_DEFENDIDO'].includes(tipoEvento);
+  const exigeJogadorSecundario = ['SUBSTITUICAO', 'PENALTI_DEFENDIDO'].includes(tipoEvento);
+
+  const handleTipoChange = useCallback((novoTipo: TipoEvento) => {
+    setTipoEvento(novoTipo);
+    if (!['SUBSTITUICAO', 'GOL', 'PENALTI_GOL', 'PENALTI_DEFENDIDO'].includes(novoTipo)) {
+      setJogadorSecundarioId(undefined);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,7 +89,7 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
         minuto,
         minutoExtra: minutoExtra || null,
         jogadorId: jogadorId || null,
-        jogadorSecundarioId: ['SUBSTITUICAO', 'GOL'].includes(tipoEvento) ? jogadorSecundarioId || null : null,
+        jogadorSecundarioId: aceitaJogadorSecundario ? jogadorSecundarioId || null : null,
       });
       toast.success('Evento registrado');
       onSaved();
@@ -113,7 +123,7 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
                 <button
                   key={t.value}
                   type="button"
-                  onClick={() => setTipoEvento(t.value)}
+                  onClick={() => handleTipoChange(t.value)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                     tipoEvento === t.value
                       ? 'bg-accent/10 text-accent border border-accent/20'
@@ -139,7 +149,7 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
                 id="minuto"
                 type="number"
                 min={1}
-                max={120}
+                max={150}
                 value={minuto}
                 onChange={(e) => setMinuto(Number(e.target.value))}
                 className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-accent/40"
@@ -156,7 +166,7 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
               <input
                 id="minutoExtra"
                 type="number"
-                min={0}
+                min={1}
                 max={30}
                 value={minutoExtra ?? ''}
                 onChange={(e) => setMinutoExtra(e.target.value ? Number(e.target.value) : undefined)}
@@ -178,8 +188,9 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
               value={jogadorId ?? ''}
               onChange={(e) => setJogadorId(e.target.value ? Number(e.target.value) : undefined)}
               className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-accent/40"
+              required
             >
-              <option value="">Selecione (opcional)</option>
+              <option value="">Selecione</option>
               {jogadores.map((j) => (
                 <option key={j.id} value={j.id}>
                   {j.nome} {j.nomeTime ? `(${j.nomeTime})` : ''}
@@ -188,21 +199,26 @@ export default function EventoForm({ partidaId, onClose, onSaved }: EventoFormPr
             </select>
           </div>
 
-          {['SUBSTITUICAO', 'GOL'].includes(tipoEvento) && (
+          {aceitaJogadorSecundario && (
             <div>
               <label
                 htmlFor="jogadorSecundarioId"
                 className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5"
               >
-                {tipoEvento === 'SUBSTITUICAO' ? 'Substituto' : 'Assistente'}
+                {tipoEvento === 'SUBSTITUICAO'
+                  ? 'Substituto'
+                  : tipoEvento === 'PENALTI_DEFENDIDO'
+                    ? 'Goleiro'
+                    : 'Assistente'}
               </label>
               <select
                 id="jogadorSecundarioId"
                 value={jogadorSecundarioId ?? ''}
                 onChange={(e) => setJogadorSecundarioId(e.target.value ? Number(e.target.value) : undefined)}
                 className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-accent/40"
+                required={exigeJogadorSecundario}
               >
-                <option value="">Selecione (opcional)</option>
+                <option value="">{exigeJogadorSecundario ? 'Selecione' : 'Selecione (opcional)'}</option>
                 {loadingJogadores ? (
                   <option value="" disabled>
                     Carregando jogadores...

@@ -6,9 +6,12 @@ import br.com.statezone.exception.ResourceNotFoundException;
 import br.com.statezone.mapper.EstatisticasJogadorMapper;
 import br.com.statezone.model.EstatisticasJogador;
 import br.com.statezone.model.EstatisticasJogadorCampeonato;
+import br.com.statezone.model.Campeonato;
+import br.com.statezone.repository.CampeonatoRepository;
 import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
+import br.com.statezone.service.helper.CampeonatoAccessHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,8 @@ public class EstatisticasJogadorService {
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
     private final EstatisticasJogadorMapper estatisticasJogadorMapper;
     private final PartidaRepository partidaRepository;
+    private final CampeonatoRepository campeonatoRepository;
+    private final CampeonatoAccessHelper campeonatoAccessHelper;
 
     public EstatisticasJogadorResponseDto buscarPorJogador(Long jogadorId) {
         return estatisticasJogadorRepository.findByJogadorId(jogadorId)
@@ -36,6 +41,7 @@ public class EstatisticasJogadorService {
     }
 
     public List<ArtilhariaResponseDto> artilharia(Long campeonatoId, int pagina, int tamanho) {
+        validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
                 .findArtilheirosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
@@ -54,6 +60,7 @@ public class EstatisticasJogadorService {
     }
 
     public List<AssistenciaRankingResponseDto> rankingAssistencias(Long campeonatoId, int pagina, int tamanho) {
+        validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
                 .findAssistentesByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
@@ -71,6 +78,7 @@ public class EstatisticasJogadorService {
                 .toList();
     }
     public List<RankingCartaoAmareloResponseDto> rankingCartaoAmarelo(Long campeonatoId, int pagina, int tamanho) {
+        validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
                 .findCartoesAmarelosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
@@ -88,6 +96,7 @@ public class EstatisticasJogadorService {
                 .toList();
     }
     public List<RankingCartaoVermelhoResponseDto> rankingCartaoVermelho(Long campeonatoId, int pagina, int tamanho) {
+        validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
                 .findCartoesVermelhosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
@@ -106,6 +115,7 @@ public class EstatisticasJogadorService {
     }
 
     public List<SelecaoCampeonatoResponseDto> gerarSelecaoDoCampeonato(Long campeonatoId) {
+        validarVisibilidadeCampeonato(campeonatoId);
         Integer maxRodada = partidaRepository.findMaxRodada(campeonatoId);
         int minPartidas = (maxRodada != null && maxRodada > 0)
                 ? Math.max(1, maxRodada / 2)
@@ -121,6 +131,7 @@ public class EstatisticasJogadorService {
                         Collectors.collectingAndThen(
                                 Collectors.maxBy(Comparator.comparingDouble(this::calcularScore)),
                                 opt -> opt.map(e -> new SelecaoCampeonatoResponseDto(
+                                        e.getJogador().getId(),
                                         e.getJogador().getPosicao().name(),
                                         e.getJogador().getNome(),
                                         e.getJogador().getTime().getNome(),
@@ -134,6 +145,7 @@ public class EstatisticasJogadorService {
     }
 
     public CraqueCampeonatoResponseDto mvpCampeonato(Long campeonatoId) {
+        validarVisibilidadeCampeonato(campeonatoId);
         Integer maxRodada = partidaRepository.findMaxRodada(campeonatoId);
         int minPartidas = (maxRodada != null && maxRodada > 0)
                 ? Math.max(1, maxRodada / 2)
@@ -143,15 +155,14 @@ public class EstatisticasJogadorService {
                 estatisticasJogadorCampeonatoRepository
                         .findParaDestaques(campeonatoId, minPartidas);
 
-        EstatisticasJogadorCampeonato mvp = estatisticas.stream()
+        return estatisticas.stream()
                 .max(Comparator.comparingDouble(this::calcularScore))
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Nenhum MVP encontrado para este campeonato"));
-
-        return estatisticasJogadorMapper.toCraqueCampeonatoDto(mvp, calcularScore(mvp));
+                .map(e -> estatisticasJogadorMapper.toCraqueCampeonatoDto(e, calcularScore(e)))
+                .orElse(null);
     }
 
     public List<RankingGoleiroResponseDto> rankingGoleiros(Long campeonatoId, int pagina, int tamanho) {
+        validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
                 .findRankingGoleirosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
 
@@ -181,6 +192,12 @@ public class EstatisticasJogadorService {
                 - (toZero(e.getPenaltisPerdidos()) * 1.0)
                 - (toZero(e.getCartoesAmarelos()) * 0.5)
                 - (toZero(e.getCartoesVermelhos()) * 2.0);
+    }
+
+    private void validarVisibilidadeCampeonato(Long campeonatoId) {
+        Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
+        campeonatoAccessHelper.validarVisibilidade(campeonato);
     }
 
     private int toZero(Integer value) {

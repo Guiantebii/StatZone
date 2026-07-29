@@ -12,8 +12,8 @@ import br.com.statezone.model.Partida;
 import br.com.statezone.model.Time;
 import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
-import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.JogadorRepository;
+import br.com.statezone.service.helper.StatsHelper;
 import br.com.statezone.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,9 +51,6 @@ class CleanSheetEngineTest {
     private UserDetailsService userDetailsService;
 
     @Mock
-    private EstatisticasJogadorRepository estatisticasJogadorRepository;
-
-    @Mock
     private EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
 
     @Mock
@@ -62,15 +59,18 @@ class CleanSheetEngineTest {
     @Mock
     private EscalacaoPartidaRepository escalacaoPartidaRepository;
 
+    @Mock
+    private StatsHelper statsHelper;
+
     private CleanSheetEngine engine;
 
     @BeforeEach
     void setUp() {
         engine = new CleanSheetEngine(
-                estatisticasJogadorRepository,
                 estatisticasJogadorCampeonatoRepository,
                 jogadorRepository,
-                escalacaoPartidaRepository
+                escalacaoPartidaRepository,
+                statsHelper
         );
     }
 
@@ -91,35 +91,33 @@ class CleanSheetEngineTest {
                 escalacaoPartida(3L, partida, zagueiro, null, Posicao.ZAGUEIRO, 4, true)
         );
 
+        EstatisticasJogador carreiraM = new EstatisticasJogador();
+        carreiraM.setJogador(goleiroMandante);
+        EstatisticasJogadorCampeonato campM = new EstatisticasJogadorCampeonato();
+        campM.setJogador(goleiroMandante);
+        campM.setCampeonato(campeonato);
+
+        EstatisticasJogador carreiraV = new EstatisticasJogador();
+        carreiraV.setJogador(goleiroVisitante);
+        EstatisticasJogadorCampeonato campV = new EstatisticasJogadorCampeonato();
+        campV.setJogador(goleiroVisitante);
+        campV.setCampeonato(campeonato);
+
         when(escalacaoPartidaRepository.findByPartidaIdWithJogador(30L)).thenReturn(escalacoes);
-        when(estatisticasJogadorRepository.findByJogadorId(anyLong())).thenReturn(Optional.empty());
-        when(estatisticasJogadorCampeonatoRepository.findByJogadorIdAndCampeonatoId(anyLong(), anyLong()))
-                .thenReturn(Optional.empty());
-        when(estatisticasJogadorRepository.save(any(EstatisticasJogador.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(estatisticasJogadorCampeonatoRepository.save(any(EstatisticasJogadorCampeonato.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(statsHelper.buscarOuCriarCarreira(goleiroMandante)).thenReturn(carreiraM);
+        when(statsHelper.buscarOuCriarCarreira(goleiroVisitante)).thenReturn(carreiraV);
+        when(statsHelper.obterOuCriarCampeonato(goleiroMandante, partida)).thenReturn(campM);
+        when(statsHelper.obterOuCriarCampeonato(goleiroVisitante, partida)).thenReturn(campV);
 
         engine.process(partida);
 
-        ArgumentCaptor<EstatisticasJogador> carreiraCaptor = ArgumentCaptor.forClass(EstatisticasJogador.class);
-        verify(estatisticasJogadorRepository, times(2)).save(carreiraCaptor.capture());
-        assertThat(carreiraCaptor.getAllValues())
-                .extracting(stat -> stat.getJogador().getId(), EstatisticasJogador::getCleanSheets)
-                .containsExactlyInAnyOrder(
-                        org.assertj.core.groups.Tuple.tuple(20L, 1),
-                        org.assertj.core.groups.Tuple.tuple(21L, 1)
-                );
+        assertThat(carreiraM.getCleanSheets()).isEqualTo(1);
+        assertThat(carreiraV.getCleanSheets()).isEqualTo(1);
+        assertThat(campM.getCleanSheets()).isEqualTo(1);
+        assertThat(campV.getCleanSheets()).isEqualTo(1);
 
-        ArgumentCaptor<EstatisticasJogadorCampeonato> campeonatoCaptor =
-                ArgumentCaptor.forClass(EstatisticasJogadorCampeonato.class);
-        verify(estatisticasJogadorCampeonatoRepository, times(2)).save(campeonatoCaptor.capture());
-        assertThat(campeonatoCaptor.getAllValues())
-                .extracting(stat -> stat.getJogador().getId(), EstatisticasJogadorCampeonato::getCleanSheets)
-                .containsExactlyInAnyOrder(
-                        org.assertj.core.groups.Tuple.tuple(20L, 1),
-                        org.assertj.core.groups.Tuple.tuple(21L, 1)
-                );
+        verify(statsHelper).salvarAmbos(carreiraM, campM);
+        verify(statsHelper).salvarAmbos(carreiraV, campV);
     }
 
     @Test
@@ -133,17 +131,18 @@ class CleanSheetEngineTest {
 
         when(escalacaoPartidaRepository.findByPartidaIdWithJogador(30L)).thenReturn(List.of());
         when(jogadorRepository.findByTimeIdAndPosicao(10L, Posicao.GOLEIRO)).thenReturn(List.of(goleiroMandante));
-        when(estatisticasJogadorRepository.findByJogadorId(anyLong())).thenReturn(Optional.empty());
-        when(estatisticasJogadorCampeonatoRepository.findByJogadorIdAndCampeonatoId(anyLong(), anyLong()))
-                .thenReturn(Optional.empty());
-        when(estatisticasJogadorRepository.save(any(EstatisticasJogador.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(estatisticasJogadorCampeonatoRepository.save(any(EstatisticasJogadorCampeonato.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        EstatisticasJogador carreira = new EstatisticasJogador();
+        carreira.setJogador(goleiroMandante);
+        EstatisticasJogadorCampeonato camp = new EstatisticasJogadorCampeonato();
+        camp.setJogador(goleiroMandante);
+        camp.setCampeonato(campeonato);
+        when(statsHelper.buscarOuCriarCarreira(goleiroMandante)).thenReturn(carreira);
+        when(statsHelper.obterOuCriarCampeonato(goleiroMandante, partida)).thenReturn(camp);
 
         engine.process(partida);
 
-        verify(estatisticasJogadorRepository, times(1)).save(any(EstatisticasJogador.class));
-        verify(estatisticasJogadorCampeonatoRepository, times(1)).save(any(EstatisticasJogadorCampeonato.class));
+        assertThat(carreira.getCleanSheets()).isEqualTo(1);
+        verify(statsHelper).salvarAmbos(carreira, camp);
     }
 }

@@ -9,10 +9,9 @@ import br.com.statezone.model.Jogador;
 import br.com.statezone.model.Time;
 import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.TimeRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ public class ApiFootballJogadorImportService {
     }
 
     @Transactional
-    @Scheduled(fixedDelay = 8000, initialDelay = 5000)
     public void importarJogadoresTodosTimes() {
 
         List<Time> times = timeRepository.findAll();
@@ -77,6 +75,11 @@ public class ApiFootballJogadorImportService {
                 );
 
         List<Jogador> jogadores = new ArrayList<>();
+
+        if (response == null || response.response() == null) {
+            log.warn("Resposta nula da API ao buscar jogadores do time: {}", time.getNome());
+            return;
+        }
 
         for (PlayersTeamDto elenco : response.response()) {
 

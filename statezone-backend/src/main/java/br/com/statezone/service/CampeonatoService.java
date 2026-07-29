@@ -4,6 +4,7 @@ import br.com.statezone.dto.campeonato.CampeonatoRequestDto;
 import br.com.statezone.dto.campeonato.CampeonatoResponseDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.dto.time.TimeResponseDto;
+import br.com.statezone.enums.StatusCampeonato;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;
@@ -22,12 +23,14 @@ import br.com.statezone.repository.GrupoRepository;
 import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.TimeRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import br.com.statezone.service.helper.CampeonatoAccessHelper;
 
 @Service
 @Transactional
@@ -45,6 +48,7 @@ public class CampeonatoService {
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
     private final JogadorRepository jogadorRepository;
+    private final CampeonatoAccessHelper campeonatoAccessHelper;
 
     public CampeonatoResponseDto criarCampeonato(CampeonatoRequestDto dto){
         Campeonato entity = campeonatoMapper.toEntity(dto);
@@ -58,8 +62,33 @@ public class CampeonatoService {
                 .toList();
     }
 
+    public List<CampeonatoResponseDto> listarCampeonatosPublicos(){
+        return campeonatoRepository.findByStatus(StatusCampeonato.ATIVO)
+                .stream()
+                .map(campeonatoMapper::toDto)
+                .toList();
+    }
+
+    public CampeonatoResponseDto ativarCampeonato(Long id){
+        Campeonato campeonato = campeonatoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
+        campeonato.setStatus(StatusCampeonato.ATIVO);
+        Campeonato salvo = campeonatoRepository.save(campeonato);
+        return campeonatoMapper.toDto(salvo);
+    }
+
+    public CampeonatoResponseDto reverterParaRascunho(Long id){
+        Campeonato campeonato = campeonatoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
+        campeonato.setStatus(StatusCampeonato.RASCUNHO);
+        Campeonato salvo = campeonatoRepository.save(campeonato);
+        return campeonatoMapper.toDto(salvo);
+    }
+
     public CampeonatoResponseDto obterCampeonatoPorId(Long id){
-        Campeonato campeonato = campeonatoRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
+        Campeonato campeonato = campeonatoRepository.findByIdWithTimes(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
+        campeonatoAccessHelper.validarVisibilidade(campeonato);
         return campeonatoMapper.toDto(campeonato);
 
     }
@@ -120,8 +149,9 @@ public class CampeonatoService {
     }
 
     public List<TimeResponseDto> listarTimesDoCampeonato(Long campeonatoId) {
-        Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
+        Campeonato campeonato = campeonatoRepository.findByIdWithTimes(campeonatoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
+        campeonatoAccessHelper.validarVisibilidade(campeonato);
         return campeonato.getTimes()
                 .stream()
                 .map(timeMapper::toDto)
@@ -130,10 +160,11 @@ public class CampeonatoService {
 
     public List<PartidaResponseDto> listarPartidas(Long campeonatoId) {
 
-        campeonatoRepository.findById(campeonatoId)
+        Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
+        campeonatoAccessHelper.validarVisibilidade(campeonato);
 
-        return partidaRepository.findByCampeonatoId(campeonatoId)
+        return partidaRepository.findByCampeonatoIdWithTimes(campeonatoId)
                 .stream()
                 .map(partidaMapper::toDto)
                 .toList();
@@ -166,4 +197,3 @@ public class CampeonatoService {
     }
 
 }
-

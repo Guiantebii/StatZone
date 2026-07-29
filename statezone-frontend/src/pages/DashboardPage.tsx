@@ -16,6 +16,7 @@ import { SkeletonCard } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
 import { isLiveStatus, isFinishedStatus } from '../constants/status';
 import { usePolling } from '../hooks/usePolling';
+import logger from '../utils/logger';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ export default function DashboardPage() {
           const artRes = await api.get(
             `/campeonatos/${campeonatosRes.data[0].id}/artilharia?pagina=0&tamanho=${ARTILHARIA_TOP}`,
           );
-          setArtilharia(artRes.data);
+          setArtilharia(Array.isArray(artRes.data) ? artRes.data : []);
         }
       } catch (err) {
         toast.error(getApiError(err, 'Erro ao carregar dados do dashboard'));
@@ -80,7 +81,7 @@ export default function DashboardPage() {
         );
       })
       .catch((err) => {
-        import('../utils/logger').then((m) => m.default.error('Erro ao atualizar partidas ao vivo', err));
+        logger.error('Erro ao atualizar partidas ao vivo', err);
       });
   }, []);
 

@@ -5,13 +5,15 @@ import br.com.statezone.integration.apifootball.dto.TeamResponseDto;
 import br.com.statezone.integration.apifootball.ApiFootballClient;
 import br.com.statezone.model.Time;
 import br.com.statezone.repository.TimeRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ApiFootballImportService {
@@ -26,6 +28,11 @@ public class ApiFootballImportService {
                 apiFootballClient.buscarTimesLiga(71L, 2024);
 
         List<Time> times = new ArrayList<>();
+
+        if (response == null || response.response() == null) {
+            log.warn("Resposta nula da API ao buscar times");
+            return;
+        }
 
         for (TeamResponseDto item : response.response()) {
 

@@ -75,8 +75,13 @@ public class RefreshController {
             return ResponseEntity.status(401).build();
         }
 
-        // rotate: create new refresh token and persist, remove old record
-        String newRefresh = refreshTokenService.rotateRefreshToken(oldJti, user);
+        // rotate: revoke old token and create new one (with reuse detection)
+        String newRefresh;
+        try {
+            newRefresh = refreshTokenService.rotateRefreshToken(oldJti, user);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(401).build();
+        }
 
         String newAccess = jwtService.gerarToken(user);
         ResponseCookie tokenCookie = ResponseCookie.from("token", newAccess)

@@ -238,6 +238,9 @@ export default function CampeonatosPage() {
                   Formato
                 </th>
                 <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                  Status
+                </th>
+                <th className="text-left px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
                   Suspensão
                 </th>
                 <th className="text-right px-5 py-3 text-xs uppercase tracking-wider text-slate-500 font-semibold">
@@ -281,6 +284,17 @@ export default function CampeonatosPage() {
                       className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${badgeClasses(c.tipoFormato)}`}
                     >
                       {formatarTipo(c.tipoFormato)}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <span
+                      className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        c.status === 'ATIVO'
+                          ? 'bg-success-bg text-success border border-success-border'
+                          : 'bg-warning-bg text-warning border border-warning-border'
+                      }`}
+                    >
+                      {c.status === 'ATIVO' ? 'Ativo' : 'Rascunho'}
                     </span>
                   </td>
                   <td className="px-5 py-3.5">

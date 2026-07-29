@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -33,7 +34,7 @@ public class BracketEngine {
             Time timeA = timesOrdenados.get(i);
             Time timeB = timesOrdenados.get(totalTimes - 1 - i);
 
-            ConfrontoEliminatorio confronto = criarConfronto(fase, timeA, timeB, i, 1);
+            ConfrontoEliminatorio confronto = criarConfronto(fase, timeA, timeB, i, fase.getFase().ordinal() + 1);
             confronto.setSeed(i + 1);
 
             confrontos.add(confronto);
@@ -49,11 +50,8 @@ public class BracketEngine {
         int totalConfrontos = classificados.size() / 2;
 
         for (int i = 0; i < totalConfrontos; i++) {
-            int indexA = i * 2;
-            int indexB = indexA + 1;
-
-            Time timeA = classificados.get(indexA);
-            Time timeB = classificados.get(indexB);
+            Time timeA = classificados.get(i);
+            Time timeB = classificados.get(classificados.size() - 1 - i);
 
             ConfrontoEliminatorio confronto = criarConfronto(fase, timeA, timeB, i, round);
             novosConfrontos.add(confronto);
@@ -109,7 +107,7 @@ public class BracketEngine {
         c.setBracketIndex(bracketIndex);
         c.setRoundIndex(roundIndex);
         c.setStatusConfronto(StatusConfronto.PENDENTE);
-        c.setJogoUnico(true);
+        c.setJogoUnico(fase.getJogoUnico() != null ? fase.getJogoUnico() : true);
         return c;
     }
 
@@ -120,8 +118,9 @@ public class BracketEngine {
         if (penaltisA > penaltisB) return confronto.getTimeA();
         if (penaltisB > penaltisA) return confronto.getTimeB();
 
+        String idStr = confronto.getId() != null ? confronto.getId().toString() : "N/A";
         throw new BusinessException(
-                String.format("Impossível resolver vencedor. Confronto %d empatado inclusive nos pênaltis.", confronto.getId())
+                String.format("Impossível resolver vencedor. Confronto %s empatado inclusive nos pênaltis.", idStr)
         );
     }
 

@@ -40,7 +40,12 @@ public class CampeonatoController {
                     .body(response);
         }
     @GetMapping
-    public ResponseEntity<List<CampeonatoResponseDto>> listarCampeonatos(){
+    public ResponseEntity<List<CampeonatoResponseDto>> listarCampeonatos(
+            @RequestParam(required = false, defaultValue = "false") boolean publico
+    ){
+        if (publico) {
+            return ResponseEntity.ok(campeonatoService.listarCampeonatosPublicos());
+        }
         return ResponseEntity.ok(campeonatoService.listarTodosCampeonatos());
     }
     @GetMapping("/{id}")
@@ -57,6 +62,18 @@ public class CampeonatoController {
     public ResponseEntity<Void> deletarCampeonato(@PathVariable Long id) {
         campeonatoService.deletarCampeonato(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/ativar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CampeonatoResponseDto> ativarCampeonato(@PathVariable Long id){
+        return ResponseEntity.ok(campeonatoService.ativarCampeonato(id));
+    }
+
+    @PatchMapping("/{id}/reverter")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CampeonatoResponseDto> reverterCampeonato(@PathVariable Long id){
+        return ResponseEntity.ok(campeonatoService.reverterParaRascunho(id));
     }
 
     @PostMapping("/{campeonatoId}/times/{timeId}")

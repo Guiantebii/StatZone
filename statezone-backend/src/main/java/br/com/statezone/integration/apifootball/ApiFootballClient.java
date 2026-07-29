@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
+
 @Component
 @RequiredArgsConstructor
 public class ApiFootballClient {
@@ -25,7 +27,7 @@ public class ApiFootballClient {
                         .build())
                 .retrieve()
                 .bodyToMono(ApiFootballTeamsResponse.class)
-                .block();
+                .block(Duration.ofSeconds(30));
     }
 
     public ApiFootballPlayersResponse buscarElencoTime(
@@ -39,6 +41,6 @@ public class ApiFootballClient {
                         .build())
                 .retrieve()
                 .bodyToMono(ApiFootballPlayersResponse.class)
-                .block();
+                .block(Duration.ofSeconds(30));
     }
 }

@@ -1,13 +1,21 @@
-import { ChevronRight, Trophy } from 'lucide-react';
+import { ChevronRight, Trophy, XCircle } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { getLogoUrl } from '../constants/helpers';
 import type { ConfrontoEliminatorio } from '../types/fases';
+import { useAuth } from '../context/AuthContext';
 import Card from './ui/Card';
+import Button from './ui/Button';
 
 interface ConfrontoCardProps {
   confronto: ConfrontoEliminatorio;
+  onEncerrar?: (confrontoId: number) => void;
 }
 
-export default function ConfrontoCard({ confronto }: ConfrontoCardProps) {
+export default function ConfrontoCard({ confronto, onEncerrar }: ConfrontoCardProps) {
+  const { isAdmin, isAuthenticated } = useAuth();
+  const location = useLocation();
+  const isDashboardContext = location.pathname.startsWith('/dashboard');
+  const partidaBasePath = isDashboardContext ? '/dashboard/partidas' : '/partidas';
   const isFinished = confronto.statusConfronto === 'ENCERRADO';
 
   const statusBadge = () => {
@@ -29,10 +37,7 @@ export default function ConfrontoCard({ confronto }: ConfrontoCardProps) {
 
   return (
     <Card className="p-3 w-56">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] text-slate-600 uppercase tracking-wider">{confronto.id}</span>
-        {statusBadge()}
-      </div>
+      <div className="flex items-center justify-between mb-2">{statusBadge()}</div>
 
       <div className="space-y-1">
         <div
@@ -92,10 +97,32 @@ export default function ConfrontoCard({ confronto }: ConfrontoCardProps) {
       )}
 
       {(confronto.partidaIdaId || confronto.partidaVoltaId) && (
-        <div className="mt-2 pt-2 border-t border-white/[0.04] text-[10px] text-slate-600">
-          {confronto.partidaIdaId && <span>Ida: #{confronto.partidaIdaId}</span>}
-          {confronto.partidaIdaId && confronto.partidaVoltaId && <span> · </span>}
-          {confronto.partidaVoltaId && <span>Volta: #{confronto.partidaVoltaId}</span>}
+        <div className="mt-2 pt-2 border-t border-white/[0.04] text-[10px] text-slate-600 space-y-0.5">
+          {confronto.partidaIdaId && (
+            <Link
+              to={`${partidaBasePath}/${confronto.partidaIdaId}`}
+              className="block hover:text-accent transition-colors"
+            >
+              Ida: #{confronto.partidaIdaId}
+            </Link>
+          )}
+          {confronto.partidaVoltaId && (
+            <Link
+              to={`${partidaBasePath}/${confronto.partidaVoltaId}`}
+              className="block hover:text-accent transition-colors"
+            >
+              Volta: #{confronto.partidaVoltaId}
+            </Link>
+          )}
+        </div>
+      )}
+
+      {isAuthenticated && isAdmin && !isFinished && onEncerrar && (
+        <div className="mt-2 pt-2 border-t border-white/[0.04]">
+          <Button size="sm" variant="secondary" onClick={() => onEncerrar(confronto.id)} className="w-full text-[10px]">
+            <XCircle size={10} />
+            Encerrar confronto
+          </Button>
         </div>
       )}
     </Card>

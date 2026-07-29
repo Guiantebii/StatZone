@@ -13,10 +13,13 @@ const faseLabel: Record<FaseEnum, string> = {
 
 interface BracketViewProps {
   fases: FaseEliminatoria[];
+  onEncerrarConfronto?: (confrontoId: number) => void;
 }
 
-export default function BracketView({ fases }: BracketViewProps) {
-  const sorted = [...fases].sort((a, b) => faseOrder.indexOf(a.fase) - faseOrder.indexOf(b.fase));
+export default function BracketView({ fases, onEncerrarConfronto }: BracketViewProps) {
+  const sorted = [...fases]
+    .sort((a, b) => faseOrder.indexOf(a.fase) - faseOrder.indexOf(b.fase))
+    .filter((f) => f.confrontos.length > 0);
   const maxConfrontos = Math.max(...sorted.map((f) => f.confrontos.length), 0);
 
   return (
@@ -26,12 +29,18 @@ export default function BracketView({ fases }: BracketViewProps) {
           <div key={fase.id} className="flex flex-col gap-3 relative">
             <div className="text-center mb-2">
               <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{faseLabel[fase.fase]}</span>
+              {fase.jogoUnico && <span className="block text-[9px] text-slate-500 mt-0.5">Jogo único</span>}
             </div>
             {fase.confrontos.map((conf, confIdx) => (
               <div
                 key={conf.id}
                 className="relative"
-                style={{ marginTop: confIdx > 0 ? `${2 ** (sorted.length - faseIdx - 1) * 0.5 - 0.75}rem` : '0' }}
+                style={{
+                  marginTop:
+                    confIdx > 0 && sorted.length > 1
+                      ? `${Math.max(0.25, 2 ** (sorted.length - faseIdx - 1) * 0.5 - 0.5)}rem`
+                      : '0',
+                }}
               >
                 {faseIdx > 0 && confIdx % 2 === 0 && confIdx + 1 < sorted[faseIdx - 1]?.confrontos.length && (
                   <div className="absolute -left-6 top-1/2 w-6 h-[200%] pointer-events-none">
@@ -39,7 +48,7 @@ export default function BracketView({ fases }: BracketViewProps) {
                     <div className="absolute right-0 top-1/2 w-3 h-1/2 border-r border-t border-white/[0.08] rounded-tr" />
                   </div>
                 )}
-                <ConfrontoCard confronto={conf} />
+                <ConfrontoCard confronto={conf} onEncerrar={onEncerrarConfronto} />
               </div>
             ))}
           </div>

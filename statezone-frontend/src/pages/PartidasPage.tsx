@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Plus, Filter, Calendar } from 'lucide-react';
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
@@ -33,12 +34,15 @@ export default function PartidasPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const { isAdmin } = useAuth();
+  const location = useLocation();
+  const isDashboardContext = location.pathname.startsWith('/dashboard');
   const [filterStatus, setFilterStatus] = useState<string>('TODOS');
   const [filterCampeonato, setFilterCampeonato] = useState<string>('TODOS');
+  const campeonatosEndpoint = isDashboardContext ? '/campeonatos' : '/campeonatos?publico=true';
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([api.get('/partidas'), api.get('/campeonatos')])
+    Promise.all([api.get('/partidas'), api.get(campeonatosEndpoint)])
       .then(([partidasRes, campeonatosRes]) => {
         if (!isMounted) return;
         setPartidas(partidasRes.data);
@@ -53,10 +57,10 @@ export default function PartidasPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [campeonatosEndpoint]);
 
   const load = () => {
-    Promise.all([api.get('/partidas'), api.get('/campeonatos')])
+    Promise.all([api.get('/partidas'), api.get(campeonatosEndpoint)])
       .then(([partidasRes, campeonatosRes]) => {
         setPartidas(partidasRes.data);
         setCampeonatos(campeonatosRes.data);

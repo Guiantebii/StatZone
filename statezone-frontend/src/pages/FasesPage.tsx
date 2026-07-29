@@ -74,8 +74,11 @@ export default function FasesPage() {
         .then((r) => {
           if (isMounted) setFases(r.data);
         })
-        .catch(() => {
-          if (isMounted) setFases([]);
+        .catch((err) => {
+          if (isMounted) {
+            setFases([]);
+            toast.error(getApiError(err, 'Erro ao carregar fases'));
+          }
         }),
       api
         .get(`/campeonatos/${campeonatoId}/grupos`)
@@ -88,16 +91,18 @@ export default function FasesPage() {
               try {
                 const cr = await api.get(`/campeonatos/${campeonatoId}/grupos/${g.id}/classificacao`);
                 classMap[g.id] = cr.data;
-              } catch {
-                // grupo sem classificação ainda
+              } catch (err) {
+                console.warn('Classificação ainda não disponível para grupo', g.id, err);
+                classMap[g.id] = [];
               }
             }),
           );
           if (isMounted) setGrupoClassificacoes(classMap);
         })
-        .catch(() => {
+        .catch((err) => {
           if (isMounted) {
             setGrupos([]);
+            toast.error(getApiError(err, 'Erro ao carregar grupos'));
           }
         }),
       api
@@ -105,8 +110,11 @@ export default function FasesPage() {
         .then((r) => {
           if (isMounted) setTimes(r.data);
         })
-        .catch(() => {
-          if (isMounted) setTimes([]);
+        .catch((err) => {
+          if (isMounted) {
+            setTimes([]);
+            toast.error(getApiError(err, 'Erro ao carregar times'));
+          }
         }),
     ]).finally(() => {
       if (isMounted) setDataLoading(false);
@@ -180,8 +188,20 @@ export default function FasesPage() {
     try {
       const r = await api.get(`/campeonatos/${campeonatoId}/grupos/${grupoId}/classificacao`);
       setGrupoClassificacoes((prev) => ({ ...prev, [grupoId]: r.data }));
-    } catch {
-      // classificacao not available yet
+    } catch (err) {
+      console.warn('Classificação ainda não disponível para grupo', grupoId, err);
+      setGrupoClassificacoes((prev) => ({ ...prev, [grupoId]: [] }));
+    }
+  };
+
+  const handleEncerrarConfronto = async (confrontoId: number) => {
+    try {
+      await api.post(`/campeonatos/${campeonatoId}/confrontos/${confrontoId}/encerrar`);
+      toast.success('Confronto encerrado');
+      const res = await api.get(`/campeonatos/${campeonatoId}/fases`);
+      setFases(res.data);
+    } catch (err) {
+      toast.error(getApiError(err, 'Erro ao encerrar confronto'));
     }
   };
 
@@ -220,7 +240,13 @@ export default function FasesPage() {
         {campeonatos.length > 0 && (
           <select
             value={campeonatoId ?? ''}
-            onChange={(e) => setCampeonatoId(Number(e.target.value))}
+            onChange={(e) => {
+              setCampeonatoId(Number(e.target.value));
+              setFases([]);
+              setGrupos([]);
+              setGrupoClassificacoes({});
+              setTimes([]);
+            }}
             className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-accent/40"
           >
             {campeonatos.map((c) => (
@@ -498,7 +524,7 @@ export default function FasesPage() {
                           </p>
                         </Card>
                       ) : (
-                        <BracketView fases={fases} />
+                        <BracketView fases={fases} onEncerrarConfronto={handleEncerrarConfronto} />
                       )}
                     </div>
                   ))

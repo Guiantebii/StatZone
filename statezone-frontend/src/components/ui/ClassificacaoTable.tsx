@@ -32,12 +32,12 @@ export default function ClassificacaoTable({ dados, onTimeClick, isGroup = false
               key={c.timeId}
               className={`hover:bg-white/[0.02] transition-colors cursor-pointer ${
                 isGroup
-                  ? c.posicao <= 4
+                  ? c.posicao <= 4 && c.posicao <= dados.length
                     ? 'bg-success/5'
                     : ''
                   : dados.length >= 4 && c.posicao >= dados.length - 3
                     ? 'bg-danger/5'
-                    : c.posicao <= 4
+                    : c.posicao <= 4 && c.posicao <= dados.length
                       ? 'bg-success/5'
                       : ''
               }`}
@@ -55,12 +55,12 @@ export default function ClassificacaoTable({ dados, onTimeClick, isGroup = false
                 <span
                   className={`text-sm font-bold font-mono ${
                     isGroup
-                      ? c.posicao <= 4
+                      ? c.posicao <= 4 && c.posicao <= dados.length
                         ? 'text-accent'
                         : 'text-slate-400'
                       : dados.length >= 4 && c.posicao >= dados.length - 3
                         ? 'text-danger'
-                        : c.posicao <= 4
+                        : c.posicao <= 4 && c.posicao <= dados.length
                           ? 'text-accent'
                           : 'text-slate-400'
                   }`}

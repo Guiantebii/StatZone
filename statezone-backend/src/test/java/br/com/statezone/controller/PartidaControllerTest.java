@@ -6,6 +6,7 @@ import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.security.JwtService;
 import br.com.statezone.service.EventoPartidaService;
+import br.com.statezone.service.PartidaLifecycleService;
 import br.com.statezone.service.PartidaService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -53,6 +54,9 @@ class PartidaControllerTest {
 
     @MockBean
     private EventoPartidaService eventoPartidaService;
+
+    @MockBean
+    private PartidaLifecycleService partidaLifecycleService;
 
     @Test
     @WithMockUser

@@ -36,9 +36,10 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
   const escudoUrlFinal = escudoManual ? escudoUrl : TEAM_LOGO(nome || time?.nome || '');
 
   useEffect(() => {
+    const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = prev;
     };
   }, []);
 
@@ -78,7 +79,7 @@ export default function TimeForm({ time, onClose, onSaved }: TimeFormProps) {
     <Modal title={time ? 'Editar time' : 'Novo time'} onClose={onClose}>
       <p className="text-xs text-slate-500 mb-4">{time ? `Editando "${time.nome}"` : 'Preencha os dados do time'}</p>
       <form onSubmit={handleSubmit}>
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="nome">Nome *</Label>

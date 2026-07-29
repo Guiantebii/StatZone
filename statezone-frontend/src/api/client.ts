@@ -15,7 +15,11 @@ const api = axios.create({
 });
 
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (val: unknown) => void; reject: (err: unknown) => void; config: InternalAxiosRequestConfig }> = [];
+let failedQueue: Array<{
+  resolve: (val: unknown) => void;
+  reject: (err: unknown) => void;
+  config: InternalAxiosRequestConfig;
+}> = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -29,6 +33,16 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    const publicPaths = ['/login', '/', '/estatisticas', '/partidas', '/times', '/campeonatos', '/jogadores'];
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest.url?.includes('/api/auth/') &&
+      publicPaths.some((p) => window.location.pathname === p || window.location.pathname.startsWith(p + '/'))
+    ) {
+      return Promise.reject(error);
+    }
 
     if (
       error.response?.status === 401 &&

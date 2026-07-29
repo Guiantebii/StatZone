@@ -7,4 +7,3 @@ node_modules/
 dist/
 build/
 
-statezone-backend/src/main/resources/application.properties

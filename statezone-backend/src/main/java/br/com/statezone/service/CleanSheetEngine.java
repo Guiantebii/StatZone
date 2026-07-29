@@ -8,8 +8,8 @@ import br.com.statezone.model.Jogador;
 import br.com.statezone.model.Partida;
 import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
-import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.JogadorRepository;
+import br.com.statezone.service.helper.StatsHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,52 +21,36 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class CleanSheetEngine {
 
-    private final EstatisticasJogadorRepository estatisticasJogadorRepository;
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
     private final JogadorRepository jogadorRepository;
     private final EscalacaoPartidaRepository escalacaoPartidaRepository;
+    private final StatsHelper statsHelper;
 
     public void process(Partida partida) {
         if (partida == null) {
             return;
         }
 
-        if (partida.getGolsMandante() != null && partida.getGolsMandante() == 0) {
+        if (partida.getGolsMandante() != null && partida.getGolsMandante() == 0
+                && partida.getTimeMandante() != null) {
             registrarCleanSheet(partida, partida.getTimeMandante().getId());
         }
 
-        if (partida.getGolsVisitante() != null && partida.getGolsVisitante() == 0) {
+        if (partida.getGolsVisitante() != null && partida.getGolsVisitante() == 0
+                && partida.getTimeVisitante() != null) {
             registrarCleanSheet(partida, partida.getTimeVisitante().getId());
         }
     }
 
     private void registrarCleanSheet(Partida partida, Long timeId) {
         for (Jogador goleiro : goleirosDoTimeNaPartida(partida, timeId)) {
-            EstatisticasJogador carreira = estatisticasJogadorRepository
-                    .findByJogadorId(goleiro.getId())
-                    .orElseGet(() -> {
-                        EstatisticasJogador estatisticas = new EstatisticasJogador();
-                        estatisticas.setJogador(goleiro);
-                        return estatisticas;
-                    });
-
-            EstatisticasJogadorCampeonato campeonato = estatisticasJogadorCampeonatoRepository
-                    .findByJogadorIdAndCampeonatoId(
-                            goleiro.getId(),
-                            partida.getCampeonato().getId()
-                    )
-                    .orElseGet(() -> {
-                        EstatisticasJogadorCampeonato estatisticas = new EstatisticasJogadorCampeonato();
-                        estatisticas.setJogador(goleiro);
-                        estatisticas.setCampeonato(partida.getCampeonato());
-                        return estatisticas;
-                    });
+            EstatisticasJogador carreira = statsHelper.buscarOuCriarCarreira(goleiro);
+            EstatisticasJogadorCampeonato campeonato = statsHelper.obterOuCriarCampeonato(goleiro, partida);
 
             carreira.setCleanSheets(somar(carreira.getCleanSheets(), 1));
             campeonato.setCleanSheets(somar(campeonato.getCleanSheets(), 1));
 
-            estatisticasJogadorRepository.save(carreira);
-            estatisticasJogadorCampeonatoRepository.save(campeonato);
+            statsHelper.salvarAmbos(carreira, campeonato);
         }
     }
 

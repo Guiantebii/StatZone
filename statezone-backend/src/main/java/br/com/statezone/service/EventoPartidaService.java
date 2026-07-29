@@ -15,7 +15,7 @@ import br.com.statezone.model.Partida;
 import br.com.statezone.repository.EventoPartidaRepository;
 import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,6 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class EventoPartidaService {
 
         private final EventoPartidaRepository eventoPartidaRepository;
@@ -34,6 +33,7 @@ public class EventoPartidaService {
         private final EventoPartidaMapper eventoPartidaMapper;
         private final ApplicationEventPublisher publisher;
 
+        @Transactional
         public EventoPartidaResponseDto registrarEvento(
                 EventoPartidaRequestDto dto,
                 Long partidaId
@@ -41,7 +41,7 @@ public class EventoPartidaService {
 
                 validarInputs(dto);
 
-                Partida partida = partidaRepository.findById(partidaId)
+                Partida partida = partidaRepository.findByIdWithLock(partidaId)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException("Partida não encontrada"));
 
@@ -67,9 +67,7 @@ public class EventoPartidaService {
 
                 if (dto.jogadorSecundarioId() != null) {
 
-                        if (dto.tipoEvento() != TipoEvento.GOL &&
-                                dto.tipoEvento() != TipoEvento.PENALTI_GOL &&
-                                dto.tipoEvento() != TipoEvento.SUBSTITUICAO) {
+                        if (!aceitaJogadorSecundario(dto.tipoEvento())) {
 
                                 throw new BusinessException(
                                         "Este tipo de evento não aceita jogador secundário");
@@ -88,6 +86,9 @@ public class EventoPartidaService {
                                 throw new BusinessException(
                                         "O jogador principal não pode ser o jogador secundário");
                         }
+                } else if (exigeJogadorSecundario(dto.tipoEvento())) {
+                        throw new BusinessException(
+                                "Este tipo de evento exige um jogador secundário");
                 }
                 EventoPartida eventoRelacionado = null;
                 if (dto.tipoEvento() == TipoEvento.VAR_GOL_ANULADO) {
@@ -290,6 +291,24 @@ public class EventoPartidaService {
                              INICIO_PRORROGACAO,
                              FIM_PRORROGACAO,
                              FIM_PARTIDA -> false;
+                };
+        }
+
+        private boolean aceitaJogadorSecundario(TipoEvento tipo) {
+                return switch (tipo) {
+                        case GOL,
+                             PENALTI_GOL,
+                             SUBSTITUICAO,
+                             PENALTI_DEFENDIDO -> true;
+                        default -> false;
+                };
+        }
+
+        private boolean exigeJogadorSecundario(TipoEvento tipo) {
+                return switch (tipo) {
+                        case SUBSTITUICAO,
+                             PENALTI_DEFENDIDO -> true;
+                        default -> false;
                 };
         }
 }

@@ -62,8 +62,10 @@ class GlobalExceptionHandlerTest {
         ResponseEntity<Map<String, Object>> response = handler.handleGeneric(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody().get("message")).isEqualTo("Erro interno no servidor");
-        assertThat(response.getBody().get("message")).isNotEqualTo("Erro interno detalhado");
+        assertThat((String) response.getBody().get("message"))
+                .contains("Erro interno no servidor")
+                .contains("CorrelationId")
+                .doesNotContain("Erro interno detalhado");
     }
 
     @Test

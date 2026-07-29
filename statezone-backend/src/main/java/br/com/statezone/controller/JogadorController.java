@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/jogadores")
@@ -38,12 +40,15 @@ public class JogadorController {
 
     @GetMapping
     public ResponseEntity<List<JogadorResponseDto>> listarJogadores(
-            @RequestParam(required = false, defaultValue = "") String nome
+            @RequestParam(required = false, defaultValue = "") String nome,
+            @RequestParam(required = false, defaultValue = "0") int pagina,
+            @RequestParam(required = false, defaultValue = "50") int tamanho
     ) {
         if (!nome.isBlank()) {
             return ResponseEntity.ok(jogadorService.buscarPorNome(nome));
         }
-        return ResponseEntity.ok(jogadorService.listarTodosJogadores());
+        var pageable = PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.ASC, "nome"));
+        return ResponseEntity.ok(jogadorService.listarTodosJogadores(pageable));
     }
 
     @GetMapping("/{id}")

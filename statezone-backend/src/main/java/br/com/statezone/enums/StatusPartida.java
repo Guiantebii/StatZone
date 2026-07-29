@@ -7,6 +7,7 @@ public enum StatusPartida {
     ADIADA,
     CANCELADA,
     INTERVALO,
+    PRORROGACAO,
     WO_MANDANTE,
     PENALTIS,
     WO_VISITANTE
