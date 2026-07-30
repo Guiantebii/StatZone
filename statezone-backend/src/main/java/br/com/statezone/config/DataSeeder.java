@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,6 +35,7 @@ public class DataSeeder {
     private final MatchEngine matchEngine;
     private final PasswordEncoder passwordEncoder;
     private final RoundRobinHelper roundRobinHelper;
+    private final TransactionTemplate transactionTemplate;
 
     private final Random random = new Random(42);
     private int nameCounter = 0;
@@ -94,19 +96,18 @@ public class DataSeeder {
             "Paulo César Zanovelli", "Savio Pereira Sampaio", "Leandro Pedro Vuaden"
     };
 
-    @Transactional
-    public void run() throws Exception {
+    public void run() {
         System.out.println("=== DataSeeder: iniciando... ===");
-        cleanDatabase();
-        seedUsuarios();
-        List<Time> times = seedTimes();
-        Map<Long, List<Jogador>> jogadoresPorTime = seedJogadores(times);
-        seedCampeonato1(times, jogadoresPorTime);
-        seedCampeonato2(times, jogadoresPorTime);
+        transactionTemplate.executeWithoutResult(s -> cleanDatabase());
+        transactionTemplate.executeWithoutResult(s -> seedUsuarios());
+        List<Time> times = transactionTemplate.execute(s -> seedTimes());
+        Map<Long, List<Jogador>> jogadoresPorTime = transactionTemplate.execute(s -> seedJogadores(times));
+        transactionTemplate.executeWithoutResult(s -> seedCampeonato1(times, jogadoresPorTime));
+        transactionTemplate.executeWithoutResult(s -> seedCampeonato2(times, jogadoresPorTime));
         System.out.println("=== DataSeeder: concluído! ===");
     }
 
-    private void cleanDatabase() {
+    public void cleanDatabase() {
         System.out.println("Limpando banco de dados...");
         entityManager.createNativeQuery("DELETE FROM eventos_partida").executeUpdate();
         entityManager.createNativeQuery("DELETE FROM estatisticas_partida").executeUpdate();
