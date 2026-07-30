@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -15,16 +16,31 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class SeedController {
 
     private final DataSeeder dataSeeder;
+    private static final AtomicBoolean running = new AtomicBoolean(false);
+    private static String status = "Aguardando";
 
     @PostMapping("/seed")
     public ResponseEntity<String> seed() {
-        new Thread(() -> {
-            try {
-                dataSeeder.run();
-            } catch (Exception e) {
-                System.err.println("Seed failed: " + e.getMessage());
-            }
-        }).start();
-        return ResponseEntity.ok("Seed iniciado em background");
+        if (running.compareAndSet(false, true)) {
+            status = "Executando...";
+            new Thread(() -> {
+                try {
+                    dataSeeder.run();
+                    status = "Seed concluído!";
+                } catch (Exception e) {
+                    status = "Erro: " + e.getMessage();
+                    e.printStackTrace();
+                } finally {
+                    running.set(false);
+                }
+            }).start();
+            return ResponseEntity.ok("Seed iniciado");
+        }
+        return ResponseEntity.ok("Já está rodando: " + status);
+    }
+
+    @GetMapping("/seed-status")
+    public ResponseEntity<String> status() {
+        return ResponseEntity.ok(status);
     }
 }
