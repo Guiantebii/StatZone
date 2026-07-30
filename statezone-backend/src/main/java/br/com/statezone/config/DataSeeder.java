@@ -114,22 +114,6 @@ public class DataSeeder {
         System.out.println("=== DataSeeder: concluído! ===");
     }
 
-    public void seedCampeonatos() {
-        System.out.println("=== Seed só campeonatos ===");
-        List<Time> times = timeRepository.findAll();
-        if (times.isEmpty()) {
-            System.out.println("Nenhum time encontrado, abortando");
-            return;
-        }
-        Map<Long, List<Jogador>> jogadoresPorTime = new HashMap<>();
-        for (Time t : times) {
-            jogadoresPorTime.put(t.getId(), jogadorRepository.findByTimeId(t.getId()));
-        }
-        transactionTemplate.executeWithoutResult(s -> seedCampeonato1(times, jogadoresPorTime));
-        transactionTemplate.executeWithoutResult(s -> seedCampeonato2(times, jogadoresPorTime));
-        System.out.println("Campeonatos criados!");
-    }
-
     public void cleanDatabase() {
         System.out.println("Limpando banco de dados...");
         entityManager.createNativeQuery("DELETE FROM eventos_partida").executeUpdate();
