@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
@@ -35,10 +36,16 @@ public class DataSeeder {
     private final MatchEngine matchEngine;
     private final PasswordEncoder passwordEncoder;
     private final RoundRobinHelper roundRobinHelper;
-    private final TransactionTemplate transactionTemplate;
+    private final PlatformTransactionManager transactionManager;
+    private TransactionTemplate transactionTemplate;
 
     private final Random random = new Random(42);
     private int nameCounter = 0;
+
+    @jakarta.annotation.PostConstruct
+    public void init() {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
 
     private static final String[] FIRST_NAMES = {
             "João", "Pedro", "Lucas", "Gabriel", "Rafael", "Matheus", "Felipe", "Gustavo",
