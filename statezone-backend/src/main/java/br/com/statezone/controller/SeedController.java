@@ -43,4 +43,16 @@ public class SeedController {
     public ResponseEntity<String> status() {
         return ResponseEntity.ok(status);
     }
+
+    @PostMapping("/seed-campeonatos")
+    public ResponseEntity<String> seedCampeonatos() {
+        new Thread(() -> {
+            try {
+                dataSeeder.seedCampeonatos();
+            } catch (Exception e) {
+                System.err.println("Seed campeonatos failed: " + e.getMessage());
+            }
+        }).start();
+        return ResponseEntity.ok("Seed campeonatos iniciado");
+    }
 }
