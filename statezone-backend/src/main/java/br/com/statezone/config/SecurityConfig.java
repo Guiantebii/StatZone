@@ -106,7 +106,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        List<String> origins = List.of(allowedOrigins.split(","));
+        List<String> origins = new java.util.ArrayList<>(List.of(allowedOrigins.split(",")));
+        if (origins.stream().noneMatch(o -> o.contains("stat-zone-psi"))) {
+            origins.add("https://stat-zone-psi.vercel.app");
+        }
+        origins.removeIf(String::isBlank);
         configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
