@@ -68,7 +68,7 @@ public class AuthController {
         ResponseCookie tokenCookie = ResponseCookie.from("token", token)
                 .httpOnly(true)
                 .secure(cookieSecure)
-                .sameSite("Lax")
+                .sameSite("None")
                 .path("/")
                 .maxAge(jwtService.getExpirationMs() / 1000)
                 .build();
@@ -76,7 +76,7 @@ public class AuthController {
         ResponseCookie refreshCookie = ResponseCookie.from("refresh", refresh)
                 .httpOnly(true)
                 .secure(cookieSecure)
-                .sameSite("Lax")
+                .sameSite("None")
                 .path("/api/auth/refresh")
                 .maxAge(jwtService.getRefreshExpirationMs() / 1000)
                 .build();
@@ -115,7 +115,7 @@ public class AuthController {
         ResponseCookie tokenCookie = ResponseCookie.from("token", "")
                 .httpOnly(true)
                 .secure(cookieSecure)
-                .sameSite("Lax")
+                .sameSite("None")
                 .path("/")
                 .maxAge(0)
                 .build();
@@ -124,7 +124,7 @@ public class AuthController {
         ResponseCookie refreshCookie = ResponseCookie.from("refresh", "")
                 .httpOnly(true)
                 .secure(cookieSecure)
-                .sameSite("Lax")
+                .sameSite("None")
                 .path("/api/auth/refresh")
                 .maxAge(0)
                 .build();

@@ -87,7 +87,7 @@ public class RefreshController {
         ResponseCookie tokenCookie = ResponseCookie.from("token", newAccess)
                 .httpOnly(true)
                 .secure(cookieSecure)
-                .sameSite("Lax")
+                .sameSite("None")
                 .path("/")
                 .maxAge(jwtService.getExpirationMs() / 1000)
                 .build();
@@ -95,7 +95,7 @@ public class RefreshController {
         ResponseCookie refreshCookie = ResponseCookie.from("refresh", newRefresh)
                 .httpOnly(true)
                 .secure(cookieSecure)
-                .sameSite("Lax")
+                .sameSite("None")
                 .path("/api/auth/refresh")
                 .maxAge(jwtService.getRefreshExpirationMs() / 1000)
                 .build();
