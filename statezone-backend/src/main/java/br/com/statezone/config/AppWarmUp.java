@@ -12,8 +12,9 @@ public class AppWarmUp {
 
     private static final Logger log = LoggerFactory.getLogger(AppWarmUp.class);
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void warmUp(ApplicationContext context) {
+    @EventListener
+    public void warmUp(ApplicationReadyEvent event) {
+        ApplicationContext context = event.getApplicationContext();
         Thread thread = new Thread(() -> {
             log.info("Warm-up: inicializando beans em segundo plano...");
             for (String name : context.getBeanDefinitionNames()) {
