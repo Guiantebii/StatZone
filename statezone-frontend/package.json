@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@stomp/stompjs": "^7.3.0",
+    "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.18.0",
     "lucide-react": "^1.21.0",
     "react": "^19.2.6",
