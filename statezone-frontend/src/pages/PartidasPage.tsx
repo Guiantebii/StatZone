@@ -38,15 +38,21 @@ export default function PartidasPage() {
   const isDashboardContext = location.pathname.startsWith('/dashboard');
   const [filterStatus, setFilterStatus] = useState<string>('TODOS');
   const [filterCampeonato, setFilterCampeonato] = useState<string>('TODOS');
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const TAMANHO = 20;
   const campeonatosEndpoint = isDashboardContext ? '/campeonatos' : '/campeonatos?publico=true';
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([api.get('/partidas'), api.get(campeonatosEndpoint)])
+    Promise.all([api.get(`/partidas?pagina=0&tamanho=${TAMANHO}`), api.get(campeonatosEndpoint)])
       .then(([partidasRes, campeonatosRes]) => {
         if (!isMounted) return;
         setPartidas(partidasRes.data);
         setCampeonatos(campeonatosRes.data);
+        setHasMore((partidasRes.data as Partida[]).length === TAMANHO);
+        setPage(1);
       })
       .catch((err) => {
         toast.error(getApiError(err, 'Erro ao carregar partidas'));
@@ -57,17 +63,23 @@ export default function PartidasPage() {
     return () => {
       isMounted = false;
     };
-  }, [campeonatosEndpoint]);
+  }, [filterStatus, filterCampeonato, campeonatosEndpoint]);
 
-  const load = () => {
-    Promise.all([api.get('/partidas'), api.get(campeonatosEndpoint)])
-      .then(([partidasRes, campeonatosRes]) => {
-        setPartidas(partidasRes.data);
-        setCampeonatos(campeonatosRes.data);
+  const loadMore = () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    api
+      .get(`/partidas?pagina=${page}&tamanho=${TAMANHO}`)
+      .then((res) => {
+        const next = res.data as Partida[];
+        setPartidas((prev) => [...prev, ...next]);
+        setHasMore(next.length === TAMANHO);
+        setPage((p) => p + 1);
       })
       .catch((err) => {
-        toast.error(getApiError(err, 'Erro ao carregar partidas'));
-      });
+        toast.error(getApiError(err, 'Erro ao carregar mais partidas'));
+      })
+      .finally(() => setLoadingMore(false));
   };
 
   const filtered = partidas.filter((p) => {
@@ -190,6 +202,14 @@ export default function PartidasPage() {
               <PartidaCard key={p.id} partida={p} />
             ))}
           </div>
+
+          {hasMore && filtered.length > 0 && (
+            <div className="flex justify-center mt-2">
+              <Button onClick={loadMore} disabled={loadingMore} className="text-xs">
+                {loadingMore ? 'Carregando...' : 'Carregar mais'}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -198,7 +218,21 @@ export default function PartidasPage() {
           onClose={() => setShowForm(false)}
           onSaved={() => {
             setShowForm(false);
-            load();
+            setPartidas([]);
+            setPage(0);
+            setHasMore(true);
+            setLoading(true);
+            Promise.all([api.get(`/partidas?pagina=0&tamanho=${TAMANHO}`), api.get(campeonatosEndpoint)])
+              .then(([partidasRes, campeonatosRes]) => {
+                setPartidas(partidasRes.data);
+                setCampeonatos(campeonatosRes.data);
+                setHasMore((partidasRes.data as Partida[]).length === TAMANHO);
+                setPage(1);
+              })
+              .catch((err) => {
+                toast.error(getApiError(err, 'Erro ao carregar partidas'));
+              })
+              .finally(() => setLoading(false));
           }}
           campeonatos={campeonatos}
         />

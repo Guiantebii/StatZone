@@ -42,9 +42,10 @@ public class PartidaController {
     @GetMapping
     public ResponseEntity<List<PartidaResponseDto>> listarTodasPartidas(
             @RequestParam(required = false, defaultValue = "0") int pagina,
-            @RequestParam(required = false, defaultValue = "50") int tamanho
+            @RequestParam(required = false, defaultValue = "20") int tamanho
     ){
-        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.DESC, "dataPartida"));
+        Pageable pageable = PageRequest.of(pagina, tamanho,
+                Sort.by(Sort.Order.desc("criadoEm"), Sort.Order.desc("id")));
         return ResponseEntity.ok(partidaService.listarTodas(pageable));
     }
     @GetMapping("/{id}")
