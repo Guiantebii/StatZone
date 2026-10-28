@@ -11,4 +11,5 @@ WORKDIR /app
 COPY --from=build /app/target/statezone-backend-0.0.1-SNAPSHOT.jar app.jar
 USER appuser
 EXPOSE 8080
+ENV SPRING_PROFILES_ACTIVE=prod
 ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-XX:TieredStopAtLevel=1", "-XX:+UseSerialGC", "-jar", "app.jar", "--server.address=0.0.0.0"]

@@ -7,7 +7,9 @@ services:
     dockerfilePath: ./statezone-backend/Dockerfile
     healthCheckPath: /actuator/health
     envVars:
-      - key: SPRING_DATASOURCE_URL
+    - key: SPRING_PROFILES_ACTIVE
+      value: prod
+    - key: SPRING_DATASOURCE_URL
         value: jdbc:postgresql://SEU_HOST:5432/statezone
       - key: DB_USERNAME
         value: SEU_USER
