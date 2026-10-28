@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 import { LogIn, Mail, Lock, Shield, Zap, BarChart3, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
+  const [email, setEmail] = useState('demo@statzone.dev');
+  const [senha, setSenha] = useState('portfolio');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ export default function LoginPage() {
 
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-slate-100 tracking-tight">Bem-vindo de volta</h2>
-            <p className="text-sm text-slate-500 mt-1.5">Entre com suas credenciais para continuar.</p>
+            <p className="text-sm text-slate-500 mt-1.5">Conta de demonstração: demo@statzone.dev / portfolio</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
