@@ -9,9 +9,25 @@ if (!baseURL) {
 const api = axios.create({
   baseURL,
   timeout: 15000,
-  withCredentials: true, // rely on httpOnly cookie set by server
+  withCredentials: true,
   xsrfCookieName: 'XSRF-TOKEN',
   xsrfHeaderName: 'X-XSRF-TOKEN',
+});
+
+let csrfToken: string | null = null;
+
+function rememberCsrf(headers?: { [key: string]: unknown }) {
+  const token = headers?.['x-xsrf-token'];
+  if (typeof token === 'string' && token) {
+    csrfToken = token;
+  }
+}
+
+api.interceptors.request.use((config) => {
+  if (csrfToken) {
+    config.headers.set('X-XSRF-TOKEN', csrfToken);
+  }
+  return config;
 });
 
 let isRefreshing = false;
@@ -30,8 +46,12 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    rememberCsrf(response.headers);
+    return response;
+  },
   async (error) => {
+    rememberCsrf(error.response?.headers);
     const originalRequest = error.config;
 
     const publicPaths = ['/login', '/', '/estatisticas', '/partidas', '/times', '/campeonatos', '/jogadores'];

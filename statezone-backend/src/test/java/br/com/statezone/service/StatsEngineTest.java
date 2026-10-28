@@ -61,9 +61,6 @@ class StatsEngineTest {
     private EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
 
     @Mock
-    private JogadorRepository jogadorRepository;
-
-    @Mock
     private EscalacaoPartidaRepository escalacaoPartidaRepository;
 
     @Mock
@@ -76,7 +73,6 @@ class StatsEngineTest {
         engine = new StatsEngine(
                 estatisticasJogadorRepository,
                 estatisticasJogadorCampeonatoRepository,
-                jogadorRepository,
                 escalacaoPartidaRepository,
                 statsHelper
         );
@@ -137,7 +133,7 @@ class StatsEngineTest {
 
         assertThat(carreiraStore.get(20L).getPartidasJogadas()).isEqualTo(1);
         assertThat(carreiraStore.get(20L).getGols()).isEqualTo(1);
-        assertThat(carreiraStore.get(20L).getFinalizacoes()).isEqualTo(1);
+        assertThat(carreiraStore.get(20L).getFinalizacoes()).isEqualTo(2);
         assertThat(carreiraStore.get(21L).getAssistencias()).isEqualTo(1);
         assertThat(carreiraStore.get(22L).getDefesas()).isEqualTo(1);
         assertThat(carreiraStore.get(22L).getPenaltisDefendidos()).isEqualTo(1);
@@ -149,40 +145,17 @@ class StatsEngineTest {
 
     @Test
     @WithMockUser
-    void process_quandoNaoHaEscalacao_deveUsarJogadoresDoTime() {
+    void process_quandoNaoHaEscalacao_naoContaPartidaJogada() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
         Time visitante = time(11L, "Visitante");
-        Jogador goleiroMandante = jogador(20L, mandante, "Goleiro", br.com.statezone.enums.Posicao.GOLEIRO, 1);
-        Jogador atacanteVisitante = jogador(21L, visitante, "Atacante", br.com.statezone.enums.Posicao.CENTROAVANTE, 9);
         Partida partida = partida(30L, campeonato, mandante, visitante, StatusPartida.ENCERRADA, 4, 1, 0);
         partida.setEventos(List.of());
 
         when(escalacaoPartidaRepository.findByPartidaIdWithJogador(30L)).thenReturn(List.of());
-        when(jogadorRepository.findByTimeIdIn(List.of(10L, 11L))).thenReturn(List.of(goleiroMandante, atacanteVisitante));
-
-        Map<Long, EstatisticasJogador> carreiraStore = new HashMap<>();
-        when(statsHelper.buscarOuCriarCarreira(any())).thenAnswer(inv -> {
-            Jogador j = inv.getArgument(0);
-            return carreiraStore.computeIfAbsent(j.getId(), k -> {
-                EstatisticasJogador e = new EstatisticasJogador();
-                e.setJogador(j);
-                return e;
-            });
-        });
-        when(statsHelper.obterOuCriarCampeonato(any(), eq(partida))).thenAnswer(inv -> {
-            Jogador j = inv.getArgument(0);
-            EstatisticasJogadorCampeonato e = new EstatisticasJogadorCampeonato();
-            e.setJogador(j);
-            e.setCampeonato(campeonato);
-            return e;
-        });
 
         engine.process(partida);
 
-        assertThat(carreiraStore).containsKeys(20L, 21L);
-        assertThat(carreiraStore.get(20L).getPartidasJogadas()).isEqualTo(1);
-        assertThat(carreiraStore.get(21L).getPartidasJogadas()).isEqualTo(1);
-        verify(jogadorRepository).findByTimeIdIn(List.of(10L, 11L));
+        verify(statsHelper, org.mockito.Mockito.never()).buscarOuCriarCarreira(any());
     }
 }

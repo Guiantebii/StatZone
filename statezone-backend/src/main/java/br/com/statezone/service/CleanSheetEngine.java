@@ -8,7 +8,6 @@ import br.com.statezone.model.Jogador;
 import br.com.statezone.model.Partida;
 import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
-import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.service.helper.StatsHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,6 @@ import java.util.Set;
 public class CleanSheetEngine {
 
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
-    private final JogadorRepository jogadorRepository;
     private final EscalacaoPartidaRepository escalacaoPartidaRepository;
     private final StatsHelper statsHelper;
 
@@ -64,11 +62,7 @@ public class CleanSheetEngine {
                 .filter(j -> j.getPosicao() == Posicao.GOLEIRO)
                 .toList();
 
-        if (!escalados.isEmpty()) {
-            return new LinkedHashSet<>(escalados);
-        }
-
-        return new LinkedHashSet<>(jogadorRepository.findByTimeIdAndPosicao(timeId, Posicao.GOLEIRO));
+        return new LinkedHashSet<>(escalados);
     }
 
     private int somar(Integer valor, int incremento) {

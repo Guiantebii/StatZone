@@ -12,6 +12,7 @@ import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
 import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.service.helper.CampeonatoAccessHelper;
+import br.com.statezone.util.Paginacao;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class EstatisticasJogadorService {
     public List<ArtilhariaResponseDto> artilharia(Long campeonatoId, int pagina, int tamanho) {
         validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
-                .findArtilheirosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
+                .findArtilheirosByCampeonatoId(campeonatoId, pagina(pagina, tamanho));
 
         AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
@@ -62,7 +63,7 @@ public class EstatisticasJogadorService {
     public List<AssistenciaRankingResponseDto> rankingAssistencias(Long campeonatoId, int pagina, int tamanho) {
         validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
-                .findAssistentesByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
+                .findAssistentesByCampeonatoId(campeonatoId, pagina(pagina, tamanho));
 
         AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
@@ -80,7 +81,7 @@ public class EstatisticasJogadorService {
     public List<RankingCartaoAmareloResponseDto> rankingCartaoAmarelo(Long campeonatoId, int pagina, int tamanho) {
         validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
-                .findCartoesAmarelosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
+                .findCartoesAmarelosByCampeonatoId(campeonatoId, pagina(pagina, tamanho));
 
         AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
@@ -98,7 +99,7 @@ public class EstatisticasJogadorService {
     public List<RankingCartaoVermelhoResponseDto> rankingCartaoVermelho(Long campeonatoId, int pagina, int tamanho) {
         validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
-                .findCartoesVermelhosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
+                .findCartoesVermelhosByCampeonatoId(campeonatoId, pagina(pagina, tamanho));
 
         AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
@@ -164,7 +165,7 @@ public class EstatisticasJogadorService {
     public List<RankingGoleiroResponseDto> rankingGoleiros(Long campeonatoId, int pagina, int tamanho) {
         validarVisibilidadeCampeonato(campeonatoId);
         var lista = estatisticasJogadorCampeonatoRepository
-                .findRankingGoleirosByCampeonatoId(campeonatoId, PageRequest.of(pagina, tamanho));
+                .findRankingGoleirosByCampeonatoId(campeonatoId, pagina(pagina, tamanho));
 
         AtomicInteger posicao = new AtomicInteger(1 + (pagina * tamanho));
 
@@ -202,5 +203,9 @@ public class EstatisticasJogadorService {
 
     private int toZero(Integer value) {
         return value != null ? value : 0;
+    }
+
+    private org.springframework.data.domain.Pageable pagina(int pagina, int tamanho) {
+        return PageRequest.of(Paginacao.pagina(pagina), Paginacao.tamanho(tamanho));
     }
 }

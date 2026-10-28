@@ -64,21 +64,23 @@ public class RefreshTokenService {
 
     @Transactional
     public String rotateRefreshToken(String oldTokenId, UserDetails userDetails) {
-        Optional<RefreshToken> oldToken = refreshTokenRepository.findByTokenId(oldTokenId);
+        Optional<RefreshToken> oldToken = refreshTokenRepository.findByTokenIdForUpdate(oldTokenId);
 
-        if (oldToken.isPresent()) {
-            RefreshToken token = oldToken.get();
-
-            if (token.isRevoked()) {
-                log.warn("Tentativa de rotação de refresh token já revogado (roubo detectado) para usuário: {}",
-                        userDetails.getUsername());
-                revokeAllForUsuario(token.getUsuario());
-                throw new IllegalStateException("Refresh token reuse detected. All tokens revoked for security.");
-            }
-
-            token.setRevoked(true);
-            refreshTokenRepository.save(token);
+        if (oldToken.isEmpty()) {
+            throw new IllegalStateException("Refresh token não encontrado");
         }
+
+        RefreshToken token = oldToken.get();
+
+        if (token.isRevoked()) {
+            log.warn("Tentativa de rotação de refresh token já revogado (roubo detectado) para usuário: {}",
+                    userDetails.getUsername());
+            revokeAllForUsuario(token.getUsuario());
+            throw new IllegalStateException("Refresh token reuse detected. All tokens revoked for security.");
+        }
+
+        token.setRevoked(true);
+        refreshTokenRepository.save(token);
 
         return createRefreshToken(userDetails);
     }

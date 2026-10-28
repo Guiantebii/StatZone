@@ -411,6 +411,14 @@ export default function PartidaDetalhePage() {
                 >
                   <Pause size={14} /> Intervalo
                 </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => handleAction('prorrogacao')}
+                  disabled={actionLoading}
+                >
+                  <Clock size={14} /> Prorrogação
+                </Button>
                 <Button size="sm" variant="danger" onClick={() => handleAction('encerrar')} disabled={actionLoading}>
                   <Square size={14} /> Encerrar
                 </Button>
@@ -418,6 +426,11 @@ export default function PartidaDetalhePage() {
                   + Evento
                 </Button>
               </>
+            )}
+            {partida.status === STATUS_PARTIDA.PRORROGACAO && (
+              <Button size="sm" onClick={() => handleAction('encerrar-prorrogacao')} disabled={actionLoading}>
+                <Square size={14} /> Encerrar prorrogação
+              </Button>
             )}
             {partida.status === STATUS_PARTIDA.INTERVALO && (
               <Button size="sm" onClick={() => handleAction('segundo-tempo')} disabled={actionLoading}>

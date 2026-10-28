@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PartidaRepository extends JpaRepository<Partida,Long> {
+public interface PartidaRepository extends JpaRepository<Partida,Long>, PartidaRepositoryCustom {
 
     @Query(value = "SELECT p FROM Partida p JOIN FETCH p.timeMandante JOIN FETCH p.timeVisitante",
            countQuery = "SELECT COUNT(p) FROM Partida p")
@@ -103,6 +103,40 @@ public interface PartidaRepository extends JpaRepository<Partida,Long> {
     List<Partida> findProximasPartidasDoTime(Long campeonatoId, Long timeId, Pageable pageable);
 
     List<Partida> findByGrupoIdAndStatusIn(Long grupoId, List<StatusPartida> status);
+
+    @Query("""
+    SELECT DISTINCT p FROM Partida p
+    LEFT JOIN FETCH p.eventos e
+    LEFT JOIN FETCH e.jogador
+    LEFT JOIN FETCH e.jogadorSecundario
+    LEFT JOIN FETCH e.time
+    JOIN FETCH p.timeMandante
+    JOIN FETCH p.timeVisitante
+    JOIN FETCH p.campeonato
+    WHERE p.id = :id
+    """)
+    Optional<Partida> findByIdParaProcessamento(@Param("id") Long id);
+
+    @Query("""
+    SELECT p FROM Partida p
+    JOIN FETCH p.timeMandante
+    JOIN FETCH p.timeVisitante
+    JOIN FETCH p.campeonato
+    WHERE p.status IN :statuses
+      AND (:incluirRascunho = true OR p.campeonato.status <> br.com.statezone.enums.StatusCampeonato.RASCUNHO)
+    """)
+    List<Partida> findVisiveisPorStatus(
+            @Param("statuses") List<StatusPartida> statuses,
+            @Param("incluirRascunho") boolean incluirRascunho,
+            Pageable pageable
+    );
+
+    @Query("""
+    SELECT COUNT(p) FROM Partida p
+    WHERE :incluirRascunho = true
+       OR p.campeonato.status <> br.com.statezone.enums.StatusCampeonato.RASCUNHO
+    """)
+    long contarVisiveis(@Param("incluirRascunho") boolean incluirRascunho);
 
     @Query("""
     SELECT p FROM Partida p

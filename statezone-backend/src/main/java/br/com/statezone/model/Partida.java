@@ -21,6 +21,9 @@ public class Partida {
     @Version
     private Long version;
 
+    @Column(name = "estatisticas_processadas", nullable = false)
+    private boolean estatisticasProcessadas = false;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

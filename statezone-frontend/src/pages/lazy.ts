@@ -12,6 +12,7 @@ export const PartidaDetalhePage = lazy(() => import('./PartidaDetalhePage'));
 export const EstatisticasPage = lazy(() => import('./EstatisticasPage'));
 export const FasesPage = lazy(() => import('./FasesPage'));
 export const ImportacaoPage = lazy(() => import('./ImportacaoPage'));
+export const UsuariosPage = lazy(() => import('./UsuariosPage'));
 export const PublicHomePage = lazy(() => import('./PublicHomePage'));
 export const PublicCampeonatosPage = lazy(() => import('./PublicCampeonatosPage'));
 export const PublicTimesPage = lazy(() => import('./PublicTimesPage'));

@@ -5,6 +5,7 @@ import br.com.statezone.dto.jogador.JogadorRequestDto;
 import br.com.statezone.dto.jogador.JogadorResponseDto;
 import br.com.statezone.service.EstatisticasJogadorService;
 import br.com.statezone.service.JogadorService;
+import br.com.statezone.util.Paginacao;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +48,7 @@ public class JogadorController {
         if (!nome.isBlank()) {
             return ResponseEntity.ok(jogadorService.buscarPorNome(nome));
         }
-        var pageable = PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.ASC, "nome"));
+        var pageable = PageRequest.of(Paginacao.pagina(pagina), Paginacao.tamanho(tamanho), Sort.by(Sort.Direction.ASC, "nome"));
         return ResponseEntity.ok(jogadorService.listarTodosJogadores(pageable));
     }
 

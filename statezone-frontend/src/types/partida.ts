@@ -3,6 +3,7 @@ export type StatusPartida =
   | 'AO_VIVO'
   | 'INTERVALO'
   | 'PENALTIS'
+  | 'PRORROGACAO'
   | 'ENCERRADA'
   | 'ADIADA'
   | 'CANCELADA'

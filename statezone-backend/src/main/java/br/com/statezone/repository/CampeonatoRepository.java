@@ -21,4 +21,14 @@ public interface CampeonatoRepository extends JpaRepository<Campeonato,Long> {
     Optional<Campeonato> findByIdWithTimes(@Param("id") Long id);
 
     List<Campeonato> findByStatus(StatusCampeonato status);
+
+    List<Campeonato> findByNomeContainingIgnoreCase(String nome);
+
+    long countByStatus(StatusCampeonato status);
+
+    @Query("""
+    SELECT MIN(c.id) FROM Campeonato c
+    WHERE :incluirRascunho = true OR c.status = br.com.statezone.enums.StatusCampeonato.ATIVO
+    """)
+    Long primeiroIdVisivel(@Param("incluirRascunho") boolean incluirRascunho);
 }

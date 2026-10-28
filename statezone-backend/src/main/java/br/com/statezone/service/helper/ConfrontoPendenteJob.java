@@ -1,11 +1,9 @@
 package br.com.statezone.service.helper;
 
-import br.com.statezone.listeners.ConfrontoEventListener;
-import br.com.statezone.model.Partida;
 import br.com.statezone.model.ProcessamentoConfrontoPendente;
-import br.com.statezone.repository.PartidaRepository;
 import br.com.statezone.repository.ProcessamentoConfrontoPendenteRepository;
-import org.springframework.transaction.annotation.Transactional;
+import br.com.statezone.service.PartidaEncerradaProcessor;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,37 +17,35 @@ import java.util.List;
 public class ConfrontoPendenteJob {
 
     private final ProcessamentoConfrontoPendenteRepository pendenteRepository;
-    private final PartidaRepository partidaRepository;
-    private final ConfrontoEventListener confrontoEventListener;
+    private final PartidaEncerradaProcessor processor;
+    private final MeterRegistry meterRegistry;
 
     private static final int MAX_TENTATIVAS = 3;
 
     @Scheduled(fixedDelay = 60000)
-    @Transactional
     public void processarPendentes() {
         List<ProcessamentoConfrontoPendente> pendentes =
                 pendenteRepository.findByResolvidoFalseAndTentativasLessThan(MAX_TENTATIVAS);
 
-        for (ProcessamentoConfrontoPendente p : pendentes) {
+        for (ProcessamentoConfrontoPendente pendente : pendentes) {
             try {
-                Partida partida = partidaRepository.findById(p.getPartidaId())
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Partida não encontrada com ID: " + p.getPartidaId()));
-
-                confrontoEventListener.processarConfronto(partida);
-
-            } catch (IllegalArgumentException e) {
-                log.warn("Partida não encontrada no processamento de confronto: {}", e.getMessage());
-                p.setResolvido(true);
-                pendenteRepository.save(p);
+                processor.processar(pendente.getPartidaId());
             } catch (Exception e) {
-                p.setTentativas(p.getTentativas() + 1);
-                p.setUltimoErro("Erro ao processar confronto pendente: " + e.getMessage());
-if (p.getTentativas() >= MAX_TENTATIVAS) {
-                    log.error("Falha definitiva ao processar confronto da partida {}", p.getPartidaId(), e);
-                }
-                pendenteRepository.save(p);
+                registrarFalha(pendente.getId(), e);
             }
         }
+    }
+
+    private void registrarFalha(Long pendenteId, Exception erro) {
+        pendenteRepository.findById(pendenteId).ifPresent(pendente -> {
+            pendente.setTentativas(pendente.getTentativas() + 1);
+            String mensagem = erro.getMessage() == null ? erro.getClass().getSimpleName() : erro.getMessage();
+            pendente.setUltimoErro(mensagem);
+            pendenteRepository.save(pendente);
+            meterRegistry.counter("statzone.partidas.processamento.falhas").increment();
+            if (pendente.getTentativas() >= MAX_TENTATIVAS) {
+                log.error("Falha definitiva ao processar partida {}", pendente.getPartidaId(), erro);
+            }
+        });
     }
 }

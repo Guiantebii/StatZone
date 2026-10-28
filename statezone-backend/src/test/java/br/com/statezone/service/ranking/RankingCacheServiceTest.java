@@ -1,5 +1,6 @@
 package br.com.statezone.service.ranking;
 
+import br.com.statezone.repository.GrupoRepository;
 import br.com.statezone.service.helper.ClassificacaoStats;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,11 +19,14 @@ class RankingCacheServiceTest {
     @Mock
     private RankingEngine rankingEngine;
 
+    @Mock
+    private GrupoRepository grupoRepository;
+
     private RankingCacheService rankingCacheService;
 
     @BeforeEach
     void setUp() {
-        rankingCacheService = new RankingCacheService(rankingEngine);
+        rankingCacheService = new RankingCacheService(rankingEngine, grupoRepository);
     }
 
     @Test

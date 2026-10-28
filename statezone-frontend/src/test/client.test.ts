@@ -1,4 +1,4 @@
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { AxiosHeaders, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import api from '../api/client';
 
@@ -70,5 +70,22 @@ describe('client axios interceptor', () => {
       value: { href: originalHref, pathname: '/' },
       writable: true,
     });
+  });
+
+  it('reenvia o token CSRF lido da resposta', async () => {
+    const config = { headers: new AxiosHeaders() } as InternalAxiosRequestConfig;
+    const responseHandler = api.interceptors.response.handlers![0];
+    responseHandler.fulfilled?.({
+      headers: { 'x-xsrf-token': 'csrf-teste' },
+      data: {},
+      status: 200,
+      statusText: 'OK',
+      config,
+    });
+
+    const requestHandler = api.interceptors.request.handlers![0];
+    const result = await requestHandler.fulfilled?.(config);
+
+    expect((result as InternalAxiosRequestConfig).headers.get('X-XSRF-TOKEN')).toBe('csrf-teste');
   });
 });

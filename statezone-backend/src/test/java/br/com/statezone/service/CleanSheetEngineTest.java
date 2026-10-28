@@ -54,9 +54,6 @@ class CleanSheetEngineTest {
     private EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
 
     @Mock
-    private JogadorRepository jogadorRepository;
-
-    @Mock
     private EscalacaoPartidaRepository escalacaoPartidaRepository;
 
     @Mock
@@ -68,7 +65,6 @@ class CleanSheetEngineTest {
     void setUp() {
         engine = new CleanSheetEngine(
                 estatisticasJogadorCampeonatoRepository,
-                jogadorRepository,
                 escalacaoPartidaRepository,
                 statsHelper
         );
@@ -122,27 +118,16 @@ class CleanSheetEngineTest {
 
     @Test
     @WithMockUser
-    void process_quandoNaoHaEscalacao_deveBuscarGoleiroNoRepositorio() {
+    void process_quandoNaoHaEscalacao_naoContaCleanSheet() {
         Campeonato campeonato = campeonato(1L, 3);
         Time mandante = time(10L, "Mandante");
         Time visitante = time(11L, "Visitante");
-        Jogador goleiroMandante = jogador(20L, mandante, "Goleiro A", Posicao.GOLEIRO, 1);
         Partida partida = partida(30L, campeonato, mandante, visitante, StatusPartida.ENCERRADA, 4, 0, 1);
 
         when(escalacaoPartidaRepository.findByPartidaIdWithJogador(30L)).thenReturn(List.of());
-        when(jogadorRepository.findByTimeIdAndPosicao(10L, Posicao.GOLEIRO)).thenReturn(List.of(goleiroMandante));
-
-        EstatisticasJogador carreira = new EstatisticasJogador();
-        carreira.setJogador(goleiroMandante);
-        EstatisticasJogadorCampeonato camp = new EstatisticasJogadorCampeonato();
-        camp.setJogador(goleiroMandante);
-        camp.setCampeonato(campeonato);
-        when(statsHelper.buscarOuCriarCarreira(goleiroMandante)).thenReturn(carreira);
-        when(statsHelper.obterOuCriarCampeonato(goleiroMandante, partida)).thenReturn(camp);
 
         engine.process(partida);
 
-        assertThat(carreira.getCleanSheets()).isEqualTo(1);
-        verify(statsHelper).salvarAmbos(carreira, camp);
+        verify(statsHelper, org.mockito.Mockito.never()).salvarAmbos(any(), any());
     }
 }

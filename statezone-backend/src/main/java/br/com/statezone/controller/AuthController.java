@@ -2,7 +2,6 @@ package br.com.statezone.controller;
 
 
 import br.com.statezone.dto.security.LoginRequest;
-import br.com.statezone.dto.security.LoginResponse;
 import br.com.statezone.dto.security.RegistroRequest;
 import br.com.statezone.enums.Role;
 import br.com.statezone.exception.ConflictException;
@@ -35,8 +34,8 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final br.com.statezone.service.RefreshTokenService refreshTokenService;
-
     private final boolean cookieSecure;
+    private final boolean registrationEnabled;
 
     public AuthController(
             AuthenticationManager authenticationManager,
@@ -44,17 +43,19 @@ public class AuthController {
             UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             br.com.statezone.service.RefreshTokenService refreshTokenService,
-            @Value("${app.security.cookie-secure:true}") boolean cookieSecure) {
+            @Value("${app.security.cookie-secure:true}") boolean cookieSecure,
+            @Value("${app.registration.enabled:true}") boolean registrationEnabled) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
         this.cookieSecure = cookieSecure;
+        this.registrationEnabled = registrationEnabled;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request,
+    public ResponseEntity<Void> login(@RequestBody @Valid LoginRequest request,
                                                 HttpServletResponse response) {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.senha())
@@ -84,8 +85,7 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, tokenCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        LoginResponse loginResponse = new LoginResponse(token);
-        return ResponseEntity.ok(loginResponse);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")
@@ -144,6 +144,9 @@ public class AuthController {
 
     @PostMapping("/registro")
     public ResponseEntity<Void> registro(@RequestBody @Valid RegistroRequest request) {
+        if (!registrationEnabled) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (usuarioRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email já cadastrado");
         }

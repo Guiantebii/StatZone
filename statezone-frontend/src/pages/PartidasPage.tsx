@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Plus, Filter, Calendar } from 'lucide-react';
 import api from '../api/client';
@@ -28,7 +28,10 @@ const statusList = [
   'WO_VISITANTE',
 ] as const;
 
+const TAMANHO = 20;
+
 export default function PartidasPage() {
+  const [aoVivo, setAoVivo] = useState<Partida[]>([]);
   const [partidas, setPartidas] = useState<Partida[]>([]);
   const [campeonatos, setCampeonatos] = useState<Campeonato[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,20 +44,39 @@ export default function PartidasPage() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const TAMANHO = 20;
   const campeonatosEndpoint = isDashboardContext ? '/campeonatos' : '/campeonatos?publico=true';
 
+  const partidasUrl = useCallback(
+    (pageNumber: number) => {
+      const params = new URLSearchParams({ pagina: String(pageNumber), tamanho: String(TAMANHO) });
+      if (filterStatus !== 'TODOS') params.set('status', filterStatus);
+      if (filterCampeonato !== 'TODOS') params.set('campeonatoId', filterCampeonato);
+      return `/partidas?${params.toString()}`;
+    },
+    [filterStatus, filterCampeonato],
+  );
+
+  const filtroRef = useRef(0);
+
   useEffect(() => {
+    const geracao = ++filtroRef.current;
+    const controller = new AbortController();
     let isMounted = true;
-    Promise.all([api.get(`/partidas?pagina=0&tamanho=${TAMANHO}`), api.get(campeonatosEndpoint)])
-      .then(([partidasRes, campeonatosRes]) => {
-        if (!isMounted) return;
+    Promise.all([
+      api.get(partidasUrl(0), { signal: controller.signal }),
+      api.get(campeonatosEndpoint, { signal: controller.signal }),
+      api.get('/partidas/painel', { signal: controller.signal }),
+    ])
+      .then(([partidasRes, campeonatosRes, painelRes]) => {
+        if (!isMounted || geracao !== filtroRef.current) return;
         setPartidas(partidasRes.data);
         setCampeonatos(campeonatosRes.data);
+        setAoVivo(painelRes.data.aoVivo);
         setHasMore((partidasRes.data as Partida[]).length === TAMANHO);
         setPage(1);
       })
       .catch((err) => {
+        if (controller.signal.aborted) return;
         toast.error(getApiError(err, 'Erro ao carregar partidas'));
       })
       .finally(() => {
@@ -62,15 +84,18 @@ export default function PartidasPage() {
       });
     return () => {
       isMounted = false;
+      controller.abort();
     };
-  }, [filterStatus, filterCampeonato, campeonatosEndpoint]);
+  }, [partidasUrl, campeonatosEndpoint]);
 
   const loadMore = () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
+    const geracao = filtroRef.current;
     api
-      .get(`/partidas?pagina=${page}&tamanho=${TAMANHO}`)
+      .get(partidasUrl(page))
       .then((res) => {
+        if (geracao !== filtroRef.current) return;
         const next = res.data as Partida[];
         setPartidas((prev) => [...prev, ...next]);
         setHasMore(next.length === TAMANHO);
@@ -79,16 +104,11 @@ export default function PartidasPage() {
       .catch((err) => {
         toast.error(getApiError(err, 'Erro ao carregar mais partidas'));
       })
-      .finally(() => setLoadingMore(false));
+      .finally(() => {
+        if (geracao === filtroRef.current) setLoadingMore(false);
+      });
   };
 
-  const filtered = partidas.filter((p) => {
-    if (filterStatus !== 'TODOS' && p.status !== filterStatus) return false;
-    if (filterCampeonato !== 'TODOS' && p.campeonatoId !== Number(filterCampeonato)) return false;
-    return true;
-  });
-
-  const aoVivo = partidas.filter((p) => p.status === 'AO_VIVO' || p.status === 'PENALTIS' || p.status === 'INTERVALO');
   const agendadas = partidas.filter((p) => p.status === 'AGENDADA');
 
   if (loading)
@@ -179,7 +199,7 @@ export default function PartidasPage() {
         </div>
       </Card>
 
-      {filtered.length === 0 ? (
+      {partidas.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center glass rounded-2xl">
           <div className="w-14 h-14 rounded-2xl bg-accent/5 flex items-center justify-center mb-4">
             <Calendar size={28} className="text-accent/40" />
@@ -198,12 +218,12 @@ export default function PartidasPage() {
             </div>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
-            {filtered.map((p) => (
+            {partidas.map((p) => (
               <PartidaCard key={p.id} partida={p} />
             ))}
           </div>
 
-          {hasMore && filtered.length > 0 && (
+          {hasMore && partidas.length > 0 && (
             <div className="flex justify-center mt-2">
               <Button onClick={loadMore} disabled={loadingMore} className="text-xs">
                 {loadingMore ? 'Carregando...' : 'Carregar mais'}
@@ -222,10 +242,11 @@ export default function PartidasPage() {
             setPage(0);
             setHasMore(true);
             setLoading(true);
-            Promise.all([api.get(`/partidas?pagina=0&tamanho=${TAMANHO}`), api.get(campeonatosEndpoint)])
-              .then(([partidasRes, campeonatosRes]) => {
+            Promise.all([api.get(partidasUrl(0)), api.get(campeonatosEndpoint), api.get('/partidas/painel')])
+              .then(([partidasRes, campeonatosRes, painelRes]) => {
                 setPartidas(partidasRes.data);
                 setCampeonatos(campeonatosRes.data);
+                setAoVivo(painelRes.data.aoVivo);
                 setHasMore((partidasRes.data as Partida[]).length === TAMANHO);
                 setPage(1);
               })

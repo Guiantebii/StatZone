@@ -1,12 +1,15 @@
 package br.com.statezone.controller;
 
 import br.com.statezone.dto.partida.FormacaoUpdateRequest;
+import br.com.statezone.dto.partida.PartidaPainelResponse;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
 import br.com.statezone.dto.partida.PenaltisRequestDto;
+import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.service.EventoPartidaService;
 import br.com.statezone.service.PartidaLifecycleService;
 import br.com.statezone.service.PartidaService;
+import br.com.statezone.util.Paginacao;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -39,14 +41,24 @@ public class PartidaController {
                 .body(response);
     }
 
+    @GetMapping("/painel")
+    public ResponseEntity<PartidaPainelResponse> painel() {
+        return ResponseEntity.ok(partidaService.painel());
+    }
+
     @GetMapping
     public ResponseEntity<List<PartidaResponseDto>> listarTodasPartidas(
+            @RequestParam(required = false) StatusPartida status,
+            @RequestParam(required = false) Long campeonatoId,
             @RequestParam(required = false, defaultValue = "0") int pagina,
             @RequestParam(required = false, defaultValue = "20") int tamanho
     ){
-        Pageable pageable = PageRequest.of(pagina, tamanho,
-                Sort.by(Sort.Order.desc("criadoEm"), Sort.Order.desc("id")));
-        return ResponseEntity.ok(partidaService.listarTodas(pageable));
+        Pageable pageable = PageRequest.of(
+                Paginacao.pagina(pagina),
+                Paginacao.tamanho(tamanho),
+                Sort.by(Sort.Order.desc("criadoEm"), Sort.Order.desc("id"))
+        );
+        return ResponseEntity.ok(partidaService.listarTodas(status, campeonatoId, pageable));
     }
     @GetMapping("/{id}")
     public ResponseEntity<PartidaResponseDto> obterPartidaPorId(@PathVariable Long id){

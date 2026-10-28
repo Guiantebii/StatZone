@@ -33,7 +33,7 @@ import java.util.List;
 import br.com.statezone.service.helper.CampeonatoAccessHelper;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class CampeonatoService {
 
@@ -44,18 +44,22 @@ public class CampeonatoService {
     private final PartidaRepository partidaRepository;
     private final PartidaMapper partidaMapper;
     private final GrupoRepository grupoRepository;
-    private final MatchEngine matchEngine;
+    private final PartidaEncerradaProcessor partidaEncerradaProcessor;
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
     private final JogadorRepository jogadorRepository;
     private final CampeonatoAccessHelper campeonatoAccessHelper;
 
+    @Transactional
     public CampeonatoResponseDto criarCampeonato(CampeonatoRequestDto dto){
         Campeonato entity = campeonatoMapper.toEntity(dto);
         Campeonato salvo = campeonatoRepository.save(entity);
         return campeonatoMapper.toDto(salvo);
     }
     public List<CampeonatoResponseDto> listarTodosCampeonatos(){
+        if (!campeonatoAccessHelper.podeVerRascunho()) {
+            return listarCampeonatosPublicos();
+        }
         return campeonatoRepository.findAll()
                 .stream()
                 .map(campeonatoMapper::toDto)
@@ -69,6 +73,7 @@ public class CampeonatoService {
                 .toList();
     }
 
+    @Transactional
     public CampeonatoResponseDto ativarCampeonato(Long id){
         Campeonato campeonato = campeonatoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
@@ -77,6 +82,7 @@ public class CampeonatoService {
         return campeonatoMapper.toDto(salvo);
     }
 
+    @Transactional
     public CampeonatoResponseDto reverterParaRascunho(Long id){
         Campeonato campeonato = campeonatoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
@@ -92,6 +98,7 @@ public class CampeonatoService {
         return campeonatoMapper.toDto(campeonato);
 
     }
+    @Transactional
     public CampeonatoResponseDto atualizarCampeonato(CampeonatoRequestDto dto ,Long id){
         Campeonato campeonato = campeonatoRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
         campeonatoMapper.updateCampeonatoFromDto(dto,campeonato);
@@ -99,9 +106,9 @@ public class CampeonatoService {
         return campeonatoMapper.toDto(campeonatoAtualizado);
     }
 
+    @Transactional
     public void deletarCampeonato(Long id) {
-        synchronized (this) {
-            Campeonato campeonato = campeonatoRepository.findById(id)
+        Campeonato campeonato = campeonatoRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Campeonato com id " + id + " não encontrado"));
 
             List<String> dependencias = new ArrayList<>();
@@ -124,9 +131,9 @@ public class CampeonatoService {
             }
 
             campeonatoRepository.delete(campeonato);
-        }
     }
 
+    @Transactional
     public void adicionarTime(Long campeonatoId, Long timeId){
 
         Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
@@ -170,12 +177,14 @@ public class CampeonatoService {
                 .toList();
     }
 
+    @Transactional
     public void reprocessarEstatisticas(Long campeonatoId) {
         campeonatoRepository.findById(campeonatoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
 
-        List<Partida> partidas = partidaRepository.findByCampeonatoIdAndStatusWithTimes(
-                campeonatoId, StatusPartida.ENCERRADA
+        List<Partida> partidas = partidaRepository.findByCampeonatoIdAndStatusInWithTimes(
+                campeonatoId,
+                List.of(StatusPartida.ENCERRADA, StatusPartida.WO_MANDANTE, StatusPartida.WO_VISITANTE)
         );
 
         List<Long> jogadorIds = partidas.stream()
@@ -192,7 +201,7 @@ public class CampeonatoService {
         }
 
         for (Partida partida : partidas) {
-            matchEngine.process(partida);
+            partidaEncerradaProcessor.reaplicarEstatisticas(partida.getId());
         }
     }
 

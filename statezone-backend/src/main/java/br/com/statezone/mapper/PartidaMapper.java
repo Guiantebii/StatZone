@@ -49,6 +49,7 @@ public interface PartidaMapper {
     @Mapping(target = "formacaoMandante", ignore = true)
     @Mapping(target = "formacaoVisitante", ignore = true)
     @Mapping(target = "version", ignore = true)
+    @Mapping(target = "estatisticasProcessadas", ignore = true)
     Partida toEntity(PartidaRequestDto dto);
 
 
@@ -72,6 +73,7 @@ public interface PartidaMapper {
     @Mapping(target = "formacaoMandante", ignore = true)
     @Mapping(target = "formacaoVisitante", ignore = true)
     @Mapping(target = "version", ignore = true)
+    @Mapping(target = "estatisticasProcessadas", ignore = true)
     void updatePartidaFromDto(
             PartidaRequestDto dto,
             @MappingTarget Partida entity

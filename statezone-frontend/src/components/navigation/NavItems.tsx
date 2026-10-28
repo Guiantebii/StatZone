@@ -7,7 +7,7 @@ interface NavItemsProps {
 }
 
 export default function NavItems({ collapse }: NavItemsProps) {
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
 
   return (
     <nav className="flex flex-col flex-1">
@@ -32,6 +32,7 @@ export default function NavItems({ collapse }: NavItemsProps) {
         <SidebarLink to="/dashboard/estatisticas" icon="chart-bar" label="Estatísticas" collapse={collapse} />
         <SidebarLink to="/dashboard/fases" icon="tournament" label="Fases" collapse={collapse} />
         <SidebarLink to="/dashboard/importacao" icon="cloud-download" label="Importação" collapse={collapse} />
+        {isAdmin && <SidebarLink to="/dashboard/usuarios" icon="user" label="Usuários" collapse={collapse} />}
       </div>
 
       <div className="flex-1" />

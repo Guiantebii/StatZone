@@ -9,7 +9,6 @@ import br.com.statezone.model.EventoPartida;
 import br.com.statezone.repository.EscalacaoPartidaRepository;
 import br.com.statezone.repository.EstatisticasJogadorCampeonatoRepository;
 import br.com.statezone.repository.EstatisticasJogadorRepository;
-import br.com.statezone.repository.JogadorRepository;
 import br.com.statezone.service.helper.StatsHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,6 @@ public class StatsEngine {
 
     private final EstatisticasJogadorRepository estatisticasJogadorRepository;
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
-    private final JogadorRepository jogadorRepository;
     private final EscalacaoPartidaRepository escalacaoPartidaRepository;
     private final StatsHelper statsHelper;
 
@@ -61,9 +59,13 @@ public class StatsEngine {
         switch (evento.getTipoEvento()) {
             case GOL -> {
                 registrarGol(jogador, partida);
+                registrarFinalizacao(jogador, partida);
                 registrarAssistencia(evento.getJogadorSecundario(), partida);
             }
-            case PENALTI_GOL -> registrarGol(jogador, partida);
+            case PENALTI_GOL -> {
+                registrarGol(jogador, partida);
+                registrarFinalizacao(jogador, partida);
+            }
             case FINALIZACAO, FINALIZACAO_NO_GOL -> registrarFinalizacao(jogador, partida);
             case FALTA -> registrarFalta(jogador, partida);
             case CARTAO_AMARELO -> registrarCartaoAmarelo(jogador, partida);
@@ -90,16 +92,7 @@ public class StatsEngine {
                 .map(EscalacaoPartida::getJogador)
                 .toList();
 
-        if (!jogadoresDaEscalacao.isEmpty()) {
-            return new LinkedHashSet<>(jogadoresDaEscalacao);
-        }
-
-        return new LinkedHashSet<>(jogadorRepository.findByTimeIdIn(
-                List.of(
-                        partida.getTimeMandante().getId(),
-                        partida.getTimeVisitante().getId()
-                )
-        ));
+        return new LinkedHashSet<>(jogadoresDaEscalacao);
     }
 
     private void registrarPartidaJogada(Jogador jogador, Partida partida) {

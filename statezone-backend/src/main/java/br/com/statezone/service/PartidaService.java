@@ -1,9 +1,9 @@
 package br.com.statezone.service;
 
 import br.com.statezone.dto.partida.FormacaoUpdateRequest;
+import br.com.statezone.dto.partida.PartidaPainelResponse;
 import br.com.statezone.dto.partida.PartidaRequestDto;
 import br.com.statezone.dto.partida.PartidaResponseDto;
-import br.com.statezone.enums.StatusCampeonato;
 import br.com.statezone.enums.StatusPartida;
 import br.com.statezone.exception.BusinessException;
 import br.com.statezone.exception.ConflictException;
@@ -12,8 +12,11 @@ import br.com.statezone.mapper.PartidaMapper;
 import br.com.statezone.model.*;
 import br.com.statezone.repository.*;
 import br.com.statezone.service.helper.CampeonatoAccessHelper;
-import org.springframework.data.domain.Page;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,7 @@ public class PartidaService {
     private final PartidaMapper partidaMapper;
     private final ConfrontoEliminatorioRepository confrontoEliminatorioRepository;
     private final CampeonatoAccessHelper campeonatoAccessHelper;
+    private final MeterRegistry meterRegistry;
 
     @Transactional
     public PartidaResponseDto criar(PartidaRequestDto dto) {
@@ -53,12 +57,33 @@ public class PartidaService {
     }
 
     @Transactional(readOnly = true)
-    public List<PartidaResponseDto> listarTodas(Pageable pageable) {
-        return partidaRepository.findAllWithTimes(pageable)
+    public List<PartidaResponseDto> listarTodas(StatusPartida status, Long campeonatoId, Pageable pageable) {
+        boolean incluirRascunho = campeonatoAccessHelper.podeVerRascunho();
+        return partidaRepository.buscarFiltradas(status, campeonatoId, incluirRascunho, pageable)
                 .stream()
-                .filter(this::partidaVisivelParaUsuarioAtual)
                 .map(partidaMapper::toDto)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PartidaPainelResponse painel() {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        try {
+            boolean incluirRascunho = campeonatoAccessHelper.podeVerRascunho();
+            List<StatusPartida> aoVivo = List.of(AO_VIVO, INTERVALO, PENALTIS, PRORROGACAO);
+            return new PartidaPainelResponse(
+                    mapear(partidaRepository.findVisiveisPorStatus(aoVivo, incluirRascunho, PageRequest.of(0, 50, Sort.by("dataPartida")))),
+                    mapear(partidaRepository.findVisiveisPorStatus(List.of(AGENDADA), incluirRascunho, PageRequest.of(0, 8, Sort.by("dataPartida")))),
+                    mapear(partidaRepository.findVisiveisPorStatus(
+                            List.of(ENCERRADA, WO_MANDANTE, WO_VISITANTE),
+                            incluirRascunho,
+                            PageRequest.of(0, 5, Sort.by(Sort.Order.desc("dataPartida"), Sort.Order.desc("id")))
+                    )),
+                    partidaRepository.contarVisiveis(incluirRascunho)
+            );
+        } finally {
+            sample.stop(meterRegistry.timer("statzone.partidas.painel"));
+        }
     }
 
     @Transactional(readOnly = true)
@@ -185,12 +210,7 @@ public class PartidaService {
         }
     }
 
-    private boolean partidaVisivelParaUsuarioAtual(Partida partida) {
-        if (campeonatoAccessHelper.podeVerRascunho()) {
-            return true;
-        }
-
-        return partida.getCampeonato() != null
-                && partida.getCampeonato().getStatus() == StatusCampeonato.ATIVO;
+    private List<PartidaResponseDto> mapear(List<Partida> partidas) {
+        return partidas.stream().map(partidaMapper::toDto).toList();
     }
 }

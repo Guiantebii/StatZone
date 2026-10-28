@@ -2,12 +2,14 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import api from '../api/client';
+import type { Campeonato } from '../types/campeonato';
 import type { Time } from '../types/time';
 import type { Jogador } from '../types/jogador';
 
 type SearchResult = {
   times: Time[];
   jogadores: Jogador[];
+  campeonatos: Campeonato[];
 };
 
 interface SearchBarProps {
@@ -24,12 +26,15 @@ function buildItems(results: SearchResult): Array<{ label: string; path: string 
   for (const j of results.jogadores) {
     items.push({ label: `Jogador: ${j.nome}`, path: `/jogadores/${j.id}` });
   }
+  for (const c of results.campeonatos ?? []) {
+    items.push({ label: `Campeonato: ${c.nome}`, path: `/campeonatos/${c.id}` });
+  }
   return items;
 }
 
 export default function SearchBar({ placeholder = 'Buscar...', className = '', navigatePrefix = '' }: SearchBarProps) {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult>({ times: [], jogadores: [] });
+  const [results, setResults] = useState<SearchResult>({ times: [], jogadores: [], campeonatos: [] });
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -52,16 +57,12 @@ export default function SearchBar({ placeholder = 'Buscar...', className = '', n
       setLoading(true);
       setOpen(true);
       try {
-        const [timesRes, jogadoresRes] = await Promise.all([
-          api.get<Time[]>('/times', { params: { nome: query } }),
-          api.get<Jogador[]>('/jogadores', { params: { nome: query } }),
-        ]);
-        const data = { times: timesRes.data, jogadores: jogadoresRes.data };
+        const res = await api.get<SearchResult>('/busca', { params: { q: query } });
         if (isCancelled) return;
-        setResults(data);
+        setResults(res.data);
         setActiveIndex(-1);
       } catch {
-        if (!isCancelled) setResults({ times: [], jogadores: [] });
+        if (!isCancelled) setResults({ times: [], jogadores: [], campeonatos: [] });
       } finally {
         if (!isCancelled) setLoading(false);
       }
@@ -83,12 +84,15 @@ export default function SearchBar({ placeholder = 'Buscar...', className = '', n
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelect = useCallback((path: string) => {
-    setQuery('');
-    setOpen(false);
-    setActiveIndex(-1);
-    navigate(navigatePrefix + path);
-  }, [navigate, navigatePrefix]);
+  const handleSelect = useCallback(
+    (path: string) => {
+      setQuery('');
+      setOpen(false);
+      setActiveIndex(-1);
+      navigate(navigatePrefix + path);
+    },
+    [navigate, navigatePrefix],
+  );
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') {
@@ -118,7 +122,14 @@ export default function SearchBar({ placeholder = 'Buscar...', className = '', n
   }
 
   return (
-    <div ref={wrapperRef} className="relative" role="combobox" aria-expanded={open} aria-haspopup="listbox" aria-controls="search-results">
+    <div
+      ref={wrapperRef}
+      className="relative"
+      role="combobox"
+      aria-expanded={open}
+      aria-haspopup="listbox"
+      aria-controls="search-results"
+    >
       <div className="relative">
         <input
           ref={inputRef}

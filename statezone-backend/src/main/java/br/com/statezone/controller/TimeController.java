@@ -8,6 +8,7 @@ import br.com.statezone.dto.time.TimeResponseDto;
 import br.com.statezone.dto.time.UltimasPartidasTimeResponseDto;
 import br.com.statezone.service.ApiFootballImportService;
 import br.com.statezone.service.TimeService;
+import br.com.statezone.util.Paginacao;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -49,7 +50,7 @@ public class TimeController {
         if (!nome.isBlank()) {
             return ResponseEntity.ok(timeService.buscarPorNome(nome));
         }
-        var pageable = PageRequest.of(pagina, tamanho, Sort.by(Sort.Direction.ASC, "nome"));
+        var pageable = PageRequest.of(Paginacao.pagina(pagina), Paginacao.tamanho(tamanho), Sort.by(Sort.Direction.ASC, "nome"));
         return ResponseEntity.ok(timeService.listarTodosTimes(pageable));
     }
 

@@ -3,6 +3,7 @@ export const STATUS_PARTIDA = {
   AO_VIVO: 'AO_VIVO' as const,
   INTERVALO: 'INTERVALO' as const,
   PENALTIS: 'PENALTIS' as const,
+  PRORROGACAO: 'PRORROGACAO' as const,
   ENCERRADA: 'ENCERRADA' as const,
   ADIADA: 'ADIADA' as const,
   CANCELADA: 'CANCELADA' as const,
@@ -10,7 +11,12 @@ export const STATUS_PARTIDA = {
   WO_VISITANTE: 'WO_VISITANTE' as const,
 } as const;
 
-export const STATUS_AO_VIVO = [STATUS_PARTIDA.AO_VIVO, STATUS_PARTIDA.PENALTIS, STATUS_PARTIDA.INTERVALO] as const;
+export const STATUS_AO_VIVO = [
+  STATUS_PARTIDA.AO_VIVO,
+  STATUS_PARTIDA.PENALTIS,
+  STATUS_PARTIDA.INTERVALO,
+  STATUS_PARTIDA.PRORROGACAO,
+] as const;
 export const STATUS_ENCERRADA = [
   STATUS_PARTIDA.ENCERRADA,
   STATUS_PARTIDA.WO_MANDANTE,
@@ -29,6 +35,7 @@ export const STATUS_LABEL: Record<string, string> = {
   AO_VIVO: 'Ao Vivo',
   INTERVALO: 'Intervalo',
   PENALTIS: 'Pênaltis',
+  PRORROGACAO: 'Prorrogação',
   ENCERRADA: 'Encerrada',
   AGENDADA: 'Agendada',
   ADIADA: 'Adiada',

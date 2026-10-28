@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.mockito.ArgumentCaptor;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 @ExtendWith(MockitoExtension.class)
 @Import(TestSecurityConfig.class)
@@ -76,7 +77,8 @@ class PartidaServiceTest {
                 timeRepository,
                 partidaMapper,
                 confrontoEliminatorioRepository,
-                campeonatoAccessHelper
+                campeonatoAccessHelper,
+                new SimpleMeterRegistry()
         );
     }
 

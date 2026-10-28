@@ -24,7 +24,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class EscalacaoPartidaService {
 
     private final EscalacaoPartidaRepository escalacaoPartidaRepository;
@@ -33,6 +33,7 @@ public class EscalacaoPartidaService {
     private final EscalacaoPartidaMapper escalacaoPartidaMapper;
     private final SuspensaoRepository suspensaoRepository;
 
+    @Transactional
     public EscalacaoPartidaResponseDto adicionarJogador(
             Long partidaId,
             EscalacaoPartidaRequestDto dto

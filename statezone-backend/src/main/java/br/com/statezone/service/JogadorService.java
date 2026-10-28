@@ -18,7 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class JogadorService {
 
     private final JogadorRepository jogadorRepository;
@@ -29,6 +29,7 @@ public class JogadorService {
     private final EstatisticasJogadorCampeonatoRepository estatisticasJogadorCampeonatoRepository;
     private final SuspensaoRepository suspensaoRepository;
 
+    @Transactional
     public JogadorResponseDto criar(JogadorRequestDto dto) {
         Time time = timeRepository.findById(dto.timeId())
                 .orElseThrow(() ->
@@ -66,6 +67,7 @@ public class JogadorService {
         return jogadorMapper.toDto(jogador);
     }
 
+    @Transactional
     public JogadorResponseDto atualizarJogador(JogadorRequestDto dto, Long id){
         Jogador jogador = jogadorRepository.findById(id)
                 .orElseThrow(()->
@@ -88,6 +90,7 @@ public class JogadorService {
         return jogadorMapper.toDto(jogadorAtualizado);
     }
 
+    @Transactional
     public void deletarJogador(Long id) {
         synchronized (this) {
             Jogador jogador = jogadorRepository.findById(id)

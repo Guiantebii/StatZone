@@ -109,16 +109,7 @@ public class PartidaLifecycleService {
         Partida salva = partidaRepository.save(partida);
 
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_FIM);
-
-        processamentoConfrontoPendenteRepository.save(
-                ProcessamentoConfrontoPendente.builder()
-                        .partidaId(partida.getId())
-                        .criadoEm(LocalDateTime.now())
-                        .tentativas(0)
-                        .resolvido(false)
-                        .build()
-        );
-        publisher.publishEvent(new PartidaEncerradaEvent(salva));
+        publicarEncerramento(salva);
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
@@ -137,15 +128,7 @@ public class PartidaLifecycleService {
 
         Partida salva = partidaRepository.save(partida);
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_FIM);
-        processamentoConfrontoPendenteRepository.save(
-                ProcessamentoConfrontoPendente.builder()
-                        .partidaId(salva.getId())
-                        .criadoEm(LocalDateTime.now())
-                        .tentativas(0)
-                        .resolvido(false)
-                        .build()
-        );
-        publisher.publishEvent(new PartidaEncerradaEvent(salva));
+        publicarEncerramento(salva);
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
         return partidaMapper.toDto(salva);
     }
@@ -162,15 +145,7 @@ public class PartidaLifecycleService {
 
         Partida salva = partidaRepository.save(partida);
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_FIM);
-        processamentoConfrontoPendenteRepository.save(
-                ProcessamentoConfrontoPendente.builder()
-                        .partidaId(salva.getId())
-                        .criadoEm(LocalDateTime.now())
-                        .tentativas(0)
-                        .resolvido(false)
-                        .build()
-        );
-        publisher.publishEvent(new PartidaEncerradaEvent(salva));
+        publicarEncerramento(salva);
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
         return partidaMapper.toDto(salva);
     }
@@ -201,13 +176,22 @@ public class PartidaLifecycleService {
             throw new BusinessException("Partida não está na prorrogação");
         }
 
-        partida.setStatus(StatusPartida.PENALTIS);
-        partida.setGolsPenaltisMandante(partida.getGolsPenaltisMandante() != null ? partida.getGolsPenaltisMandante() : 0);
-        partida.setGolsPenaltisVisitante(partida.getGolsPenaltisVisitante() != null ? partida.getGolsPenaltisVisitante() : 0);
+        partida.setStatus(StatusPartida.ENCERRADA);
 
         Partida salva = partidaRepository.save(partida);
 
         criarEventoSistema(salva, TipoEvento.FIM_PRORROGACAO, MINUTO_PRORROGACAO_FIM);
+
+        int golsMandante = salva.getGolsMandante() != null ? salva.getGolsMandante() : 0;
+        int golsVisitante = salva.getGolsVisitante() != null ? salva.getGolsVisitante() : 0;
+        if (golsMandante != golsVisitante) {
+            salva.setStatus(StatusPartida.ENCERRADA);
+            publicarEncerramento(salva);
+        } else {
+            salva.setStatus(StatusPartida.PENALTIS);
+            salva.setGolsPenaltisMandante(salva.getGolsPenaltisMandante() != null ? salva.getGolsPenaltisMandante() : 0);
+            salva.setGolsPenaltisVisitante(salva.getGolsPenaltisVisitante() != null ? salva.getGolsPenaltisVisitante() : 0);
+        }
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
@@ -248,11 +232,23 @@ public class PartidaLifecycleService {
         Partida salva = partidaRepository.save(partida);
 
         criarEventoSistema(salva, TipoEvento.FIM_PARTIDA, MINUTO_PRORROGACAO_FIM);
-        publisher.publishEvent(new PartidaEncerradaEvent(salva));
+        publicarEncerramento(salva);
 
         partidaWebSocketService.notificarAtualizacaoPartida(partidaMapper.toDto(salva));
 
         return partidaMapper.toDto(salva);
+    }
+
+    private void publicarEncerramento(Partida partida) {
+        processamentoConfrontoPendenteRepository.save(
+                ProcessamentoConfrontoPendente.builder()
+                        .partidaId(partida.getId())
+                        .criadoEm(LocalDateTime.now())
+                        .tentativas(0)
+                        .resolvido(false)
+                        .build()
+        );
+        publisher.publishEvent(new PartidaEncerradaEvent(partida));
     }
 
     private Partida buscarPartida(Long id) {

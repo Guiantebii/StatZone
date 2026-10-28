@@ -30,7 +30,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class TimeService {
     private final TimeRepository timeRepository;
     private final TimeMapper timeMapper;
@@ -40,6 +40,7 @@ public class TimeService {
     private final PartidaMapper partidaMapper;
     private final CampeonatoAccessHelper campeonatoAccessHelper;
 
+    @Transactional
     public TimeResponseDto criar(TimeRequestDto dto){
         Time entity = timeMapper.toEntity(dto);
 
@@ -73,6 +74,7 @@ public class TimeService {
         return timeMapper.toDto(time);
     }
 
+    @Transactional
     public TimeResponseDto atualizarTime(TimeRequestDto dto, Long id){
         Time time = timeRepository.findById(id)
                 .orElseThrow(() ->
@@ -87,6 +89,7 @@ public class TimeService {
         return timeMapper.toDto(timeAtualizado);
     }
 
+    @Transactional
     public void deletarTime(Long id) {
         synchronized (this) {
             Time time = timeRepository.findById(id)

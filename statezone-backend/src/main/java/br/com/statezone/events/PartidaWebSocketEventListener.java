@@ -30,5 +30,6 @@ public class PartidaWebSocketEventListener {
                 "/topic/partidas/" + event.partida().getId(),
                 partidaDto
         );
+        messagingTemplate.convertAndSend("/topic/painel", partidaDto);
     }
 }

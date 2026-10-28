@@ -13,7 +13,7 @@ import static org.mockito.Mockito.*;
 
 class RateLimitingFilterTest {
 
-    private final RateLimitingFilter filter = new RateLimitingFilter();
+    private final RateLimitingFilter filter = new RateLimitingFilter(new InMemoryRateLimitStore(), false);
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
     private FilterChain filterChain;

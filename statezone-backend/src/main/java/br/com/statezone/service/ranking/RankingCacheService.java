@@ -1,5 +1,6 @@
 package br.com.statezone.service.ranking;
 
+import br.com.statezone.repository.GrupoRepository;
 import br.com.statezone.service.helper.ClassificacaoStats;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ public class RankingCacheService {
     private static final long TTL_SECONDS = 60;
 
     private final RankingEngine rankingEngine;
+    private final GrupoRepository grupoRepository;
 
     private final ConcurrentHashMap<String, CacheEntry> cache =
             new ConcurrentHashMap<>();
@@ -56,6 +58,8 @@ public class RankingCacheService {
 
     public void recalcular(Long campeonatoId) {
         cache.keySet().removeIf(key -> key.startsWith(campeonatoId + "_"));
+        grupoRepository.findByCampeonatoId(campeonatoId)
+                .forEach(grupo -> cache.remove(grupo.getId() + "_grupo"));
         String key = campeonatoId + "_geral";
         cache.put(key, new CacheEntry(rankingEngine.gerar(campeonatoId), Instant.now().plusSeconds(TTL_SECONDS)));
     }

@@ -22,7 +22,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class GrupoService {
 
     private final GrupoRepository grupoRepository;
@@ -34,6 +34,7 @@ public class GrupoService {
     private final RoundRobinHelper roundRobinHelper;
 
 
+    @Transactional
     public GrupoResponseDto criarGrupo(Long campeonatoId, GrupoRequestDto dto) {
         Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
@@ -54,6 +55,7 @@ public class GrupoService {
         return grupoMapper.toDto(grupoRepository.save(grupo));
     }
 
+    @Transactional
     public GrupoResponseDto adicionarTime(Long campeonatoId, Long grupoId, Long timeId) {
         Grupo grupo = grupoRepository.findById(grupoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));
@@ -110,6 +112,7 @@ public class GrupoService {
         return grupoMapper.toDto(grupo);
     }
 
+    @Transactional
     public void gerarFixturesPorGrupo(Long campeonatoId, Long grupoId) {
         Grupo grupo = grupoRepository.findById(grupoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo não encontrado"));

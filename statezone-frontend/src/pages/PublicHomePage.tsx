@@ -9,9 +9,8 @@ import type { Artilharia } from '../types/estatisticas';
 import Card from '../components/ui/Card';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { ARTILHARIA_TOP } from '../constants/pagination';
-import { STATUS_PARTIDA, isLiveStatus, isFinishedStatus } from '../constants/status';
 import { toast } from 'sonner';
-import { usePolling } from '../hooks/usePolling';
+import { usePainelAoVivo } from '../hooks/useWebSocket';
 
 export default function PublicHomePage() {
   const navigate = useNavigate();
@@ -26,25 +25,15 @@ export default function PublicHomePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [partidasRes, campRes] = await Promise.all([api.get('/partidas'), api.get('/campeonatos?publico=true')]);
+        const [painelRes, campRes] = await Promise.all([
+          api.get<{ aoVivo: Partida[]; agendadas: Partida[]; recentes: Partida[]; total: number }>('/partidas/painel'),
+          api.get('/campeonatos?publico=true'),
+        ]);
 
-        const todas: Partida[] = partidasRes.data;
-
-        const live = todas.filter((p) => isLiveStatus(p.status));
-        const scheduled = todas
-          .filter((p) => p.status === STATUS_PARTIDA.AGENDADA)
-          .sort((a, b) => new Date(a.dataPartida).getTime() - new Date(b.dataPartida).getTime())
-          .slice(0, 8);
-
-        const finished = todas
-          .filter((p) => isFinishedStatus(p.status))
-          .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
-          .slice(0, 5);
-
-        setAoVivo(live);
-        setProximas(scheduled);
-        setRecentes(finished);
-        setTotalPartidas(todas.length);
+        setAoVivo(painelRes.data.aoVivo);
+        setProximas(painelRes.data.agendadas);
+        setRecentes(painelRes.data.recentes);
+        setTotalPartidas(painelRes.data.total);
         setCampeonatos(campRes.data);
 
         if (campRes.data.length > 0) {
@@ -62,19 +51,21 @@ export default function PublicHomePage() {
     load();
   }, []);
 
-  const pollAoVivo = useCallback(() => {
+  const refreshPainel = useCallback(() => {
     api
-      .get('/partidas')
+      .get<{ aoVivo: Partida[]; agendadas: Partida[]; recentes: Partida[]; total: number }>('/partidas/painel')
       .then((res) => {
-        const todas: Partida[] = res.data;
-        setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
+        setAoVivo(res.data.aoVivo);
+        setProximas(res.data.agendadas);
+        setRecentes(res.data.recentes);
+        setTotalPartidas(res.data.total);
       })
       .catch(() => {
         toast.error('Erro ao atualizar partidas ao vivo');
       });
   }, []);
 
-  usePolling(pollAoVivo, 15000, aoVivo.length > 0);
+  usePainelAoVivo(refreshPainel);
 
   if (loading) {
     return (

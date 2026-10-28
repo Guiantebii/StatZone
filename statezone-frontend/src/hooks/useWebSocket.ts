@@ -1,7 +1,8 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import logger from '../utils/logger';
+import { usePolling } from './usePolling';
 
 const SOCKET_URL = import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'http://localhost:8080/ws' : null);
 
@@ -61,7 +62,9 @@ export function useWebSocket(options?: UseWebSocketOptions) {
       const c = clientRef.current;
       if (!c) return;
       if (document.hidden) {
-        try { c.deactivate(); } catch {}
+        try {
+          c.deactivate();
+        } catch {}
       } else {
         c.activate();
       }
@@ -155,7 +158,9 @@ export function usePartidaWebSocket(
       const c = clientRef.current;
       if (!c) return;
       if (document.hidden) {
-        try { c.deactivate(); } catch {}
+        try {
+          c.deactivate();
+        } catch {}
       } else {
         c.activate();
       }
@@ -170,4 +175,32 @@ export function usePartidaWebSocket(
       } catch {}
     };
   }, [partidaId]);
+}
+
+export function usePainelAoVivo(refresh: () => void) {
+  const refreshRef = useRef(refresh);
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    refreshRef.current = refresh;
+  }, [refresh]);
+
+  useEffect(() => {
+    const client = createClient();
+    client.onConnect = () => {
+      setConnected(true);
+      client.subscribe('/topic/painel', () => refreshRef.current());
+    };
+    client.onDisconnect = () => setConnected(false);
+    client.onWebSocketClose = () => setConnected(false);
+    client.activate();
+    return () => {
+      setConnected(false);
+      try {
+        client.deactivate();
+      } catch {}
+    };
+  }, []);
+
+  usePolling(refresh, 15000, !connected);
 }

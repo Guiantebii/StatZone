@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class BracketService {
 
     private final FaseEliminatoriaRepository faseEliminatoriaRepository;
@@ -37,6 +37,7 @@ public class BracketService {
     private final CampeonatoAccessHelper campeonatoAccessHelper;
 
 
+    @Transactional
     public FaseEliminatoriaResponseDto criarFase(Long campeonatoId, FaseEliminatoriaRequestDto dto) {
         Campeonato campeonato = campeonatoRepository.findById(campeonatoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campeonato não encontrado"));
@@ -72,6 +73,7 @@ public class BracketService {
                 .toList();
     }
 
+    @Transactional
     public void gerarPrimeiraFase(Long campeonatoId, Long faseId, int vagasPorGrupo) {
         FaseEliminatoria fase = faseEliminatoriaRepository.findById(faseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Fase não encontrada"));
@@ -117,6 +119,7 @@ public class BracketService {
                     });
         }
     }
+    @Transactional
     public FaseEliminatoriaResponseDto encerraConfronto(Long campeonatoId, Long confrontoId) {
         ConfrontoEliminatorio c = confrontoEliminatorioRepository.findById(confrontoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Confronto não encontrado"));
@@ -136,6 +139,7 @@ public class BracketService {
         return faseEliminatoriaMapper.toDto(c.getFaseEliminatoria());
     }
 
+    @Transactional
     public void verificarFase(FaseEliminatoria fase) {
         List<ConfrontoEliminatorio> confrontos = confrontoEliminatorioRepository.findByFaseEliminatoriaIdOrderByBracketIndexAsc(fase.getId());
 

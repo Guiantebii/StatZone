@@ -16,5 +16,6 @@ public class PartidaWebSocketService {
                 "/topic/partidas/" + partida.id(),
                 partida
         );
+        messagingTemplate.convertAndSend("/topic/painel", partida);
     }
 }

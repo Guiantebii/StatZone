@@ -4,9 +4,6 @@ import { Trophy, Shield, Users, Calendar, Plus, ArrowRight, Medal } from 'lucide
 import api from '../api/client';
 import { getApiError } from '../api/errorHandler';
 import { getLogoUrl, getAvatarUrl } from '../constants/helpers';
-import type { Campeonato } from '../types/campeonato';
-import type { Time } from '../types/time';
-import type { Jogador } from '../types/jogador';
 import type { Partida } from '../types/partida';
 import type { Artilharia } from '../types/estatisticas';
 import Card from '../components/ui/Card';
@@ -14,9 +11,23 @@ import Button from '../components/ui/Button';
 import { ARTILHARIA_TOP } from '../constants/pagination';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
-import { isLiveStatus, isFinishedStatus } from '../constants/status';
-import { usePolling } from '../hooks/usePolling';
+import { usePainelAoVivo } from '../hooks/useWebSocket';
 import logger from '../utils/logger';
+
+type Resumo = {
+  campeonatos: number;
+  times: number;
+  jogadores: number;
+  partidas: number;
+  primeiroCampeonatoId: number | null;
+};
+
+type Painel = {
+  aoVivo: Partida[];
+  agendadas: Partida[];
+  recentes: Partida[];
+  total: number;
+};
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -29,32 +40,23 @@ export default function DashboardPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [campeonatosRes, timesRes, jogadoresRes, partidasRes] = await Promise.all([
-          api.get<Campeonato[]>('/campeonatos'),
-          api.get<Time[]>('/times'),
-          api.get<Jogador[]>('/jogadores'),
-          api.get<Partida[]>('/partidas'),
+        const [resumoRes, painelRes] = await Promise.all([
+          api.get<Resumo>('/resumo'),
+          api.get<Painel>('/partidas/painel'),
         ]);
 
         setStats({
-          campeonatos: campeonatosRes.data.length,
-          times: timesRes.data.length,
-          jogadores: jogadoresRes.data.length,
-          partidas: partidasRes.data.length,
+          campeonatos: resumoRes.data.campeonatos,
+          times: resumoRes.data.times,
+          jogadores: resumoRes.data.jogadores,
+          partidas: resumoRes.data.partidas,
         });
+        setAoVivo(painelRes.data.aoVivo);
+        setRecentes(painelRes.data.recentes);
 
-        const todas = partidasRes.data;
-        setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
-        setRecentes(
-          todas
-            .filter((p) => isFinishedStatus(p.status))
-            .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
-            .slice(0, 5),
-        );
-
-        if (campeonatosRes.data.length > 0) {
+        if (resumoRes.data.primeiroCampeonatoId) {
           const artRes = await api.get(
-            `/campeonatos/${campeonatosRes.data[0].id}/artilharia?pagina=0&tamanho=${ARTILHARIA_TOP}`,
+            `/campeonatos/${resumoRes.data.primeiroCampeonatoId}/artilharia?pagina=0&tamanho=${ARTILHARIA_TOP}`,
           );
           setArtilharia(Array.isArray(artRes.data) ? artRes.data : []);
         }
@@ -69,23 +71,17 @@ export default function DashboardPage() {
 
   const pollPartidas = useCallback(() => {
     api
-      .get<Partida[]>('/partidas')
+      .get<Painel>('/partidas/painel')
       .then((res) => {
-        const todas = res.data;
-        setAoVivo(todas.filter((p) => isLiveStatus(p.status)));
-        setRecentes(
-          todas
-            .filter((p) => isFinishedStatus(p.status))
-            .sort((a, b) => new Date(b.dataPartida).getTime() - new Date(a.dataPartida).getTime())
-            .slice(0, 5),
-        );
+        setAoVivo(res.data.aoVivo);
+        setRecentes(res.data.recentes);
       })
       .catch((err) => {
         logger.error('Erro ao atualizar partidas ao vivo', err);
       });
   }, []);
 
-  usePolling(pollPartidas, 15000);
+  usePainelAoVivo(pollPartidas);
 
   if (loading)
     return (
