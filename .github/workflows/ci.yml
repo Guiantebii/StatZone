@@ -33,6 +33,21 @@ jobs:
       - name: Test
         run: mvn test
 
+  deploy:
+    needs: backend
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar deploy do Render
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "RENDER_DEPLOY_HOOK não configurado. O backend continua no deploy manual."
+            exit 0
+          fi
+          curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK"
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
